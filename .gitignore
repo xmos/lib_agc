@@ -1,0 +1,17 @@
+**/.build*/*
+**/bin/*
+*.o
+*.xe
+*.vcd
+*.xi
+*.i
+*.a
+**/_build/
+**/run_*.log
+**/pdf/*
+**/html/*
+*.pyc
+**/.settings*
+Installs/*
+test_results.csv
+*.log
