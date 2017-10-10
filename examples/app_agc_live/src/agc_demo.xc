@@ -105,7 +105,7 @@ void get_wav(chanend output_audio, chanend keyword,
 
         mic_array_init_time_domain_frame(c_ds_output, DECIMATOR_COUNT, buffer, audio, dc);
         agc_state_t agc;
-        agc_init_state(agc, 10, -12, FRAME_LENGTH);
+        agc_init_state(agc, 10, -12, FRAME_LENGTH, 0, 0);
         int cnt = 10;
         while(1){
             cnt++;
@@ -137,7 +137,7 @@ void get_wav(chanend output_audio, chanend keyword,
             }
             
         tmr :> t0;
-            agc_block(agc, data_buf, headroom);
+            agc_block(agc, data_buf, headroom, null, null);
         tmr :> t1;
             if ((cnt & 15) == 0) {
                 printf("%3d\n", agc_get_gain(agc) >> 24);
