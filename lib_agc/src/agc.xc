@@ -1,4 +1,6 @@
 // Copyright (c) 2017, XMOS Ltd, All rights reserved
+#include <math.h>
+
 #include "agc.h"
 
 #if 0
@@ -255,6 +257,8 @@ int main(int argc, char *argv[]) {
 #include <xs1.h>
 #include "agc.h"
 
+#define ASSERT(x)    asm("ecallf %0" :: "r" (x))
+
 /** Gain is a real number between 0 and 128. It is represented by a
  * multiplier which in unsigned 8.24 format, and a shift right value.
  */
@@ -280,7 +284,7 @@ static uint32_t cls64(int64_t x) {
 
 static void agc_set_gain(int32_t &shift, uint32_t &gain, int32_t db) {
     // First convert dB to log-base-2, in 10.22 format
-    db = (db * 5573271LL) >> 26;
+    db = (db * 5573271LL) >> 27;
     shift = db >> 22;  // Now split in shift and fraction; offset shift
     db -= (shift << 22);   // remove shift from fraction
     db = (db * 11629080LL) >> 22; // convert back to base E
@@ -291,7 +295,6 @@ static uint32_t agc_set_gain_no_shift(int32_t db) {
     int32_t shl;
     uint32_t gain;
     agc_set_gain(shl, gain, db);
-    printf(" = %d %d\n", gain, shl);
     if (shl < 0) {
         return gain >> -shl;
     } else {
@@ -302,7 +305,7 @@ static uint32_t agc_set_gain_no_shift(int32_t db) {
 static int32_t agc_get_gain_2(uint32_t shift, uint32_t gain) {
     int db = dsp_math_log(gain);
     db += (shift * 11629080LL); // add ln(2^shift)
-    db = (db * 72862523LL) >> 24;      // convert to 10*log(10)
+    db = (db * 72862523LL) >> 31;      // convert to 20*log(10) and into 16.16
     return db;
 }
 
@@ -311,14 +314,17 @@ int32_t agc_get_gain(agc_state_t &agc) {
 }
 
 void agc_set_gain_db(agc_state_t &agc, int32_t db) {
+    ASSERT(db < 128 && db > -128);
     agc_set_gain(agc.gain_shl, agc.gain, db << 24);
 }
 
 void agc_set_gain_max_db(agc_state_t &agc, int32_t db) {
+    ASSERT(db < 128 && db > -128);
     agc_set_gain(agc.max_gain_shl, agc.max_gain, db << 24);
 }
 
 void agc_set_gain_min_db(agc_state_t &agc, int32_t db) {
+    ASSERT(db < 128 && db > -128);
     agc_set_gain(agc.min_gain_shl, agc.min_gain, db << 24);
 }
 
@@ -330,27 +336,33 @@ void agc_set_desired_db(agc_state_t &agc, int32_t db) {
 }
 
 void agc_set_rate_up_dbps(agc_state_t &agc, int32_t db) {
+    ASSERT(db > 0);
     agc.up = agc_set_gain_no_shift(db * 1049);
 }
 
 void agc_set_rate_down_dbps(agc_state_t &agc, int32_t db) {
+    ASSERT(db < 0);
     agc.down = agc_set_gain_no_shift(db * 1049);
 }
 
-void agc_set_wait_for_up_ms(agc_state_t &agc, int32_t milliseconds) {
+void agc_set_wait_for_up_ms(agc_state_t &agc, uint32_t milliseconds) {
     agc.wait_for_up_samples = milliseconds * 16;
 }
 
 void agc_init_state(agc_state_t &agc,
                     int32_t initial_gain_db,
                     int32_t desired_energy_db,
-                    uint32_t frame_length) {
+                    uint32_t frame_length,
+                    uint32_t look_ahead_frames,
+                    uint32_t look_past_frames) {
     agc.frame_length = frame_length;
+    agc.look_ahead_frames = look_ahead_frames;
+    agc.look_past_frames = look_past_frames;
     agc.state = AGC_STABLE;
     agc_set_gain_db(agc, initial_gain_db);
     agc_set_desired_db(agc, desired_energy_db);
-    agc_set_gain_max_db(agc, 12);
-    agc_set_gain_min_db(agc, -48);
+    agc_set_gain_max_db(agc, 127);
+    agc_set_gain_min_db(agc, -127);
     agc_set_rate_up_dbps(agc, 7);
     agc_set_rate_down_dbps(agc, -70);
     agc_set_wait_for_up_ms(agc, 4000);
@@ -394,7 +406,9 @@ static int32_t clamp(int64_t sample) {
 
 void agc_block(agc_state_t &agc,
                int32_t samples[],
-               int32_t shr) {
+               int32_t shr,
+               int32_t (&?sample_buffer)[],
+               int32_t (&?energy_buffer)[]) {
     
     uint64_t sss = 0; // Sum of Square Signals
     int logN = 31 - clz(agc.frame_length);
@@ -406,8 +420,8 @@ void agc_block(agc_state_t &agc,
     
     uint64_t energy = (sqrt_energy * (uint64_t) agc.gain) >> (24 - agc.gain_shl);
 
-    printf("Actual energy %u postgain %lld desired %d\n", sqrt_energy, energy, agc.desired);
-//    printf("%12lld %9d %d\n", energy, sqrt_energy, agc.state);
+//    printf("Actual energy %u  postgain %lld desired %d\n", sqrt_energy, energy, agc.desired);
+//    printf("[%d..%d]  %d\n", agc.desired_min, agc.desired_max, agc.state);
     
     for(int n = 0; n < agc.frame_length; n++) {
         switch(agc.state) {
