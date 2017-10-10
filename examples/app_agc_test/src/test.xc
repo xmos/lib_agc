@@ -49,8 +49,14 @@ static void prepare_input_data() {
     }
 }
 
+static void prepare_ninput_data() {
+    for(int i =0 ; i < AGC_WINDOW_LENGTH; i++) {
+        input_data[i] = -compare_data[i];
+    }
+}
+
 static double dBSignal(int32_t x, int32_t ref) {
-    return log(x/(float)0x7fffffff)/log(10.0)*20.0;    // *8.6858896381
+    return log(x/(float)ref)/log(10.0)*20.0;    // *8.6858896381
 }
 
 static void down_test() {
@@ -159,10 +165,85 @@ static void up_test() {
     }
 }
 
+static void look_past_test() {
+    agc_state_t a;
+    int errors = 0;
+    const int start_signal = 0;
+    const int desired_energy = -20;
+#define past_windows   1
+#define ahead_windows  2
+    uint32_t energy_buffer[past_windows + 1 + ahead_windows];
+    int32_t sample_buffer[(AGC_WINDOW_LENGTH + 1) * ahead_windows];
+    // One frame in the past
+    // One frame now
+    // Two frames ahead
+    
+    agc_init_state(a, start_signal, desired_energy, AGC_WINDOW_LENGTH,
+                   past_windows, ahead_windows);
+
+    for(int i = 0; i < 10; i++) {
+        if (i & 2) {
+            prepare_input_data();
+        } else {
+            prepare_ninput_data();
+        }
+        agc_block(a, input_data, 0, sample_buffer, energy_buffer);
+        double signal = dBSignal(input_data[4], ((i-2)&2) ? 0x7fffffff : -0x7fffffff);
+        double desired_signal = start_signal;// + i*AGC_WINDOW_LENGTH/16000.0 * down_rate;
+
+        if (1 || fabs(desired_signal - signal) > 0.05) {
+            printf("Error down_test: Signal level %f not %f\n", signal, desired_signal);
+            errors++;
+        }
+        output_block((input_data, unsigned char[]), AGC_WINDOW_LENGTH * 4);
+    }
+
+    if (errors == 0) {
+        printf("Down test passed\n");
+    }
+}
+
+#define MAX_AHEAD_WINDOWS  4
+static void look_ahead_test() {
+    agc_state_t a;
+    uint32_t energy_buffer[1 + MAX_AHEAD_WINDOWS];
+    int32_t sample_buffer[(AGC_WINDOW_LENGTH + 1) * MAX_AHEAD_WINDOWS];
+    
+    for(int ahead_frames = 0; ahead_frames < MAX_AHEAD_WINDOWS; ahead_frames++) {
+        int errors = 0;    
+        agc_init_state(a, 0, 0, AGC_WINDOW_LENGTH,
+                       0, ahead_frames);
+        agc_set_gain_min_db(a, 0);
+        agc_set_gain_max_db(a, 0);
+        for(int i = 0; i < ahead_frames + 3; i++) {
+            for(int k = 0; k < AGC_WINDOW_LENGTH; k++) {
+                input_data[k] = (k+i*AGC_WINDOW_LENGTH)*k;
+            }
+            agc_block(a, input_data, i, sample_buffer, energy_buffer);
+            int32_t ci = i-ahead_frames;
+            if (ci >= 0) {
+                for(int k = 0; k < AGC_WINDOW_LENGTH; k++) {
+                    int32_t expected = (k+ci*AGC_WINDOW_LENGTH)*k;
+                    if (input_data[k] != (expected >> ci)) {
+                        printf("%d %d\n", input_data[k], expected);
+                    }
+                }
+            }
+        }
+
+        if (errors == 0) {
+            printf("Look ahead test %d passed\n", ahead_frames);
+        }
+    }
+}
+
 int main(void) {
     prepare_compare_data();
     output_init();
 
+    look_ahead_test();
+    return 0;
+    look_past_test();
     down_test();
     up_test();
 

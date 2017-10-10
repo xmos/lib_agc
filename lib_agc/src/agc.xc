@@ -353,11 +353,11 @@ void agc_init_state(agc_state_t &agc,
                     int32_t initial_gain_db,
                     int32_t desired_energy_db,
                     uint32_t frame_length,
-                    uint32_t look_ahead_frames,
-                    uint32_t look_past_frames) {
+                    uint32_t look_past_frames,
+                    uint32_t look_ahead_frames) {
     agc.frame_length = frame_length;
-    agc.look_ahead_frames = look_ahead_frames;
     agc.look_past_frames = look_past_frames;
+    agc.look_ahead_frames = look_ahead_frames;
     agc.state = AGC_STABLE;
     agc_set_gain_db(agc, initial_gain_db);
     agc_set_desired_db(agc, desired_energy_db);
@@ -408,7 +408,7 @@ void agc_block(agc_state_t &agc,
                int32_t samples[],
                int32_t shr,
                int32_t (&?sample_buffer)[],
-               int32_t (&?energy_buffer)[]) {
+               uint32_t (&?energy_buffer)[]) {
     
     uint64_t sss = 0; // Sum of Square Signals
     int logN = 31 - clz(agc.frame_length);
@@ -417,6 +417,19 @@ void agc_block(agc_state_t &agc,
     }
     sss = sss >> (shr * 2);
     uint32_t sqrt_energy = dsp_math_int_sqrt64(sss);
+
+    if (!isnull(energy_buffer)) {
+        uint32_t energy_nitems =  agc.look_ahead_frames + agc.look_past_frames + 1;
+        for(uint32_t i = 1; i < energy_nitems; i++) {
+            energy_buffer[i-1] = energy_buffer[i];
+        }
+        energy_buffer[energy_nitems-1] = sqrt_energy;
+        uint64_t total_energy = 0;
+        for(uint32_t i = 0; i < energy_nitems; i++) {
+            total_energy += energy_buffer[i];
+        }
+        sqrt_energy = total_energy / energy_nitems;
+    }
     
     uint64_t energy = (sqrt_energy * (uint64_t) agc.gain) >> (24 - agc.gain_shl);
 
@@ -460,8 +473,25 @@ void agc_block(agc_state_t &agc,
             break;
         }
         energy = (sqrt_energy * (uint64_t) agc.gain) >> (24 - agc.gain_shl);
-        int64_t gained_sample = samples[n] * (int64_t) agc.gain;
-        int32_t gained_shift_r = 24 - agc.gain_shl + shr;
+
+        int32_t input_sample;
+        int32_t input_shr;
+        if (agc.look_ahead_frames != 0) {
+            input_sample = sample_buffer[n];
+            input_shr = sample_buffer[agc.frame_length];
+            for(uint32_t k = 1; k < agc.look_ahead_frames; k++) {
+                sample_buffer[n+(k-1)*(agc.frame_length+1)] = 
+                    sample_buffer[n+k*(agc.frame_length+1)];
+            }
+            sample_buffer[n+(agc.look_ahead_frames-1)*(agc.frame_length+1)] =
+                samples[n];
+        } else {
+            input_sample = samples[n];
+            input_shr = shr;
+        }
+        
+        int64_t gained_sample = input_sample * (int64_t) agc.gain;
+        int32_t gained_shift_r = 24 - agc.gain_shl + input_shr;
         int32_t output_sample;
         if (gained_shift_r > 0) {
             gained_sample >>= gained_shift_r;
@@ -480,6 +510,15 @@ void agc_block(agc_state_t &agc,
         }
 //        printf("%08x -> %016llx -> %08x %2d %08x\n", samples[n], gained_sample, output_sample, agc.gain_shl, agc.gain);
         samples[n] = output_sample;
+    }
+    if (agc.look_ahead_frames != 0) {
+        const uint32_t n = agc.frame_length;
+        for(uint32_t k = 1; k < agc.look_ahead_frames; k++) {
+            sample_buffer[n+(k-1)*(agc.frame_length+1)] = 
+                sample_buffer[n+k*(agc.frame_length+1)];
+        }
+        sample_buffer[n+(agc.look_ahead_frames-1)*(agc.frame_length+1)] =
+            shr;
     }
 }
 

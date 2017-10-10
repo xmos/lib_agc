@@ -33,8 +33,8 @@ typedef struct {
     uint32_t wait_samples;
     uint32_t wait_for_up_samples;
 
-    uint32_t look_ahead_frames;
     uint32_t look_past_frames;
+    uint32_t look_ahead_frames;
 } agc_state_t;
 
 /** Function that initialises an automatic gain controller. It needs to be
@@ -87,12 +87,11 @@ typedef struct {
  * \param frame_length[in]      Number of samples on which AGC operates.
  *
  * TEST NOT WRITTEN
- * \param look_ahead_frames[in] Number of frames to look ahead for energy
+ * \param look_past_frames[in]  Number of frames to look in the past for energy
  *                              If this is larger than zero, than a buffer 
  *                              needs to be passed to agc_process_block()
  * 
- * TEST NOT WRITTEN
- * \param look_past_frames[in]  Number of frames to look in the past for energy
+ * \param look_ahead_frames[in] Number of frames to look ahead for energy
  *                              If this is larger than zero, than a buffer 
  *                              needs to be passed to agc_process_block()
  * 
@@ -101,8 +100,8 @@ void agc_init_state(agc_state_t &agc,
                     int32_t initial_gain_db,
                     int32_t desired_energy_db,
                     uint32_t frame_length,
-                    uint32_t look_ahead_frames,
-                    uint32_t look_past_frames);
+                    uint32_t look_past_frames,
+                    uint32_t look_ahead_frames);
 
 /** Function that sets the maximum gain allowed on the automatic gain
  * control. This value must be larger than or equal to the initial gain,
@@ -175,23 +174,24 @@ void agc_set_wait_for_up_ms(agc_state_t &agc, uint32_t milliseconds);
  * \param shr[in]         Number of bits that samples have been shifted left by
  * 
  * \param sample_buffer[in,out] Buffer that holds historic samples. Must be an
- *                        array of at least LOOK_AHEAD_FRAMES * FRAME_SIZE
+ *                        array of at least (LOOK_AHEAD_FRAMES+1) * FRAME_SIZE
  *                        words, where LOOK_AHEAD_FRAMES is the number of frames
  *                        that shall be looked ahead for energy, and FRAME_SIZE
  *                        is the number of samples per frame. If
  *                        LOOK_AHEAD_FRAMES is zero then null can be passed in.
  *
  * \param energy_buffer[in,out] Buffer that holds historic energy samples.
- *                        Must be an array of at least LOOK_PAST_FRAMES words
- *                        which is the number of past frames to use for energy
- *                        estimation. If LOOK_PAST_FRAMES is 0 then null can
- *                        be used.
+ *                        Must be an array of at least (LOOK_PAST_FRAMES +
+ *                        LOOK_AHEAD_FRAMES + 1) words which is the number
+ *                        of past frames to use for energy estimation. If
+ *                        LOOK_PAST_FRAMES and LOOK_AHEAD_FRAMES are 0 then
+ *                        null can be used for this parameter.
  */
 void agc_block(agc_state_t &agc,
                int32_t samples[],
                int32_t shr,
                int32_t (&?sample_buffer)[],
-               int32_t (&?energy_buffer)[]);
+               uint32_t (&?energy_buffer)[]);
 
 /** Function that gets the current gain.
  * \param agc[in] Gain controller structure
