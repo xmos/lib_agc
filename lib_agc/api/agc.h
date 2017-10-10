@@ -77,10 +77,13 @@ typedef struct {
  * value should be picked than if microphones have a high sensitiviy.
  * 
  * \param agc[out]              gain controller structure, initialised on return
+ *
  * \param initial_gain_db[in]   Initial gain in dB. 12 is a good number. The
  *                              initial gain must be in the range [-127..127].
+ *
  * \param desired_energy_db[in] desired energy in dB. -12 is a good number. The
  *                              desired energy must be in the range [-127..-1].
+ *
  * \param frame_length[in]      Number of samples on which AGC operates.
  *
  * TEST NOT WRITTEN
@@ -107,8 +110,6 @@ void agc_init_state(agc_state_t &agc,
  * range [-127..127]. This function is typically not used as the default
  * used by agc_init_state() will do the trick.
  *
- * TEST NOT WRITTEN
- *
  * \param agc[in,out] Gain controller structure
  * \param db[in]      Desired maximum gain in dB
  */
@@ -119,8 +120,6 @@ void agc_set_gain_max_db(agc_state_t &agc, int32_t db);
  * less than or equal to the maximum gain. The gain must be in the
  * range [-127..127]. This function is typically not used as the default
  * used by agc_init_state() will do the trick.
- *
- * TEST NOT WRITTEN
  *
  * \param agc[in,out] Gain controller structure
  * \param db[in]      Desired minimum gain in dB

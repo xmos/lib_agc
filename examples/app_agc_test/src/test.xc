@@ -81,6 +81,19 @@ static void down_test() {
         }
         output_block((input_data, unsigned char[]), AGC_WINDOW_LENGTH * 4);
     }
+
+    agc_set_gain_min_db(a, -3);
+    agc_set_desired_db(a, desired_energy - 10);
+    prepare_input_data();
+    agc_block(a, input_data, 0, null, null);
+    double signal = dBSignal(input_data[4], 0x7fffffff);
+    double desired_signal = start_signal - 3;
+    if (fabs(desired_signal - signal) > 0.05) {
+        printf("Error down_test - gain_min: Signal level %f not %f\n", signal, desired_signal);
+        errors++;
+    }
+    output_block((input_data, unsigned char[]), AGC_WINDOW_LENGTH * 4);
+
     if (!cliptest) {
         printf("down_test: missed out on clipping\n");
         errors++;
@@ -123,12 +136,25 @@ static void up_test() {
             }
             output_block((input_data, unsigned char[]), AGC_WINDOW_LENGTH * 4);
         }
+
+        agc_set_gain_max_db(a, -30);
+        agc_set_desired_db(a, desired_energy + 10);
+        prepare_input_data();
+        agc_block(a, input_data, 0, null, null);
+        double signal = dBSignal(input_data[4], 0x7fffffff);
+        double desired_signal = start_signal - 30;
+        if (fabs(desired_signal - signal) > 0.05) {
+            printf("Error up_test - gain_min: Signal level %f not %f\n", signal, desired_signal);
+            errors++;
+        }
+        output_block((input_data, unsigned char[]), AGC_WINDOW_LENGTH * 4);
+
         if (!cliptest) {
             printf("up_test(%d ms): missed out on clipping\n", msdelay);
             errors++;
         }
         if (errors == 0) {
-            printf("Down test passed for msdelay %d\n", msdelay);
+            printf("Up test passed for msdelay %d\n", msdelay);
         }
     }
 }
@@ -136,7 +162,7 @@ static void up_test() {
 int main(void) {
     prepare_compare_data();
     output_init();
-    
+
     down_test();
     up_test();
 
