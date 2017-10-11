@@ -4,31 +4,34 @@ Automatic gain control library
 Summary
 -------
 
-[one or two paragraphs describing the library]
+This library implements an adaptive gain control algorithm. Given a stream
+of audio samples in the time domain (in block floating point format), it
+dynamically adapts the gain so that it has a reasonably constant output level.
 
 Features
 ........
 
-  * [feature 1]
-  * [feature 2]
-  ...
+  * Settable desired output energy
+  * Settable minimum and maximum gain
+  * Settable up and down rates for the gain
+  * Settable delay before increasing gain
+  * Settable window size, look-ahead, and history
+  * Multiple instances supported
 
 Typical Resource Usage
 ......................
 
-  .. resusage::
+  .. resusage:: 
      ...
 
 Software version and dependencies
 .................................
 
-  .. libdeps::
+  .. libdeps:: lib_dsp
 
 Related application notes
 .........................
 
 The following application notes use this library:
 
-  * ANxxxx - [App note title 1]
-  * ANxxxx - [App note title 2]
-  ...
+  * ANxxxx - Example use of gain control and noise suppression
