@@ -2,40 +2,7 @@
 #ifndef _agc_h_
 #define _agc_h_
 
-#include <stdint.h>
-
-typedef enum {
-    AGC_UP = 0,
-    AGC_DOWN = 1,
-    AGC_WAIT = 2,
-    AGC_STABLE = 3
-} agc_mode;
-
-typedef struct {
-    agc_mode state;
-    uint32_t frame_length;
-
-    uint32_t desired;
-    uint32_t desired_min;
-    uint32_t desired_max;
-    
-    uint32_t gain;
-    int32_t gain_shl;
-    
-    uint32_t max_gain;
-    int32_t max_gain_shl;
-    
-    uint32_t min_gain;
-    int32_t min_gain_shl;
-    
-    uint32_t down, up;
-    
-    uint32_t wait_samples;
-    uint32_t wait_for_up_samples;
-
-    uint32_t look_past_frames;
-    uint32_t look_ahead_frames;
-} agc_state_t;
+#include "agc_state.h"
 
 /** Function that initialises an automatic gain controller. It needs to be
  * passed an AGC structure, and the initial gain setting in dB. The gain
@@ -67,7 +34,7 @@ typedef struct {
  * (meaning whole scale), the actual output of a sinewave will be
  * (10^(0/20))/sqrt(1/2) = 1.414 of whole scale, which will lead to
  * wide-spread clipping. Hence, in order to avoid clipping, keep the
- * desired output level well below zero.
+ * desired output level at least a few dB below zero.
  *
  * The other important parameter is the initial gain setting. A good guess
  * for the initial setting enables the AGC to operate without warm-up. The
@@ -78,10 +45,12 @@ typedef struct {
  * 
  * \param agc[out]              gain controller structure, initialised on return
  *
- * \param initial_gain_db[in]   Initial gain in dB. 12 is a good number. The
- *                              initial gain must be in the range [-127..127].
+ * \param initial_gain_db[in]   Initial gain in dB. The initial gain must be
+ *                              in the range [-127..127]. If you are uncertain
+ *                              estimate it on the high side; it will adjust
+ *                              quickly down to the right value.
  *
- * \param desired_energy_db[in] desired energy in dB. -12 is a good number. The
+ * \param desired_energy_db[in] desired energy in dB. -6 is a good number. The
  *                              desired energy must be in the range [-127..-1].
  *
  * \param frame_length[in]      Number of samples on which AGC operates.
