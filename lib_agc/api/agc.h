@@ -86,7 +86,6 @@ typedef struct {
  *
  * \param frame_length[in]      Number of samples on which AGC operates.
  *
- * TEST NOT WRITTEN
  * \param look_past_frames[in]  Number of frames to look in the past for energy
  *                              If this is larger than zero, than a buffer 
  *                              needs to be passed to agc_process_block()

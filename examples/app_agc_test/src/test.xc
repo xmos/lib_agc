@@ -49,9 +49,9 @@ static void prepare_input_data() {
     }
 }
 
-static void prepare_ninput_data() {
+static void prepare_zinput_data() {
     for(int i =0 ; i < AGC_WINDOW_LENGTH; i++) {
-        input_data[i] = -compare_data[i];
+        input_data[i] = 0;
     }
 }
 
@@ -106,6 +106,8 @@ static void down_test() {
     }
     if (errors == 0) {
         printf("Down test passed\n");
+    } else {
+        printf("Down test FAILED\n");
     }
 }
 
@@ -161,46 +163,68 @@ static void up_test() {
         }
         if (errors == 0) {
             printf("Up test passed for msdelay %d\n", msdelay);
+        } else {
+            printf("Up test FAILED for msdelay %d\n", msdelay);
         }
     }
 }
 
+#define AGC_WINDOW_LENGTH_SMALL 128
+
 static void look_past_test() {
     agc_state_t a;
-    int errors = 0;
-    const int start_signal = 0;
-    const int desired_energy = -20;
-#define past_windows   1
-#define ahead_windows  2
-    uint32_t energy_buffer[past_windows + 1 + ahead_windows];
-    int32_t sample_buffer[(AGC_WINDOW_LENGTH + 1) * ahead_windows];
+#define past_windows   4
+    uint32_t energy_buffer[past_windows + 1 + 0];
     // One frame in the past
     // One frame now
     // Two frames ahead
+    double dbs[6];
+    for(int i = 0; i < 6; i++) {
+        dbs[i] = log(i/5.0)/log(10)*20 - 3.0;
+    }
     
-    agc_init_state(a, start_signal, desired_energy, AGC_WINDOW_LENGTH,
-                   past_windows, ahead_windows);
+    agc_init_state(a, 0, dbs[5], AGC_WINDOW_LENGTH_SMALL,
+                   past_windows, 0);
+    agc_set_gain_min_db(a, 0);
+    agc_set_gain_max_db(a, 0);
+    agc_set_wait_for_up_ms(a, 0);
 
-    for(int i = 0; i < 10; i++) {
-        if (i & 2) {
-            prepare_input_data();
+    for(int i = 0; i < 5; i++) {
+        prepare_input_data();
+        agc_block(a, input_data, 0, null, energy_buffer);
+    }
+    agc_set_gain_min_db(a, -127);
+    agc_set_gain_max_db(a, 127);
+    agc_set_desired_db(a, dbs[5]);
+    for(int k = 0; k < 5; k++) {
+        int errors = 0;
+        for(int i = 0; i < 20; i++) {
+            int zero = i%5 < k;
+            if (zero) {
+                prepare_zinput_data();
+            } else {
+                prepare_input_data();
+            }
+            if (i == k-1) {
+                agc_set_desired_db(a, dbs[5-k]);
+            }
+            agc_block(a, input_data, 0, null, energy_buffer);
+            for(int j = 0; j < AGC_WINDOW_LENGTH_SMALL; j++) {
+                int32_t comp = zero ? 0 : compare_data[j];
+                if (input_data[j] != comp) {
+                    printf("Error past_test k %d i %d j %d : Signal level %d not %d\n", k, i, j, input_data[j], comp);
+                    errors++;
+                }
+            }
+            output_block((input_data, unsigned char[]), AGC_WINDOW_LENGTH_SMALL * 4);
+        }
+        if (errors == 0) {
+            printf("Look past test ratio %d/5 passed\n", 5-k);
         } else {
-            prepare_ninput_data();
+            printf("Look past test ratio %d/5 FAILED\n", 5-k);
         }
-        agc_block(a, input_data, 0, sample_buffer, energy_buffer);
-        double signal = dBSignal(input_data[4], ((i-2)&2) ? 0x7fffffff : -0x7fffffff);
-        double desired_signal = start_signal;// + i*AGC_WINDOW_LENGTH/16000.0 * down_rate;
-
-        if (1 || fabs(desired_signal - signal) > 0.05) {
-            printf("Error down_test: Signal level %f not %f\n", signal, desired_signal);
-            errors++;
-        }
-        output_block((input_data, unsigned char[]), AGC_WINDOW_LENGTH * 4);
     }
 
-    if (errors == 0) {
-        printf("Down test passed\n");
-    }
 }
 
 #define MAX_AHEAD_WINDOWS  4
@@ -233,6 +257,8 @@ static void look_ahead_test() {
 
         if (errors == 0) {
             printf("Look ahead test %d passed\n", ahead_frames);
+        } else {
+            printf("Look ahead test %d FAILED\n", ahead_frames);
         }
     }
 }
@@ -241,9 +267,8 @@ int main(void) {
     prepare_compare_data();
     output_init();
 
-    look_ahead_test();
-    return 0;
     look_past_test();
+    look_ahead_test();
     down_test();
     up_test();
 
