@@ -1,6 +1,6 @@
 TARGET = XCORE-200-EXPLORER
 APP_NAME =
-USED_MODULES = lib_dsp lib_agc
+USED_MODULES = lib_agc
 
 XCC_FLAGS = -O2 -g
 

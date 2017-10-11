@@ -31,7 +31,7 @@
  * or +/- 303700050. The actual level of the sine wave will be slightly
  * higher or lower, since the AGC algorithm uses a hysteresis around the
  * desired energy level. Note that if the desired output is set to 0 dB
- * (meaning whole scale), the actual output of a sinewave will be
+ * (meaning whole scale), the actual output of a sine-wave will be
  * (10^(0/20))/sqrt(1/2) = 1.414 of whole scale, which will lead to
  * wide-spread clipping. Hence, in order to avoid clipping, keep the
  * desired output level at least a few dB below zero.
@@ -41,7 +41,7 @@
  * initial setting should compensate for the sensitivity of the microphones
  * and the gain applied by any previous stages in the voice pipeline. For
  * example, if the microphones have a low sensitivity then a higher initial
- * value should be picked than if microphones have a high sensitiviy.
+ * value should be picked than if microphones have a high sensitivity.
  * 
  * \param agc[out]              gain controller structure, initialised on return
  *
@@ -125,7 +125,7 @@ void agc_set_rate_up_dbps(agc_state_t &agc, int32_t dbps);
 /** Function that sets the grace period before the gain starts increasing
  *
  * \param agc[in,out]      Gain controller structure
- * \param milliseconds[in] Time between quiesence and gain increasing
+ * \param milliseconds[in] Time between quiescence and gain increasing
  */
 void agc_set_wait_for_up_ms(agc_state_t &agc, uint32_t milliseconds);
 
