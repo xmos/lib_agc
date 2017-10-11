@@ -43,23 +43,23 @@
  * example, if the microphones have a low sensitivity then a higher initial
  * value should be picked than if microphones have a high sensitivity.
  * 
- * \param agc[out]              gain controller structure, initialised on return
+ * \param[out] agc              gain controller structure, initialised on return
  *
- * \param initial_gain_db[in]   Initial gain in dB. The initial gain must be
+ * \param[in] initial_gain_db   Initial gain in dB. The initial gain must be
  *                              in the range [-127..127]. If you are uncertain
  *                              estimate it on the high side; it will adjust
  *                              quickly down to the right value.
  *
- * \param desired_energy_db[in] desired energy in dB. -6 is a good number. The
+ * \param[in] desired_energy_db desired energy in dB. -6 is a good number. The
  *                              desired energy must be in the range [-127..-1].
  *
- * \param frame_length[in]      Number of samples on which AGC operates.
+ * \param[in] frame_length      Number of samples on which AGC operates.
  *
- * \param look_past_frames[in]  Number of frames to look in the past for energy
+ * \param[in] look_past_frames  Number of frames to look in the past for energy
  *                              If this is larger than zero, than a buffer 
  *                              needs to be passed to agc_process_block()
  * 
- * \param look_ahead_frames[in] Number of frames to look ahead for energy
+ * \param[in] look_ahead_frames Number of frames to look ahead for energy
  *                              If this is larger than zero, than a buffer 
  *                              needs to be passed to agc_process_block()
  * 
@@ -77,8 +77,8 @@ void agc_init_state(agc_state_t &agc,
  * range [-127..127]. This function is typically not used as the default
  * used by agc_init_state() will do the trick.
  *
- * \param agc[in,out] Gain controller structure
- * \param db[in]      Desired maximum gain in dB
+ * \param[in,out] agc Gain controller structure
+ * \param[in] db      Desired maximum gain in dB
  */
 void agc_set_gain_max_db(agc_state_t &agc, int32_t db);
 
@@ -88,8 +88,8 @@ void agc_set_gain_max_db(agc_state_t &agc, int32_t db);
  * range [-127..127]. This function is typically not used as the default
  * used by agc_init_state() will do the trick.
  *
- * \param agc[in,out] Gain controller structure
- * \param db[in]      Desired minimum gain in dB
+ * \param[in,out] agc Gain controller structure
+ * \param[in] db      Desired minimum gain in dB
  */
 void agc_set_gain_min_db(agc_state_t &agc, int32_t db);
 
@@ -99,8 +99,8 @@ void agc_set_gain_min_db(agc_state_t &agc, int32_t db);
  * Note that changes will not happen immediately and are governed by the
  * delay, and the maximum up and down rates.
  *
- * \param agc[in,out] Gain controller structure
- * \param db[in]      Desired output energy in dB
+ * \param[in,out] agc Gain controller structure
+ * \param[in] db      Desired output energy in dB
  */
 void agc_set_desired_db(agc_state_t &agc, int32_t db);
 
@@ -108,8 +108,8 @@ void agc_set_desired_db(agc_state_t &agc, int32_t db);
  * increasing gain. The value is expressed in dB per second, and must be
  * in the range [1..1023]
  *
- * \param agc[in,out] Gain controller structure
- * \param dbps[in]    Desired adaptation speed in dB per second
+ * \param[in,out] agc Gain controller structure
+ * \param[in] dbps    Desired adaptation speed in dB per second
  */
 void agc_set_rate_down_dbps(agc_state_t &agc, int32_t dbps);
 
@@ -117,38 +117,38 @@ void agc_set_rate_down_dbps(agc_state_t &agc, int32_t dbps);
  * decreasing gain. The value is expressed in dB per second, and must be
  * in the range [-1023..-1]
  *
- * \param agc[in,out] Gain controller structure
- * \param dbps[in]    Desired adaptation speed in dB per second
+ * \param[in,out] agc Gain controller structure
+ * \param[in] dbps    Desired adaptation speed in dB per second
  */
 void agc_set_rate_up_dbps(agc_state_t &agc, int32_t dbps);
 
 /** Function that sets the grace period before the gain starts increasing
  *
- * \param agc[in,out]      Gain controller structure
- * \param milliseconds[in] Time between quiescence and gain increasing
+ * \param[in,out] agc      Gain controller structure
+ * \param[in] milliseconds Time between quiescence and gain increasing
  */
 void agc_set_wait_for_up_ms(agc_state_t &agc, uint32_t milliseconds);
 
 /** Function that processes a block of data.
  *
- * \param agc[in,out]     Gain controller structure
- * \param samples[in,out] On input this array contains the sample data.
+ * \param[in,out] agc     Gain controller structure
+ * \param[in,out] samples On input this array contains the sample data.
  *                        If headroom has been removed, then the shr parameter
  *                        should be set to the amount of headroom that has been
  *                        removed. 
  *                        On output this array contains the data with AGC
  *                        applied. Headroom has been reintroduced, and samples
  *                        have been clamped as appropriate. 
- * \param shr[in]         Number of bits that samples have been shifted left by
+ * \param[in] shr         Number of bits that samples have been shifted left by
  * 
- * \param sample_buffer[in,out] Buffer that holds historic samples. Must be an
+ * \param[in,out] sample_buffer Buffer that holds historic samples. Must be an
  *                        array of at least (LOOK_AHEAD_FRAMES+1) * FRAME_SIZE
  *                        words, where LOOK_AHEAD_FRAMES is the number of frames
  *                        that shall be looked ahead for energy, and FRAME_SIZE
  *                        is the number of samples per frame. If
  *                        LOOK_AHEAD_FRAMES is zero then null can be passed in.
  *
- * \param energy_buffer[in,out] Buffer that holds historic energy samples.
+ * \param[in,out] energy_buffer Buffer that holds historic energy samples.
  *                        Must be an array of at least (LOOK_PAST_FRAMES +
  *                        LOOK_AHEAD_FRAMES + 1) words which is the number
  *                        of past frames to use for energy estimation. If
@@ -162,7 +162,7 @@ void agc_block(agc_state_t &agc,
                uint32_t (&?energy_buffer)[]);
 
 /** Function that gets the current gain.
- * \param agc[in] Gain controller structure
+ * \param[in] agc Gain controller structure
  * \returns       gain in dB, multiplied by 2^16. Ie, 0x0001 0000 = 1 dB.
  */
 int32_t agc_get_gain(agc_state_t &agc);

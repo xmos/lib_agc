@@ -27,7 +27,7 @@ Typical Resource Usage
 Software version and dependencies
 .................................
 
-  .. libdeps:: lib_dsp
+  .. libdeps::
 
 Related application notes
 .........................
