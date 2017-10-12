@@ -8,7 +8,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <print.h>
-#include <math.h>
 #include <xscope.h>
 
 #include "mic_array.h"
@@ -17,8 +16,7 @@
 #include "i2c.h"
 #include "i2s.h"
 #include "src.h"
-#include "xtrulyhandsfree.h"
-#include "agc.h"
+#include "demo_ns_agc.h"
 
 on tile[3]: out port leds = XS1_PORT_8C;
 //on tile[0]:in port p_buttons =  XS1_PORT_4A;
@@ -82,10 +80,8 @@ int sineWave[16] = {
     -5000
 };
 
-void get_wav(chanend output_audio, chanend keyword,
+void get_wav(chanend to_ns,
              streaming chanend c_ds_output[DECIMATOR_COUNT]){
-    int t0, t1;
-    timer tmr;
     unsafe{
         unsigned buffer;
         memset(data, 0, 8*THIRD_STAGE_COEFS_PER_STAGE*DECIMATION_FACTOR*sizeof(int));
@@ -104,8 +100,6 @@ void get_wav(chanend output_audio, chanend keyword,
         mic_array_decimator_configure(c_ds_output, DECIMATOR_COUNT, dc);
 
         mic_array_init_time_domain_frame(c_ds_output, DECIMATOR_COUNT, buffer, audio, dc);
-        agc_state_t agc;
-        agc_init_state(agc, 10, -12, FRAME_LENGTH, 0, 0);
         int cnt = 10;
         while(1){
             cnt++;
@@ -132,30 +126,18 @@ void get_wav(chanend output_audio, chanend keyword,
             } else {
                 headroom = 0;
             }
+            to_ns <: headroom;
             for(unsigned i=0;i<FRAME_LENGTH;i++) {
-                data_buf[i] <<= headroom;
-            }
-            
-        tmr :> t0;
-            agc_block(agc, data_buf, headroom, null, null);
-        tmr :> t1;
-            if ((cnt & 15) == 0) {
-                printf("%3d\n", agc_get_gain(agc) >> 24);
-            }
-            for(unsigned i=0;i<FRAME_LENGTH;i++) {
-                output_audio <: data_buf[i];
-                keyword <: data_buf[i];
+                to_ns <: (data_buf[i] << headroom);
             }
         }
     }
 }
 
-dsp_complex_t tdoa_out[4][FRAME_LENGTH/2];
-int z[4][2];
-
 
 src_os3_ctrl_t src;
 int delays[SRC_FF3_OS3_N_COEFS/SRC_FF3_OS3_N_PHASES];
+
 void upsampler(chanend c_in,
                chanend c_out) {
     int data[FRAME_LENGTH/2];
@@ -323,61 +305,13 @@ void buttoncheck(chanend adapt) {
     }
 }
 
-void keywordcheck(chanend sample) {
-    char spp[10000];
-    short sbuffer[AUDIO_BUFFER_LEN];
-    short brick[BRICK_SIZE_SAMPLES];
-    short data[FRAME_LENGTH/2];
-    int rdindex = 0;
-    timer tmr;
-    xtrulyhandsfree_init(spp, 10000, sbuffer);
-    int expiry;
-    tmr :> expiry;
-    while(1) {
-        int now;
-        tmr :> now;
-        if ((now-expiry) > 0) {
-            leds <: 0xFF;
-        }
-        int cnt = 0;
-        while(cnt < BRICK_SIZE_SAMPLES) {
-            brick[cnt] = data[rdindex];
-            cnt++;
-            rdindex++;
-            if (rdindex == FRAME_LENGTH/2) {
-                rdindex = 0;
-                for(int i = 0; i < FRAME_LENGTH/2; i++) {
-                    int x;
-                    sample :> x;
-                    data[i] = x >> 16;
-                }
-            }
-        }
-        int z;
-        switch(z = xtrulyhandsfree_process_brick(brick)) {
-        default:
-//            printint(z);
-            break;
-        case 0:
-            leds <: 0;
-            tmr :> expiry;
-            expiry += 10000000;
-            printintln(0);
-            xtrulyhandsfree_restart();
-            break;
-        }
-    }
-    
-}
-
 
 int main(){
     i2s_callback_if i_i2s;
     i2c_master_if i_i2c[1];
     interface bufget_i bufget;
-    chan c_beamformer_to_outputter;
+    chan c_agc_to_i2s, c_microphone_to_nsagc;
     chan c_tobuffer;
-    chan keyword;
     par{
         on tile[1]: {
           configure_clock_src(mclk, p_mclk_in1);
@@ -388,9 +322,10 @@ int main(){
         on tile[1]:  i2c_master_single_port(i_i2c, 1, p_i2c, 100, 0, 1, 0);
         on tile[1]:  i2s_handler(i_i2s, i_i2c[0], bufget);
         on tile[1]:  output_audio_dbuf_handler(bufget, triple_buffer, c_tobuffer);
-        on tile[1]:  upsampler(c_beamformer_to_outputter, c_tobuffer);
+        on tile[1]:  upsampler(c_agc_to_i2s, c_tobuffer);
 
-        on tile[3]: keywordcheck(keyword);
+        on tile[1]: noise_suppression_automatic_gain_control_task(c_microphone_to_nsagc, c_agc_to_i2s);
+
         on tile[2]: {
             streaming chan c_4x_pdm_mic_0, c_4x_pdm_mic_1;
             streaming chan c_ds_output[2];
@@ -410,7 +345,8 @@ int main(){
                 mic_array_decimate_to_pcm_4ch(c_4x_pdm_mic_0, c_ds_output[0], MIC_ARRAY_NO_INTERNAL_CHANS);
                 mic_array_decimate_to_pcm_4ch(c_4x_pdm_mic_1, c_ds_output[1], MIC_ARRAY_NO_INTERNAL_CHANS);
 
-                get_wav(c_beamformer_to_outputter, keyword, c_ds_output);
+                get_wav(c_microphone_to_nsagc, c_ds_output);
+                
             }
         }
     }

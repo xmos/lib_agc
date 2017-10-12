@@ -1,10 +1,10 @@
 TARGET = SMART-MIC-4-TILE-1V0
 APP_NAME =
 USED_MODULES = lib_i2c lib_i2s lib_mic_array \
-               lib_mic_array_board_support lib_src lib_xtrulyhandsfree \
+               lib_mic_array_board_support lib_src \
 			   lib_agc
 
-XCC_FLAGS = -O2 -g -fxscope
+XCC_FLAGS = -O2 -g -fxscope -Wunused
 XCORE_ARM_PROJECT = 0
 VERBOSE = 0
 
