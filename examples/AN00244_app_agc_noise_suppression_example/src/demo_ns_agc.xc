@@ -3,43 +3,62 @@
 #include <xs1.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <print.h>
+#include <xscope.h>
 
 #include "agc.h"
+#include "noise_suppression_new.h"
 #include "demo_ns_agc.h"
 
-#define AGC_FRAME_LENGTH 128
-
 void noise_suppression_automatic_gain_control_task(chanend audio_input,
-                                                   chanend audio_output) {
+                                                   chanend audio_output,
+                                                   chanend from_buttons) {
     timer tmr;
     int32_t t0, t1, t2;
     agc_state_t agc;
-//    ns_state_t ns;
-    int32_t samples[AGC_FRAME_LENGTH];
+    ns_state_t ns;
+    uint64_t ns_data[NS_PERSISTENT_ARRAY_SIZE(DEMO_NS_AGC_FRAME_LENGTH)];
+    int32_t samples[DEMO_NS_AGC_FRAME_LENGTH*2];
+    int32_t samples_out[DEMO_NS_AGC_FRAME_LENGTH];
     int32_t headroom;
+    int headroom_out;
     uint32_t cnt = 0;
-    
-    agc_init_state(agc, 10, -12, AGC_FRAME_LENGTH, 0, 0);
-//    ns_init_state(ns, AGC_FRAME_LENGTH);
+    int keep_noise = 1;
+    agc_init_state(agc, 20, -40, DEMO_NS_AGC_FRAME_LENGTH, 0, 0);
+    ns_init_state(ns, ns_data, DEMO_NS_AGC_FRAME_LENGTH);
     
     while(1) {
         cnt++;
         audio_input :> headroom;
-        for(int i = 0; i < AGC_FRAME_LENGTH; i++) {
-            audio_input :> samples[i];
+        for(int i = 0; i < DEMO_NS_AGC_FRAME_LENGTH; i++) {
+            samples[i] = samples[i + DEMO_NS_AGC_FRAME_LENGTH];
+            audio_input :> samples[i + DEMO_NS_AGC_FRAME_LENGTH];
         }
-        
+
         tmr :> t0;
-//        ns_block(ns, samples, headroom);
+        select {
+            case from_buttons:> keep_noise: break;
+            default: break;
+        }
+        if (!keep_noise) {
+            ns_process_frame(samples_out, headroom_out, ns, samples, headroom);
+        } else {
+            for(int i = 0; i < DEMO_NS_AGC_FRAME_LENGTH; i++) {
+                samples_out[i] = samples[i+DEMO_NS_AGC_FRAME_LENGTH];
+            }
+            headroom_out = headroom+1;
+        }
+        if (headroom_out < 0) headroom_out = 0;
+
         tmr :> t1;
-        agc_block(agc, samples, headroom, null, null);
+        agc_process_frame(agc, samples_out, headroom_out, null, null);
         tmr :> t2;
         if ((cnt & 15) == 0) {
-            printf("%6d %3d\n", agc_get_gain(agc) >> 24);
+            printf("%d %d  %d\n", t1-t0, t2-t1, agc_get_gain(agc) >> 16);
         }
         
-        for(int i = 0; i < AGC_FRAME_LENGTH; i++) {
-            audio_output <: samples[i];
+        for(int i = 0; i < DEMO_NS_AGC_FRAME_LENGTH; i++) {
+            audio_output <: samples_out[i];
         }
     }
 }

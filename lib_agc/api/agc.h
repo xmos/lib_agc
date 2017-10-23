@@ -155,11 +155,11 @@ void agc_set_wait_for_up_ms(agc_state_t &agc, uint32_t milliseconds);
  *                        LOOK_PAST_FRAMES and LOOK_AHEAD_FRAMES are 0 then
  *                        null can be used for this parameter.
  */
-void agc_block(agc_state_t &agc,
-               int32_t samples[],
-               int32_t shr,
-               int32_t (&?sample_buffer)[],
-               uint32_t (&?energy_buffer)[]);
+void agc_process_frame(agc_state_t &agc,
+                       int32_t samples[],
+                       int32_t shr,
+                       int32_t (&?sample_buffer)[],
+                       uint32_t (&?energy_buffer)[]);
 
 /** Function that gets the current gain.
  * \param[in] agc Gain controller structure

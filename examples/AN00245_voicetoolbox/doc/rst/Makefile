@@ -10,7 +10,7 @@ SOURCE_INCLUDE_DIRS=.
 
 IMAGES=diagram.pdf diagram-beamformer.pdf diagram-aec.pdf \
 	diagram-agc.pdf diagram-agc-states.pdf diagram-agc-graph.pdf \
-
+	diagram-ns.pdf
 
 xmospdf: $(IMAGES)
 	xdoc xmospdf

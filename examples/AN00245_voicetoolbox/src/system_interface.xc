@@ -19,12 +19,14 @@
 #include "demo_ns_agc.h"
 
 on tile[3]: out port leds = XS1_PORT_8C;
+//on tile[0]:in port p_buttons =  XS1_PORT_4A;
 
-on tile[2]: out port p_pdm_clk              = PORT_PDM_CLK;
+on tile[2]: out port p_pdm_clk               = PORT_PDM_CLK;
 on tile[2]: in buffered port:32 p_pdm_mics  = PORT_PDM_DATA;
 on tile[2]: in port p_mclk                  = PORT_PDM_MCLK;
 on tile[2]: clock pdmclk                    = XS1_CLKBLK_1;
 on tile[2]: clock pdmclk6                   = XS1_CLKBLK_2;
+on tile[2]: in port buttons                 = XS1_PORT_4A;
 
 out buffered port:32 p_i2s_dout[1]  = on tile[1]: {XS1_PORT_1P};
 in port p_mclk_in1                  = on tile[1]: XS1_PORT_1O;
@@ -40,10 +42,11 @@ int data[8][THIRD_STAGE_COEFS_PER_STAGE*6];
 
 #define DECIMATION_FACTOR   6
 #define FFT_N (1<<MIC_ARRAY_MAX_FRAME_SIZE_LOG2)
+#define NUM_OUTPUT_CHANNELS 2
 #define NUM_FRAME_BUFFERS   3   //Triple buffer needed for overlapping frames
 
 typedef struct {
-    int32_t data[FFT_N]; // FFT_N/2 due to overlapping
+    int32_t data[NUM_OUTPUT_CHANNELS][FFT_N/2]; // FFT_N/2 due to overlapping
 } multichannel_audio_block_s;
 
 multichannel_audio_block_s triple_buffer[3];
@@ -57,56 +60,6 @@ interface bufget_i {
 #define DECIMATOR_COUNT     2   //8 channels requires 2 decimators
 #define FRAME_BUFFER_COUNT  2   //The minimum of 2 will suffice for this example
 
-int sineWave48[48] = {
-0,
-1305,
-2588,
-3826,
-4999,
-6087,
-7071,
-7933,
-8660,
-9238,
-9659,
-9914,
-10000,
-9914,
-9659,
-9238,
-8660,
-7933,
-7071,
-6087,
-5000,
-3826,
-2588,
-1305,
-0,
--1305,
--2588,
--3826,
--4999,
--6087,
--7071,
--7933,
--8660,
--9238,
--9659,
--9914,
--10000,
--9914,
--9659,
--9238,
--8660,
--7933,
--7071,
--6087,
--5000,
--3826,
--2588,
--1305,
-};
 
 int sineWave[16] = {
     0,
@@ -114,8 +67,8 @@ int sineWave[16] = {
     7071,
     8660,
     10000,
-    8660,
     7071,
+    8660,
     5000,
     0,
     -5000,
@@ -148,29 +101,24 @@ void get_wav(chanend to_ns,
 
         mic_array_init_time_domain_frame(c_ds_output, DECIMATOR_COUNT, buffer, audio, dc);
         int cnt = 10;
-        unsigned int gain = 0x10000;
         while(1){
+            cnt++;
             mic_array_frame_time_domain *  current =
                                mic_array_get_next_time_domain_frame(c_ds_output, DECIMATOR_COUNT, buffer, audio, dc);
             int32_t data_buf[FRAME_LENGTH];
             
             // Copy the current sample to the delay buffer
+            uint64_t energy = 0;
             uint32_t mask = 0;
             for(unsigned i=0;i<FRAME_LENGTH;i++) {
-                if (gain < 0x7fffffff) {
-                    data_buf[i] = (current->data[0][i] * (long long)gain) >> 31;
-                    gain = (gain * 0x1000AULL) >> 16;
-                } else {
-                    data_buf[i] = current->data[0][i];
-                }
-//                data_buf[i] = sineWave48[cnt];
-//                cnt++;
-//                if (cnt == 48) cnt = 0;
+                data_buf[i] = current->data[0][i];
+//                data_buf[i] = sineWave[i&15];
                 if (data_buf[i] > 0) {
                     mask |= data_buf[i];
                 } else {
                     mask |= -data_buf[i];
                 }
+                energy += (data_buf[i] * (int64_t) data_buf[i]) >> 10;
             }
             uint32_t headroom = clz(mask);
             if (headroom > 2) {
@@ -178,7 +126,6 @@ void get_wav(chanend to_ns,
             } else {
                 headroom = 0;
             }
-            headroom = 0;
             to_ns <: headroom;
             for(unsigned i=0;i<FRAME_LENGTH;i++) {
                 to_ns <: (data_buf[i] << headroom);
@@ -189,26 +136,29 @@ void get_wav(chanend to_ns,
 
 
 src_os3_ctrl_t src;
-int delays[SRC_FF3_OS3_N_COEFS/SRC_FF3_OS3_N_PHASES*4];
+int delays[SRC_FF3_OS3_N_COEFS/SRC_FF3_OS3_N_PHASES];
 
 void upsampler(chanend c_in,
                chanend c_out) {
-    int data[FRAME_LENGTH];
+    int data[FRAME_LENGTH/2];
     unsafe {
         src.delay_base = delays;
         src_os3_init(&src);
         while(1) {
-            for(unsigned i=0;i<FRAME_LENGTH;i++) {
+            for(unsigned i=0;i<FRAME_LENGTH/2;i++) {
                 c_in :> data[i];
             }
-            for(unsigned i=0;i<FRAME_LENGTH;i++) {
+            for(unsigned i=0;i<FRAME_LENGTH/2;i++) {
                 src.in_data = data[i];
                 src_os3_input(&src);
                 src_os3_proc(&src);
                 c_out <: src.out_data;
-                src_os3_proc(&src);
                 c_out <: src.out_data;
                 src_os3_proc(&src);
+                c_out <: src.out_data;
+                c_out <: src.out_data;
+                src_os3_proc(&src);
+                c_out <: src.out_data;
                 c_out <: src.out_data;
             }
         }
@@ -219,16 +169,14 @@ void output_audio_dbuf_handler(server interface bufget_i input,
                                multichannel_audio_block_s triple_buffer[3],
                                chanend c_audio) {
 
-    unsigned sample_idx = 0, buffer_full=0;
+    unsigned count = 0, sample_idx = 0, buffer_full=0;
     //unsigned buffer_get_next_bufped_flag=1;
     int32_t sample;
 
     unsigned head = 0;          //Keeps track of index of proc_buffer
 
     unsafe {
-        timer tmr;
-        int t0 = 0, t1 = 0;
-        while(1){
+        while (1) {
             // get_next_buf buffers
             select {
             case input.get_next_buf(multichannel_audio_block_s * unsafe &buf):
@@ -240,9 +188,6 @@ void output_audio_dbuf_handler(server interface bufget_i input,
                 }
                 //buffer_get_next_bufped_flag = 1;
                 buffer_full = 0;
-                t1 = t0;
-                tmr :> t0;
-//                printf("= %d\n", t0-t1);
                 break;
 
                 // guarded select case will create back pressure.
@@ -251,9 +196,12 @@ void output_audio_dbuf_handler(server interface bufget_i input,
                 //if(sample_idx == 0 && !buffer_get_next_bufped_flag) {
                 //printf("Buffer overflow\n");
                 //};
-                triple_buffer[head].data[sample_idx] = sample;
-                sample_idx++;
-                if(sample_idx>=FFT_N) {
+                unsigned channel_idx = count & 1;
+                triple_buffer[head].data[channel_idx][sample_idx] = sample;
+                if(channel_idx==1) {
+                    sample_idx++;
+                }
+                if(sample_idx>=FFT_N/2) {
                     sample_idx = 0;
                     buffer_full = 1;
                     //Manage overlapping buffers
@@ -262,6 +210,7 @@ void output_audio_dbuf_handler(server interface bufget_i input,
                         head = 0;
                 }
 
+                count++;
                 break;
             }
         }
@@ -280,48 +229,35 @@ unsafe {
         ) {
         multichannel_audio_block_s * unsafe buffer = 0; // invalid
         unsigned sample_idx=0;
-        int left = 1;
 
         p_rst_shared <: 0xF;
 
+        mabs_init_pll(i2c, ETH_MIC_ARRAY);
         mabs_init_pll(i2c, SMART_MIC_BASE);
 
         i2c_regop_res_t res;
-        int addr = 0x4A;
+        int i = 0x4A;
 
         uint8_t data = 1;
-        res = i2c.write_reg(addr, 0x02, data); // Power down
-        res = i2c.write_reg(addr+1, 0x02, data); // Power down
+        res = i2c.write_reg(i, 0x02, data); // Power down
+        res = i2c.write_reg(i+1, 0x02, data); // Power down
 
-        // Setting MCLKDIV2 addrigh if using 24.576MHz.
-        data = i2c.read_reg(addr, 0x03, res);
-        data |= 1;
-        res = i2c.write_reg(addr, 0x03, data);
+        data = 0x08;
+        res = i2c.write_reg(i, 0x04, data); // Slave, I2S mode, up to 24-bit
 
-        data = 0b01110000;
-        res = i2c.write_reg(addr, 0x10, data);
+        data = 0;
+        res = i2c.write_reg(i, 0x03, data); // Disable Auto mode and MCLKDIV2
 
-        data = i2c.read_reg(addr, 0x02, res);
-        data &= ~1;
-        res = i2c.write_reg(addr, 0x02, data); // Power up
+        data = 0x00;
+        res = i2c.write_reg(i, 0x09, data); // Disable DSP
 
-        addr++;
-        // Setting MCLKDIV2 addrigh if using 24.576MHz.
-        data = i2c.read_reg(addr, 0x03, res);
-        data |= 1;
-        res = i2c.write_reg(addr, 0x03, data);
-
-        data = 0b01110000;
-        res = i2c.write_reg(addr, 0x10, data);
-
-        data = i2c.read_reg(addr, 0x02, res);
-        data &= ~1;
-        res = i2c.write_reg(addr, 0x02, data); // Power up
+        data = 0;
+        res = i2c.write_reg(i, 0x02, data); // Power up
 
         while (1) {
             select {
                 case i2s.init(i2s_config_t &?i2s_config, tdm_config_t &?tdm_config):
-                    i2s_config.mode = I2S_MODE_LEFT_JUSTIFIED;
+                    i2s_config.mode = I2S_MODE_I2S;
                     i2s_config.mclk_bclk_ratio = (MASTER_CLOCK_FREQUENCY/(3*OUTPUT_SAMPLE_RATE))/64;
                     break;
 
@@ -334,18 +270,20 @@ unsafe {
 
                 case i2s.send(size_t index) -> int32_t sample:
                     if(buffer) {
-                        sample = buffer->data[sample_idx];
+                        sample = buffer->data[index][sample_idx];
+                        //printf("I2S send sample %d on channel %d\n",sample_idx,index);
                     } else { // buffer invalid
                         sample = 0;
                     }
-                    left = !left;
-                    if (left) {
+                    //xscope_int(index, sample);
+                    if(index == 1) {
                         sample_idx++;
                     }
-                    if(sample_idx>=FFT_N) {
+                    if(sample_idx>=FFT_N/2) {
                         // end of buffer reached.
                         sample_idx = 0;
                         filler.get_next_buf(buffer);
+                        //printf("I2S got next buffer at 0x%x\n", buffer);
                     }
                     break;
             }
@@ -373,7 +311,7 @@ int main(){
     i2c_master_if i_i2c[1];
     interface bufget_i bufget;
     chan c_agc_to_i2s, c_microphone_to_nsagc;
-    chan c_tobuffer, button_to_suppress;
+    chan c_tobuffer;
     par{
         on tile[1]: {
           configure_clock_src(mclk, p_mclk_in1);
@@ -381,19 +319,24 @@ int main(){
           i2s_master(i_i2s, p_i2s_dout, 1, null, 0, p_bclk, p_lrclk, bclk, mclk);
         }
 
-        on tile[1]: [[distribute]] i2c_master_single_port(i_i2c, 1, p_i2c, 100, 0, 1, 0);
-        on tile[1]: [[distribute]] i2s_handler(i_i2s, i_i2c[0], bufget);
+        on tile[1]:  i2c_master_single_port(i_i2c, 1, p_i2c, 100, 0, 1, 0);
+        on tile[1]:  i2s_handler(i_i2s, i_i2c[0], bufget);
         on tile[1]:  output_audio_dbuf_handler(bufget, triple_buffer, c_tobuffer);
         on tile[1]:  upsampler(c_agc_to_i2s, c_tobuffer);
 
-        on tile[1]: noise_suppression_automatic_gain_control_task(c_microphone_to_nsagc, c_agc_to_i2s, button_to_suppress);
+        on tile[1]: noise_suppression_automatic_gain_control_task(c_microphone_to_nsagc, c_agc_to_i2s);
 
-        on tile[3]: buttoncheck(button_to_suppress);
         on tile[2]: {
             streaming chan c_4x_pdm_mic_0, c_4x_pdm_mic_1;
             streaming chan c_ds_output[2];
 
+            interface mabs_led_button_if lb[1];
             mic_array_setup_sdr(pdmclk, p_mclk, p_pdm_clk, p_pdm_mics, 8);
+
+//            configure_clock_src_divide(pdmclk, p_mclk, 4);
+//            configure_port_clock_output(p_pdm_clk, pdmclk);
+//            configure_in_port(p_pdm_mics, pdmclk);
+//            start_clock(pdmclk);
 
             chan c_generator_to_beamformer;
             streaming chan c_internal_audio;

@@ -16,3 +16,4 @@ Installs/*
 test_results.csv
 *.log
 .DS_Store
+xscope.xmt

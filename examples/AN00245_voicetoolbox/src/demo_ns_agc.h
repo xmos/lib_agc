@@ -5,14 +5,13 @@
 #define NS_FD_FRAME_SIZE 512
 #define NS_FD_FRAME_SIZE_LOG2 9
 
-#define DEMO_NS_AGC_FRAME_LENGTH      (NS_FD_FRAME_SIZE/2)
-#define DEMO_NS_AGC_FRAME_LENGTH_LOG2 (NS_FD_FRAME_SIZE_LOG2-1)
+#define DEMO_NS_AGC_FRAME_LENGTH      (NS_FD_FRAME_SIZE)
+#define DEMO_NS_AGC_FRAME_LENGTH_LOG2 (NS_FD_FRAME_SIZE_LOG2)
 
 #if defined(__XC__)
 
 void noise_suppression_automatic_gain_control_task(chanend audio_input,
-                                                   chanend audio_output,
-                                                   chanend from_buttons);
+                                                   chanend audio_output);
 
 #endif
 

@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="diagram-agc.svg">
+   sodipodi:docname="diagram-ns.svg">
   <defs
      id="defs4">
     <marker
@@ -851,7 +851,7 @@
      inkscape:snap-text-baseline="true"
      inkscape:window-width="1268"
      inkscape:window-height="759"
-     inkscape:window-x="115"
+     inkscape:window-x="54"
      inkscape:window-y="31"
      inkscape:window-maximized="0"
      fit-margin-top="0"
@@ -872,7 +872,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -905,7 +905,7 @@
          id="tspan4543"
          x="518.70605"
          y="356.36234"
-         style="font-size:15px;text-align:end;text-anchor:end">Automatic Gain Control</tspan></text>
+         style="font-size:15px;text-align:end;text-anchor:end">Noise suppressor</tspan></text>
     <text
        xml:space="preserve"
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Arial;-inkscape-font-specification:Arial;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"
@@ -949,16 +949,16 @@
        x="350"
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Arial;-inkscape-font-specification:Arial;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"
        xml:space="preserve"><tspan
-         id="tspan22643"
          style="font-size:12.5px"
          y="513.3623"
          x="350"
-         sodipodi:role="line">Time domain data; 1 channels; 16 kHz; 32 bit integers</tspan><tspan
+         sodipodi:role="line"
+         id="tspan8393">Time domain data; 1 channels; 16 kHz; 32 bit block floats</tspan><tspan
          style="font-size:12.5px"
          y="525.8623"
          x="350"
          sodipodi:role="line"
-         id="tspan8393">Programmable frame delay</tspan></text>
+         id="tspan3478">Delay by one frame</tspan></text>
     <text
        xml:space="preserve"
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Symbol;-inkscape-font-specification:Symbol;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"
@@ -1017,7 +1017,7 @@
            x="349.99997"
            y="327.36234"
            style="font-size:13.75px"
-           id="tspan5349">Energy estimation</tspan></text>
+           id="tspan5349">Noise estimator</tspan></text>
     </g>
     <g
        transform="matrix(0,-1,1,0,12.637695,737.36232)"
@@ -1033,20 +1033,15 @@
          xml:space="preserve"
          style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Arial;-inkscape-font-specification:Arial;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"
          x="337.36227"
-         y="-298"
+         y="-290"
          id="text5363"
          sodipodi:linespacing="100%"
          transform="matrix(0,1,-1,0,0,0)"><tspan
            sodipodi:role="line"
            x="337.36227"
-           y="-298"
+           y="-290"
            style="font-size:13.75px"
-           id="tspan5365">Sample by sample</tspan><tspan
-           sodipodi:role="line"
-           x="337.36227"
-           y="-284.25"
-           style="font-size:13.75px"
-           id="tspan5367">gain control</tspan></text>
+           id="tspan5367">Noise subtraction</tspan></text>
     </g>
     <path
        sodipodi:nodetypes="cc"

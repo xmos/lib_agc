@@ -74,7 +74,7 @@ static void down_test() {
 
     for(int i = 0; i < 10; i++) {
         prepare_input_data();
-        agc_block(a, input_data, 0, null, null);
+        agc_process_frame(a, input_data, 0, null, null);
         double signal = dBSignal(input_data[4], 0x7fffffff);
         double desired_signal = start_signal + i*AGC_WINDOW_LENGTH/16000.0 * down_rate;
         if (desired_signal < desired_energy + 3) {
@@ -91,7 +91,7 @@ static void down_test() {
     agc_set_gain_min_db(a, -3);
     agc_set_desired_db(a, desired_energy - 10);
     prepare_input_data();
-    agc_block(a, input_data, 0, null, null);
+    agc_process_frame(a, input_data, 0, null, null);
     double signal = dBSignal(input_data[4], 0x7fffffff);
     double desired_signal = start_signal - 3;
     if (fabs(desired_signal - signal) > 0.05) {
@@ -128,7 +128,7 @@ static void up_test() {
 
         for(int i = 0; i < 5+start_delay_frames; i++) {
             prepare_input_data();
-            agc_block(a, input_data, 4, null, null);
+            agc_process_frame(a, input_data, 4, null, null);
             double signal = dBSignal(input_data[4], 0x7fffffff);
             double desired_signal = start_signal - 24.0823996531;
             if (i > start_delay_frames) {
@@ -148,7 +148,7 @@ static void up_test() {
         agc_set_gain_max_db(a, -30);
         agc_set_desired_db(a, desired_energy + 10);
         prepare_input_data();
-        agc_block(a, input_data, 0, null, null);
+        agc_process_frame(a, input_data, 0, null, null);
         double signal = dBSignal(input_data[4], 0x7fffffff);
         double desired_signal = start_signal - 30;
         if (fabs(desired_signal - signal) > 0.05) {
@@ -191,7 +191,7 @@ static void look_past_test() {
 
     for(int i = 0; i < 5; i++) {
         prepare_input_data();
-        agc_block(a, input_data, 0, null, energy_buffer);
+        agc_process_frame(a, input_data, 0, null, energy_buffer);
     }
     agc_set_gain_min_db(a, -127);
     agc_set_gain_max_db(a, 127);
@@ -208,7 +208,7 @@ static void look_past_test() {
             if (i == k-1) {
                 agc_set_desired_db(a, dbs[5-k]);
             }
-            agc_block(a, input_data, 0, null, energy_buffer);
+            agc_process_frame(a, input_data, 0, null, energy_buffer);
             for(int j = 0; j < AGC_WINDOW_LENGTH_SMALL; j++) {
                 int32_t comp = zero ? 0 : compare_data[j];
                 if (input_data[j] != comp) {
@@ -243,7 +243,7 @@ static void look_ahead_test() {
             for(int k = 0; k < AGC_WINDOW_LENGTH; k++) {
                 input_data[k] = (k+i*AGC_WINDOW_LENGTH)*k;
             }
-            agc_block(a, input_data, i, sample_buffer, energy_buffer);
+            agc_process_frame(a, input_data, i, sample_buffer, energy_buffer);
             int32_t ci = i-ahead_frames;
             if (ci >= 0) {
                 for(int k = 0; k < AGC_WINDOW_LENGTH; k++) {

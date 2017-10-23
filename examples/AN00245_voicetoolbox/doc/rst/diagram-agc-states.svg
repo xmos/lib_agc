@@ -1008,9 +1008,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.053084"
-     inkscape:cx="303.89582"
-     inkscape:cy="128.13631"
+     inkscape:zoom="1.4892857"
+     inkscape:cx="271.69894"
+     inkscape:cy="171.7814"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -1361,15 +1361,20 @@
     <text
        xml:space="preserve"
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Arial;-inkscape-font-specification:Arial;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"
-       x="521"
-       y="374.36234"
+       x="522"
+       y="364.36234"
        id="text23573"
        sodipodi:linespacing="100%"><tspan
          id="tspan23575"
          sodipodi:role="line"
-         x="521"
+         x="522"
+         y="364.36234"
+         style="font-size:10px;text-align:center;text-anchor:middle">too</tspan><tspan
+         sodipodi:role="line"
+         x="522"
          y="374.36234"
-         style="font-size:10px;text-align:center;text-anchor:middle">too high</tspan></text>
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         id="tspan3522">strong</tspan></text>
     <path
        sodipodi:nodetypes="cccc"
        inkscape:connector-curvature="0"
@@ -1379,15 +1384,20 @@
     <text
        sodipodi:linespacing="100%"
        id="text24879"
-       y="374.36234"
-       x="40"
+       y="364.36234"
+       x="37"
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Arial;-inkscape-font-specification:Arial;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"
        xml:space="preserve"><tspan
          style="font-size:10px;text-align:center;text-anchor:middle"
-         y="374.36234"
-         x="40"
+         y="364.36234"
+         x="37"
          sodipodi:role="line"
-         id="tspan24881">too low</tspan></text>
+         id="tspan24881">too</tspan><tspan
+         style="font-size:10px;text-align:center;text-anchor:middle"
+         y="374.36234"
+         x="37"
+         sodipodi:role="line"
+         id="tspan3524">weak</tspan></text>
     <text
        xml:space="preserve"
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Arial;-inkscape-font-specification:Arial;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"
