@@ -163,9 +163,6 @@ void get_wav(chanend to_ns,
                 } else {
                     data_buf[i] = current->data[0][i];
                 }
-//                data_buf[i] = sineWave48[cnt];
-//                cnt++;
-//                if (cnt == 48) cnt = 0;
                 if (data_buf[i] > 0) {
                     mask |= data_buf[i];
                 } else {
@@ -178,7 +175,6 @@ void get_wav(chanend to_ns,
             } else {
                 headroom = 0;
             }
-            headroom = 0;
             to_ns <: headroom;
             for(unsigned i=0;i<FRAME_LENGTH;i++) {
                 to_ns <: (data_buf[i] << headroom);
