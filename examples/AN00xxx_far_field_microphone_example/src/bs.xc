@@ -35,10 +35,24 @@ void bs_task(chanend input_audio,
             default: break;
         }
         bs_process_td_frame(state, x, x_shr, error, output_frame, tdoa_out);
-        output_audio <: 0;
-        for(unsigned i=0;i<BS_FRAME_LENGTH/2;i++) {
-            output_audio <: output_frame[i];
+
+        if (1) {
+            output_audio <: 0;
+            for(unsigned i=0;i<BS_FRAME_LENGTH/2;i++) {
+                output_audio <: output_frame[i];
+            }
+        } if (1) {
+            output_audio <: state.debug_frame_input_shr;
+            for(unsigned i=0;i<BS_FRAME_LENGTH/2;i++) {
+                output_audio <: state.debug_frame_input[0][i+BS_FRAME_LENGTH/4];
+            }
+        } else {
+            output_audio <: x_shr;
+            for(unsigned i=0;i<BS_FRAME_LENGTH/2;i++) {
+                output_audio <: x[0][i];
+            }
         }
+            
 
         if (adapt > 0) {
             bs_frame_adapt(state, error);

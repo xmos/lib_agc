@@ -110,23 +110,50 @@ int sineWave48[48] = {
 -1305,
 };
 
+int sineWave24[24] = {
+0,
+2588,
+4999,
+7071,
+8660,
+9659,
+10000,
+9659,
+8660,
+7071,
+5000,
+2588,
+0,
+-2588,
+-4999,
+-7071,
+-8660,
+-9659,
+-10000,
+-9659,
+-8660,
+-7071,
+-5000,
+-2588,
+};
+
 int sineWave[16] = {
     0,
-    5000,
+    3827,
     7071,
-    8660,
+    9238,
     10000,
-    8660,
+    9238,
     7071,
-    5000,
+    3827,
     0,
-    -5000,
+    -3827,
     -7071,
-    -8660,
+    -9238,
     -10000,
-    -8660,
+    -9238,
     -7071,
-    -5000
+    -3827
 };
 
 void get_pdm(chanend audio_out,
@@ -153,7 +180,7 @@ void get_pdm(chanend audio_out,
         mic_array_decimator_configure(c_ds_output, DECIMATOR_COUNT, dc);
 
         mic_array_init_time_domain_frame(c_ds_output, DECIMATOR_COUNT, buffer, audio, dc);
-        int cnt = 10;
+        int cnt = 0;
         unsigned int gain = 0x10000;
 
         while(1){
@@ -163,8 +190,10 @@ void get_pdm(chanend audio_out,
             
             // Copy the current sample to the delay buffer
             uint32_t mask = 0;
-            for(unsigned i=0;i<BS_CHANNELS;i++){
-                for(unsigned j=0;j<BS_FRAME_LENGTH/2;j++){
+            for(unsigned j=0;j<BS_FRAME_LENGTH/2;j++){
+                cnt++;
+                for(unsigned i=0;i<BS_CHANNELS;i++){
+                    current->data[i][j] = sineWave24[(cnt+i)%24] * gain;
                     int x = current->data[i][j];
                     if (x > 0) {
                         mask |= x;
@@ -172,6 +201,8 @@ void get_pdm(chanend audio_out,
                         mask |= -x;
                     }
                 }
+                gain = (gain * 0x7FFA0000LL) >> 31;
+                if (gain < 3000) gain = 65536;
             }
             uint32_t headroom = clz(mask);
             if (headroom > 2) {
