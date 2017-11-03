@@ -33,7 +33,7 @@ void bs_task(chanend input_audio,
             default: break;
         }
 
-        int X_shr = bs_process_td_frame(state, x, x_shr, error, output_frame, tdoa_out);
+        bs_process_td_frame(state, x, x_shr, error, output_frame, tdoa_out);
         
         dsp_bfp_tx_xc(output_audio,
                       output_frame,
@@ -41,7 +41,7 @@ void bs_task(chanend input_audio,
                       0);
 
         if (adapt > 0) {
-            bs_frame_adapt(state, x, X_shr, error);
+            bs_frame_adapt(state, x, x_shr, error);
         } else if (adapt < 0) {
             bs_reset(state);
         }

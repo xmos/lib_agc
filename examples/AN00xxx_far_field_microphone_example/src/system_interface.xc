@@ -272,13 +272,12 @@ unsafe {
                     break;
 
                 case i2s.send(size_t index) -> int32_t sample:
-//                    xscope_int(CH0, index);
                     if(buffer) {
                         sample = buffer->data[sample_idx];
-                        if (index == 0) xscope_int(CH0, sample);
                     } else { // buffer invalid
                         sample = 0;
                     }
+//                    if (index == 0) xscope_int(CH0, sample);
                     if (index == 3) {
                         sample_idx++;
                         if(sample_idx>=SYSTEM_FRAME_ADVANCE) {
