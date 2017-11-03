@@ -7,7 +7,7 @@
 #include <xscope.h>
 
 #include "agc.h"
-#include "noise_suppression_new.h"
+#include "noise_suppression.h"
 #include "ns_agc.h"
 
 void noise_suppression_automatic_gain_control_task(chanend audio_input,
@@ -15,29 +15,24 @@ void noise_suppression_automatic_gain_control_task(chanend audio_input,
                                                    chanend from_buttons) {
     timer tmr;
     int32_t t0, t1, t2;
-    agc_state_t agc;
+    agc_state_t [[aligned(8)]] agc;
     ns_state_t ns;
-    uint64_t ns_data[NS_PERSISTENT_ARRAY_SIZE(DEMO_NS_AGC_FRAME_LENGTH)];
-    int32_t samples[DEMO_NS_AGC_FRAME_LENGTH*2];
-    int32_t samples_out[DEMO_NS_AGC_FRAME_LENGTH];
-    int32_t debug_input[DEMO_NS_AGC_FRAME_LENGTH];
+    int32_t samples[NS_PROC_FRAME_LENGTH];
+    int32_t samples_out[NS_FRAME_ADVANCE];
+    uint64_t rx_state[DSP_BFP_RX_STATE_UINT64_SIZE(1, NS_PROC_FRAME_LENGTH, NS_FRAME_ADVANCE)];
     int32_t headroom;
     int headroom_out;
     uint32_t cnt = 0;
     int keep_noise = 1;
-    agc_init_state(agc, 0, -40, DEMO_NS_AGC_FRAME_LENGTH, 0, 0);
-    ns_init_state(ns, ns_data, DEMO_NS_AGC_FRAME_LENGTH);
+    agc_init_state(agc, 0, -40, NS_FRAME_ADVANCE, 0, 0);
+    ns_init_state(ns);
+    dsp_bfp_rx_state_init_xc(rx_state,DSP_BFP_RX_STATE_UINT64_SIZE(1, NS_PROC_FRAME_LENGTH, NS_FRAME_ADVANCE)); 
 
     while(1) {
         cnt++;
-        audio_input :> headroom;
-        for(int i = 0; i < DEMO_NS_AGC_FRAME_LENGTH; i++) {
-            int32_t sample;
-            samples[i] = samples[i + DEMO_NS_AGC_FRAME_LENGTH];
-            audio_input :> sample;
-            samples[i + DEMO_NS_AGC_FRAME_LENGTH] = sample;
-            debug_input[i] = sample;
-        }
+        headroom = dsp_bfp_rx_xc(audio_input, rx_state, samples,
+                                 NS_CHANNELS, NS_PROC_FRAME_LENGTH,
+                                 NS_FRAME_ADVANCE, 1);
 
         tmr :> t0;
         select {
@@ -47,11 +42,12 @@ void noise_suppression_automatic_gain_control_task(chanend audio_input,
         if (!keep_noise) {
             ns_process_frame(samples_out, headroom_out, ns, samples, headroom);
         } else {
-            for(int i = 0; i < DEMO_NS_AGC_FRAME_LENGTH; i++) {
-                samples_out[i] = samples[i+DEMO_NS_AGC_FRAME_LENGTH];
+            for(int i = 0; i < NS_FRAME_ADVANCE; i++) {
+                samples_out[i] = samples[i+NS_PROC_FRAME_LENGTH-NS_FRAME_ADVANCE];
             }
             headroom_out = headroom+1;
         }
+        
         if (headroom_out < 0) headroom_out = 0;
 
         tmr :> t1;
@@ -60,15 +56,14 @@ void noise_suppression_automatic_gain_control_task(chanend audio_input,
         if ((cnt & 15) == 0) {
             printf("%d %d  %d\n", t1-t0, t2-t1, agc_get_gain(agc) >> 16);
         }
+//        timer tmr; int t; tmr :> t;
+//        for (int i = 0; i < NS_FRAME_ADVANCE; i++) {
+//            xscope_int(CH0, samples_out[i]);
+//            tmr when timerafter(t += 400) :> void;
+//        }
         
-        if(1) {
-            for(int i = 0; i < DEMO_NS_AGC_FRAME_LENGTH; i++) {
-                audio_output <: samples_out[i];
-            }
-        } else {
-            for(int i = 0; i < DEMO_NS_AGC_FRAME_LENGTH; i++) {
-                audio_output <: debug_input[i];
-            }
+        for(int i = 0; i < NS_FRAME_ADVANCE; i++) {
+            audio_output <: samples_out[i];
         }
     }
 }

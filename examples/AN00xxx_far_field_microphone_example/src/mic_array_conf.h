@@ -7,6 +7,7 @@
 #define MIC_ARRAY_WORD_LENGTH_SHORT 0 // 32 bit samples
 
 #define MIC_ARRAY_MAX_FRAME_SIZE_LOG2 8
+
 #define MIC_ARRAY_NUM_MICS 8
 
 

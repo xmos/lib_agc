@@ -19,146 +19,56 @@
 #include "ns_agc.h"
 #include "bs.h"
 #include "beamsteering.h"
+#include "noise_suppression.h"
+#include "far_end_audio_server.h"
+
+#define SYSTEM_FRAME_ADVANCE    256
+
 
 on tile[3]: out port leds = XS1_PORT_8C;
 
-on tile[2]: out port p_pdm_clk              = PORT_PDM_CLK;
-on tile[2]: in buffered port:32 p_pdm_mics  = PORT_PDM_DATA;
-on tile[2]: in port p_mclk                  = PORT_PDM_MCLK;
-on tile[2]: clock pdmclk                    = XS1_CLKBLK_1;
-on tile[2]: clock pdmclk6                   = XS1_CLKBLK_2;
+on tile[2]: out port p_pdm_clk                 = PORT_PDM_CLK;
+on tile[2]: in buffered port:32 p_pdm_mics     = PORT_PDM_DATA;
+on tile[2]: in port p_mclk                     = PORT_PDM_MCLK;
+on tile[2]: clock pdmclk                       = XS1_CLKBLK_1;
+on tile[2]: clock pdmclk6                      = XS1_CLKBLK_2;
 
-out buffered port:32 p_i2s_dout[1]  = on tile[1]: {XS1_PORT_1P};
-in port p_mclk_in1                  = on tile[1]: XS1_PORT_1O;
-out buffered port:32 p_bclk         = on tile[1]: XS1_PORT_1M;
-out buffered port:32 p_lrclk        = on tile[1]: XS1_PORT_1N;
-out port p_pll_sync                 = on tile[1]: XS1_PORT_4D;
-port p_i2c                          = on tile[1]: XS1_PORT_4E; // Bit 0: SCLK, Bit 1: SDA
-port p_rst_shared                   = on tile[1]: XS1_PORT_4F; // Bit 0: DAC_RST_N, Bit 1: ETH_RST_N
-clock mclk                          = on tile[1]: XS1_CLKBLK_3;
-clock bclk                          = on tile[1]: XS1_CLKBLK_4;
+on tile[1]: out buffered port:32 p_i2s_dout[2] = {PORT_I2S_DAC0,PORT_I2S_DAC1};
+on tile[1]: in port p_mclk_in1                 = PORT_MCLK_IN;
+on tile[1]: out buffered port:32 p_bclk        = PORT_I2S_BCLK;
+on tile[1]: out buffered port:32 p_lrclk       = PORT_I2S_LRCLK;
+on tile[1]: port p_i2c                         = PORT_I2C_SCL_SDA; // C:1, D:2
+on tile[1]: port p_rst_shared                  = PORT_DAC_RST_N;  
+on tile[1]: clock mclk                         = XS1_CLKBLK_3;
+on tile[1]: clock bclk                         = XS1_CLKBLK_4;
 
-int data[8][THIRD_STAGE_COEFS_PER_STAGE*6];
+int data[MIC_ARRAY_NUM_MICS][THIRD_STAGE_COEFS_PER_STAGE*6];
 
-#define DECIMATION_FACTOR   6
-#define FFT_N (1<<MIC_ARRAY_MAX_FRAME_SIZE_LOG2)
-#define NUM_FRAME_BUFFERS   3   //Triple buffer needed for overlapping frames
+#define NUM_I2S_BUFFERS   3   //Triple buffer needed for overlapping frames
 
 typedef struct {
-    int32_t data[FFT_N]; // FFT_N/2 due to overlapping
-} multichannel_audio_block_s;
+    int32_t data[SYSTEM_FRAME_ADVANCE];
+} i2s_audio_block_t;
 
-multichannel_audio_block_s triple_buffer[3];
+i2s_audio_block_t triple_i2s_buffer[NUM_I2S_BUFFERS];
 
 interface bufget_i {
-  void get_next_buf(multichannel_audio_block_s * unsafe &buf);
+  void get_next_buf(i2s_audio_block_t * unsafe &buf);
 };
 
-
-#define FRAME_LENGTH (1<<MIC_ARRAY_MAX_FRAME_SIZE_LOG2)
+#define DECIMATION_FACTOR   6
 #define DECIMATOR_COUNT     2   //8 channels requires 2 decimators
 #define FRAME_BUFFER_COUNT  2   //The minimum of 2 will suffice for this example
 
-int sineWave48[48] = {
-0,
-1305,
-2588,
-3826,
-4999,
-6087,
-7071,
-7933,
-8660,
-9238,
-9659,
-9914,
-10000,
-9914,
-9659,
-9238,
-8660,
-7933,
-7071,
-6087,
-5000,
-3826,
-2588,
-1305,
-0,
--1305,
--2588,
--3826,
--4999,
--6087,
--7071,
--7933,
--8660,
--9238,
--9659,
--9914,
--10000,
--9914,
--9659,
--9238,
--8660,
--7933,
--7071,
--6087,
--5000,
--3826,
--2588,
--1305,
-};
-
 int sineWave24[24] = {
-0,
-2588,
-4999,
-7071,
-8660,
-9659,
-10000,
-9659,
-8660,
-7071,
-5000,
-2588,
-0,
--2588,
--4999,
--7071,
--8660,
--9659,
--10000,
--9659,
--8660,
--7071,
--5000,
--2588,
-};
-
-int sineWave[16] = {
-    0,
-    3827,
-    7071,
-    9238,
-    10000,
-    9238,
-    7071,
-    3827,
-    0,
-    -3827,
-    -7071,
-    -9238,
-    -10000,
-    -9238,
-    -7071,
-    -3827
+    0, 2588, 4999, 7071, 8660, 9659, 10000, 9659, 8660, 7071, 5000, 2588,
+    0,-2588,-4999,-7071,-8660,-9659,-10000,-9659,-8660,-7071,-5000,-2588,
 };
 
 void get_pdm(chanend audio_out,
              streaming chanend c_ds_output[DECIMATOR_COUNT]){
     unsafe{
+        dsp_complex_t databuf[BS_INPUT_CHANNELS][BS_FRAME_ADVANCE];
         unsigned buffer;
         memset(data, 0, 8*THIRD_STAGE_COEFS_PER_STAGE*DECIMATION_FACTOR*sizeof(int));
 
@@ -173,9 +83,9 @@ void get_pdm(chanend audio_out,
           {&dcc, data[4], {INT_MAX, INT_MAX, INT_MAX, INT_MAX}, 4}
         };
         
-        assert((1<<MIC_ARRAY_MAX_FRAME_SIZE_LOG2) == BS_FRAME_LENGTH/2);
-        assert(MIC_ARRAY_NUM_MICS >= BS_CHANNELS);
-        assert(BS_FRAME_LENGTH/2 == DEMO_NS_AGC_FRAME_LENGTH);
+        assert((1<<MIC_ARRAY_MAX_FRAME_SIZE_LOG2) == BS_FRAME_ADVANCE);
+        assert(MIC_ARRAY_NUM_MICS >= BS_INPUT_CHANNELS);
+        assert(BS_FRAME_ADVANCE == NS_FRAME_ADVANCE);
         
         mic_array_decimator_configure(c_ds_output, DECIMATOR_COUNT, dc);
 
@@ -186,38 +96,33 @@ void get_pdm(chanend audio_out,
         while(1){
             mic_array_frame_time_domain *  current =
                                mic_array_get_next_time_domain_frame(c_ds_output, DECIMATOR_COUNT, buffer, audio, dc);
-            int32_t data_buf[FRAME_LENGTH];
             
             // Copy the current sample to the delay buffer
             uint32_t mask = 0;
-            for(unsigned j=0;j<BS_FRAME_LENGTH/2;j++){
+            for(unsigned j=0;j<BS_FRAME_ADVANCE;j++){
                 cnt++;
-                for(unsigned i=0;i<BS_CHANNELS;i++){
-                    current->data[i][j] = sineWave24[(cnt+i)%24] * gain;
-                    int x = current->data[i][j];
-                    if (x > 0) {
-                        mask |= x;
-                    } else {
-                        mask |= -x;
-                    }
+                for(unsigned i=0;i<BS_INPUT_CHANNELS;i+=2){
+// #define REPLACE_WITH_SINE_WAVE
+#if REPLACE_WITH_SINE_WAVE
+                    current->data[i+0][j] = sineWave24[(cnt+i+0)%24] * gain;
+                    current->data[i+1][j] = sineWave24[(cnt+i+1)%24] * gain;
+#endif
+                    databuf[i>>1][j].re = current->data[i+0][j];
+                    databuf[i>>1][j].im = current->data[i+1][j];
                 }
                 gain = (gain * 0x7FFA0000LL) >> 31;
                 if (gain < 3000) gain = 65536;
             }
-            uint32_t headroom = clz(mask);
-            if (headroom > 2) {
-                headroom -= 2;
-            } else {
-                headroom = 0;
-            }
-            master {
-                for(unsigned i=0;i<BS_CHANNELS;i++){
-                    for(unsigned j=0;j<BS_FRAME_LENGTH/2;j++){
-                        audio_out <: (current -> data[i][j] << headroom);
-                    }
-                }
-                audio_out <: headroom;
-            }
+
+            // GET DATA FROM I2S.
+            // Run Pharell Williams on tile[3]
+            // Post data to I2S, then block and send on to AEC 
+            // Change names
+            
+            dsp_bfp_tx_pairs(audio_out,
+                             (databuf, dsp_complex_t[]),
+                             BS_INPUT_CHANNELS, BS_FRAME_ADVANCE,
+                             0);
         }
     }
 }
@@ -228,15 +133,15 @@ int delays[SRC_FF3_OS3_N_COEFS/SRC_FF3_OS3_N_PHASES*4];
 
 void upsampler(chanend c_in,
                chanend c_out) {
-    int data[FRAME_LENGTH];
+    int data[SYSTEM_FRAME_ADVANCE];
     unsafe {
         src.delay_base = delays;
         src_os3_init(&src);
         while(1) {
-            for(unsigned i=0;i<FRAME_LENGTH;i++) {
+            for(unsigned i=0;i<SYSTEM_FRAME_ADVANCE;i++) {
                 c_in :> data[i];
             }
-            for(unsigned i=0;i<FRAME_LENGTH;i++) {
+            for(unsigned i=0;i<SYSTEM_FRAME_ADVANCE;i++) {
                 src.in_data = data[i];
                 src_os3_input(&src);
                 src_os3_proc(&src);
@@ -251,7 +156,7 @@ void upsampler(chanend c_in,
 }
     
 void output_audio_dbuf_handler(server interface bufget_i input,
-                               multichannel_audio_block_s triple_buffer[3],
+                               i2s_audio_block_t triple_buffer[NUM_I2S_BUFFERS],
                                chanend c_audio) {
 
     unsigned sample_idx = 0, buffer_full=0;
@@ -266,10 +171,10 @@ void output_audio_dbuf_handler(server interface bufget_i input,
         while(1){
             // get_next_buf buffers
             select {
-            case input.get_next_buf(multichannel_audio_block_s * unsafe &buf):
+            case input.get_next_buf(i2s_audio_block_t * unsafe &buf):
                 // pass ptr to previous buffer
                 if(head==0) {
-                    buf = &triple_buffer[NUM_FRAME_BUFFERS-1];
+                    buf = &triple_buffer[NUM_I2S_BUFFERS-1];
                 } else {
                     buf = &triple_buffer[head-1];
                 }
@@ -288,12 +193,12 @@ void output_audio_dbuf_handler(server interface bufget_i input,
                 //};
                 triple_buffer[head].data[sample_idx] = sample;
                 sample_idx++;
-                if(sample_idx>=FFT_N) {
+                if(sample_idx >= SYSTEM_FRAME_ADVANCE) {
                     sample_idx = 0;
                     buffer_full = 1;
                     //Manage overlapping buffers
                     head++;
-                    if(head == NUM_FRAME_BUFFERS)
+                    if(head == NUM_I2S_BUFFERS)
                         head = 0;
                 }
 
@@ -313,9 +218,8 @@ unsafe {
                          client i2c_master_if i2c, 
                          client interface bufget_i filler
         ) {
-        multichannel_audio_block_s * unsafe buffer = 0; // invalid
+        i2s_audio_block_t * unsafe buffer = 0; // invalid
         unsigned sample_idx=0;
-        int left = 1;
 
         p_rst_shared <: 0xF;
 
@@ -368,20 +272,20 @@ unsafe {
                     break;
 
                 case i2s.send(size_t index) -> int32_t sample:
+//                    xscope_int(CH0, index);
                     if(buffer) {
                         sample = buffer->data[sample_idx];
-                        if (left) xscope_int(CH0, sample);
+                        if (index == 0) xscope_int(CH0, sample);
                     } else { // buffer invalid
                         sample = 0;
                     }
-                    left = !left;
-                    if (left) {
+                    if (index == 3) {
                         sample_idx++;
-                    }
-                    if(sample_idx>=FFT_N) {
-                        // end of buffer reached.
-                        sample_idx = 0;
-                        filler.get_next_buf(buffer);
+                        if(sample_idx>=SYSTEM_FRAME_ADVANCE) {
+                            // end of buffer reached.
+                            sample_idx = 0;
+                            filler.get_next_buf(buffer);
+                        }
                     }
                     break;
             }
@@ -397,7 +301,7 @@ void buttoncheck(chanend suppress, chanend adapt) {
         button when pinsneq(butval) :> butval;
         int keep_noise = (butval & 8) ? 1 : 0;
         int adapt_bs = (butval & 4) ? (butval & 1) ? 0 : -1 : 1;
-        printf("Keepnoise: %d, apat_bs: %d\n", keep_noise, adapt_bs);
+        printf("Keepnoise: %d, adapt_bs: %d\n", keep_noise, adapt_bs);
         suppress <: keep_noise;
         adapt <: adapt_bs;
     }
@@ -405,21 +309,25 @@ void buttoncheck(chanend suppress, chanend adapt) {
 
 
 int main(){
-    i2s_callback_if i_i2s;
+    i2s_callback_if i_i2s_interfaces;
     i2c_master_if i_i2c[1];
     interface bufget_i bufget;
     chan c_agc_to_i2s, c_microphone_to_bs, c_bs_to_ns;
     chan c_tobuffer, c_button_vad, c_button_suppress;
+    chan c_music_for_speaker;
     par{
+        on tile[0]: {
+            far_end_audio_server(c_music_for_speaker);
+        }
         on tile[1]: {
           configure_clock_src(mclk, p_mclk_in1);
           start_clock(mclk);
-          i2s_master(i_i2s, p_i2s_dout, 1, null, 0, p_bclk, p_lrclk, bclk, mclk);
+          i2s_master(i_i2s_interfaces, p_i2s_dout, 2, null, 0, p_bclk, p_lrclk, bclk, mclk);
         }
 
         on tile[1]: [[distribute]] i2c_master_single_port(i_i2c, 1, p_i2c, 100, 0, 1, 0);
-        on tile[1]: [[distribute]] i2s_handler(i_i2s, i_i2c[0], bufget);
-        on tile[1]:  output_audio_dbuf_handler(bufget, triple_buffer, c_tobuffer);
+        on tile[1]: [[distribute]] i2s_handler(i_i2s_interfaces, i_i2c[0], bufget);
+        on tile[1]:  output_audio_dbuf_handler(bufget, triple_i2s_buffer, c_tobuffer);
         on tile[1]:  upsampler(c_agc_to_i2s, c_tobuffer);
 
         on tile[1]: noise_suppression_automatic_gain_control_task(c_bs_to_ns, c_agc_to_i2s, c_button_suppress);
