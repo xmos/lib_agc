@@ -10,6 +10,8 @@
 #include "noise_suppression.h"
 #include "ns_agc.h"
 
+extern int32_t buffer_out[2][SYSTEM_FRAME_ADVANCE];
+
 void noise_suppression_automatic_gain_control_task(chanend audio_input,
                                                    chanend audio_output,
                                                    chanend from_buttons) {
@@ -27,7 +29,8 @@ void noise_suppression_automatic_gain_control_task(chanend audio_input,
     agc_init_state(agc, 0, -40, NS_FRAME_ADVANCE, 0, 0);
     ns_init_state(ns);
     dsp_bfp_rx_state_init_xc(rx_state,DSP_BFP_RX_STATE_UINT64_SIZE(1, NS_PROC_FRAME_LENGTH, NS_FRAME_ADVANCE)); 
-
+    int out_buff = 0;
+    
     while(1) {
         cnt++;
         headroom = dsp_bfp_rx_xc(audio_input, rx_state, samples,
@@ -56,14 +59,13 @@ void noise_suppression_automatic_gain_control_task(chanend audio_input,
         if ((cnt & 15) == 0) {
             printf("%d %d  %d\n", t1-t0, t2-t1, agc_get_gain(agc) >> 16);
         }
-//        timer tmr; int t; tmr :> t;
-//        for (int i = 0; i < NS_FRAME_ADVANCE; i++) {
-//            xscope_int(CH0, samples_out[i]);
-//            tmr when timerafter(t += 400) :> void;
-//        }
-        
+
         for(int i = 0; i < NS_FRAME_ADVANCE; i++) {
-            audio_output <: samples_out[i];
+            uint32_t x;
+            asm("ldaw %0,dp[buffer_out]" : "=r" (x));
+            asm("stw %0, %1[%2]" :: "r" (samples_out[i]), "r" (x), "r" ((out_buff * SYSTEM_FRAME_ADVANCE) + i));
+            
         }
+        audio_output :> out_buff;
     }
 }

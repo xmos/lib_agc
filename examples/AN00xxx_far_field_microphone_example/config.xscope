@@ -18,6 +18,7 @@
 
     <!-- For example: -->
     <Probe name="CH0" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
+    <Probe name="CH1" type="CONTINUOUS" datatype="INT" units="Value" enabled="true"/>
     <!-- From the target code, call: xscope_int(PROBE_NAME, value); -->
 
 </xSCOPEconfig>

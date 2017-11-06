@@ -7,124 +7,114 @@
 #include "src.h"
 #include "system_defines.h"
 
-#define DECIMATION_FACTOR 6
-
-#define MASTER_TO_PDM_CLOCK_DIVIDER 4
 #define MASTER_CLOCK_FREQUENCY 24576000
-#define PDM_CLOCK_FREQUENCY (MASTER_CLOCK_FREQUENCY/(2*MASTER_TO_PDM_CLOCK_DIVIDER))
-#define OUTPUT_SAMPLE_RATE (PDM_CLOCK_FREQUENCY/(32*DECIMATION_FACTOR))
+#define OUTPUT_SAMPLE_RATE        16000
+
+#define IN_CHANNELS 2
 
 int32_t buffer_out[2][SYSTEM_FRAME_ADVANCE];
+int32_t buffer_in [2][SYSTEM_FRAME_ADVANCE][IN_CHANNELS];
 
-unsafe {
-    [[distributable]] void i2s_handler_no_buffer(server i2s_callback_if i2s,
-                                                 client i2c_master_if i2c, 
-                                                 chanend need_more,
-                                                 out port p_rst
-        ) {
-
-        p_rst <: 0xF;
-
-        mabs_init_pll(i2c, SMART_MIC_BASE);
-
+[[distributable]] static void i2s_handler_no_buffer(server i2s_callback_if i2s,
+                                             client i2c_master_if i2c, 
+                                             chanend need_more,
+                                             out port p_rst
+    ) {
+    p_rst <: 0xF;
+    mabs_init_pll(i2c, SMART_MIC_BASE);
+    for(int addr = 0x4A; addr < 0x4C; addr++) {
         i2c_regop_res_t res;
-        int addr = 0x4A;
-
         uint8_t data = 1;
         res = i2c.write_reg(addr, 0x02, data); // Power down
-        res = i2c.write_reg(addr+1, 0x02, data); // Power down
-
-        // Setting MCLKDIV2 addrigh if using 24.576MHz.
         data = i2c.read_reg(addr, 0x03, res);
         data |= 1;
         res = i2c.write_reg(addr, 0x03, data);
-
         data = 0b01110000;
         res = i2c.write_reg(addr, 0x10, data);
-
-        data = i2c.read_reg(addr, 0x02, res);
-        data &= ~1;
+        data = 0;
         res = i2c.write_reg(addr, 0x02, data); // Power up
+    }
+    static int32_t [[aligned(8)]] us_data[24] = {0};
+    static int32_t [[aligned(8)]] ds_data[IN_CHANNELS][SRC_FF3V_FIR_NUM_PHASES][SRC_FF3V_FIR_TAPS_PER_PHASE];
+    unsigned in_buff = 0, in_cnt = 0;
+    unsigned out_buff = 0, out_cnt = 0;
+    int thesample = 0;
+    int us_sub_sample = 0;
+    int ds_sub_sample = 0;
+    uint64_t sum[IN_CHANNELS] = {0};
 
-        addr++;
-        // Setting MCLKDIV2 addrigh if using 24.576MHz.
-        data = i2c.read_reg(addr, 0x03, res);
-        data |= 1;
-        res = i2c.write_reg(addr, 0x03, data);
+    while (1) {
+        select {
+        case i2s.init(i2s_config_t &?i2s_config, tdm_config_t &?tdm_config):
+            i2s_config.mode = I2S_MODE_LEFT_JUSTIFIED;
+            i2s_config.mclk_bclk_ratio = (MASTER_CLOCK_FREQUENCY/(3*OUTPUT_SAMPLE_RATE))/64;
+            break;
 
-        data = 0b01110000;
-        res = i2c.write_reg(addr, 0x10, data);
+        case i2s.restart_check() -> i2s_restart_t restart:
+            restart = I2S_NO_RESTART;
+            break;
 
-        data = i2c.read_reg(addr, 0x02, res);
-        data &= ~1;
-        res = i2c.write_reg(addr, 0x02, data); // Power up
-
-        unsigned in_buff = 0;
-        unsigned in_cnt = 0;
-        unsigned out_buff = 0;
-        unsigned out_cnt = 0;
-
-        static int32_t [[aligned(8)]] us_data[24] = {0};
-        int thesample = 0;
-        int us_sub_sample = 0;
-
-        while (1) {
-            select {
-                case i2s.init(i2s_config_t &?i2s_config, tdm_config_t &?tdm_config):
-                    i2s_config.mode = I2S_MODE_LEFT_JUSTIFIED;
-                    i2s_config.mclk_bclk_ratio = (MASTER_CLOCK_FREQUENCY/(3*OUTPUT_SAMPLE_RATE))/64;
-                    break;
-
-                case i2s.restart_check() -> i2s_restart_t restart:
-                    restart = I2S_NO_RESTART;
-                    break;
-
-                case i2s.receive(size_t index, int32_t sample):
-#if 0
-                    if (index == 0) {
-                        in_ds_cnt++
-                        // downsample here.
-                        if (in_ds_cnt == 3) {
-                            in_ds_cnt = 0;
-                            buffer_in[in_buff][in_cnt][index] = sample;
-                            in_cnt++;
-                            if (in_cnt == SYSTEM_FRAME_ADVANCE) {
-                                in_buff = !in_buff;
-                                in_cnt = 0;
-                                // swap buffers within a 1 us window
-                            }
-                        }
+        case i2s.receive(size_t ch, int32_t sample):
+            // Capture stereo reference signal
+#if 1
+            if (ds_sub_sample == 0) {
+                sum[ch] = src_ds3_voice_add_sample(sum[ch],
+                                                   ds_data[ch][0],
+                                                   src_ff3v_fir_coefs[0],
+                                                   sample);
+                ds_sub_sample = 1;
+            } else if (ds_sub_sample == 1) {
+                sum[ch] = src_ds3_voice_add_sample(sum[ch],
+                                                   ds_data[ch][1],
+                                                   src_ff3v_fir_coefs[1],
+                                                   sample);
+                ds_sub_sample = 2;
+            } else if (ds_sub_sample == 2) {
+                sum[ch] = src_ds3_voice_add_final_sample(sum[ch],
+                                                         ds_data[ch][2],
+                                                         src_ff3v_fir_coefs[2],
+                                                         sample);
+                ds_sub_sample = 0;
+                buffer_in[in_buff][in_cnt][ch] = sum[ch] >> 31;
+                sum[ch] = 0;
+                if (ch == 1) {
+                    in_cnt++;
+                    if (in_cnt == SYSTEM_FRAME_ADVANCE) {
+                        in_buff = !in_buff;
+                        in_cnt = 0;
+                        // swap buffers within a 1 us window
                     }
-#endif
-                    break;
-
-                case i2s.send(size_t index) -> int32_t sample:
-                    if (index == 0) {
-                        if (us_sub_sample == 0) {
-                            int s = buffer_out[out_buff][out_cnt];
-                            thesample = sample = src_us3_voice_input_sample(us_data, src_ff3v_fir_coefs[2], s);
-//                            xscope_int(CH0, sample);
-                            us_sub_sample = 1;
-                        } else if (us_sub_sample == 1) {
-                            thesample = sample = src_us3_voice_get_next_sample(us_data, src_ff3v_fir_coefs[1]);
-                            us_sub_sample = 2;
-                        } else if (us_sub_sample == 2) {
-                            thesample = sample = src_us3_voice_get_next_sample(us_data, src_ff3v_fir_coefs[0]);
-                            us_sub_sample = 0;
-                        }
-                    } else {
-                        sample = thesample;
-                        if (us_sub_sample == 0) {
-                            out_cnt++;
-                            if (out_cnt == SYSTEM_FRAME_ADVANCE) {
-                                need_more <: out_buff;
-                                out_buff = !out_buff;
-                                out_cnt = 0;
-                            }
-                        }
-                    }
-                    break;
+                }
             }
+#endif
+            break;
+
+        case i2s.send(size_t index) -> int32_t sample:
+            if (index == 0) {
+                if (us_sub_sample == 0) {
+                    int s = buffer_out[out_buff][out_cnt];
+                    thesample = sample = src_us3_voice_input_sample(us_data, src_ff3v_fir_coefs[2], s);
+//            xscope_int(CH0, sample);
+                    us_sub_sample = 1;
+                } else if (us_sub_sample == 1) {
+                    thesample = sample = src_us3_voice_get_next_sample(us_data, src_ff3v_fir_coefs[1]);
+                    us_sub_sample = 2;
+                } else if (us_sub_sample == 2) {
+                    thesample = sample = src_us3_voice_get_next_sample(us_data, src_ff3v_fir_coefs[0]);
+                    us_sub_sample = 0;
+                }
+            } else {
+                sample = thesample;
+                if (us_sub_sample == 0) {
+                    out_cnt++;
+                    if (out_cnt == SYSTEM_FRAME_ADVANCE) {
+                        need_more <: out_buff;
+                        out_buff = !out_buff;
+                        out_cnt = 0;
+                    }
+                }
+            }
+            break;
         }
     }
 }
