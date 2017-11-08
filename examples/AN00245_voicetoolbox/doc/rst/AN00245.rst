@@ -1,0 +1,504 @@
+.. include:: ../../README.rst
+
+|newpage|
+
+Overview
+--------
+
+This document describes VocalFusion VoiceToolBox. VocalFusion VoiceToolBox
+is a toolkit with which one can build voice applications. The elements of
+the toolkit include:
+
+* A library to perform Adaptive Echo Cancellation (AEC). This will remove a
+  known sound from the input signal, for example, it can remove music
+  played by the device.
+
+* A library to perform Beamforming on 2 to 8 microphone channels. This will
+  attenuate surrounding signals and enhance a specific source of interest.
+
+* A library to perform Voice Activity Detection (VAD). This classifies
+  sound as to whether it is likely voice or not.
+
+As an example, the toolkit contains application programs to:
+
+* Implement a directional microphone using the circular microphone array
+  that enhances any voice signal.
+
+* Implement a directional microphone using the large linear array (four
+  microphones) that enhances anything that is not music.
+
+The purpose of this document is to enable developers to use the application
+program, and modify it to make their own VocalFusion products. For example,
+a product that deploys multiple beamformers.
+
+|newpage|
+
+.. toctree::
+
+|newpage|
+
+Glossary of terms
+-----------------
+
+* AEC: Adaptive Echo Canceller
+  
+* BF: Beamformer
+
+* VAD: Voice Activity Detector (detecting presence of human voice)
+
+* AGC: Automatic Gain Control (setting the gain of the signal to a standard
+  level)
+
+* NS: Noise Suppression (removal of low level noise)
+
+* TDOA: Time Difference Of Arrival (estimate of differences in time between
+  a signal arriving on pairs of microphones)
+
+* DOA: Direction Of Arrival (estimate of direction where signal arrives from)
+
+Overview of the VocalFusion VoiceToolBox
+----------------------------------------
+
+The VocalFusion VoiceToolBox is shown in
+:ref:`vocalfusion_classic_diagram`. It comprises three parts; from right to
+left:
+
+#. The Voice Pipeline (blue): the audio data flows from the microphones on
+   the top, to the ASR unit on the bottom. The purple box (dereverberation)
+   is a future component; not present at the moment.
+
+#. The Application Program (green): This controls the voice pipeline,
+   using information from both the voice pipeline and ancillary components
+
+#. Ancillary library components (yellow): these are pre-packed components
+   that the application program can use, for example voice activity
+   detectors, classifiers, or Direction-Of-Arrival computation.
+
+The audio data is reduced from 3.072 MHz 1-bit data on up to eight
+microphones to 32-bit 16 kHz PCM data.
+
+.. _vocalfusion_classic_diagram:
+
+.. figure:: diagram.pdf
+            :width: 100%
+
+            VocalFusion VoiceToolBox Structure
+
+These components run all concurrently on an xCORE200 processor; taking
+advantage of the real-time concurrency offered by xCORE200. The number of
+xCORE200 tiles required for the voice pipeline depends on the number of
+microhones, number of VADs, etc. In its smallest form, a single tile can
+execute a two microphone beamformer. An eight microphone beamformer
+requires two tiles.
+
+|newpage|
+
+Microphone interface
+--------------------
+
+The microphone interface is fully documented in the lib_mic_array manuals.
+In this context, the microphone interface needs to perform the following
+actions:
+
+* It sets all filters up to sample data at 16 kHz, on the desired number of
+  channels.
+
+* The data is framed into 512 sample frames, with a 256 overlap
+
+* The data is transferred to the Frequency domain (windowing??)
+
+* The headroom is computed for each frame, and this is ...
+
+Resource Requirements
+.....................
+
+The resources required depend on the number of microphones.
+
+* 2-4 microphones: two logical cores, XXX kByte of memory
+
+* 5-8 microphones; three logical cores, XXX kByte of memory
+
+API
+...
+
+Detailed in XXX
+
+
+Adaptive Echo Canceller interface
+---------------------------------
+
+The adaptive echo canceller cancels the mono audio signals that may be
+produced by a speaker that is attached to the device. The interface is
+shown in :ref:`vocalfusion_classic_diagram_aec`:
+
+.. _vocalfusion_classic_diagram_aec:
+
+.. figure:: diagram-aec.pdf
+            :width: 100%
+
+            VocalFusion VoiceToolBox AEC Structure
+
+* The speaker signal is preprocessed for use by the echo cancelling tasks
+  
+* For each microphone, the echoes are separately modelled and cancelled
+  out.
+
+Each echo canceller cancels a known "far-end" signal in the input signal,
+leaving the near-end signal that is desired. For example, the far-end
+signal may be music played over a speaker in the device; the desired
+near-end signal is a voice-command.
+
+Each echo canceller learns the peculiarities for the echo path from the
+speaker to the particular microphone. Learning requires enough data to
+operate on, and this means that it will take a short period of time (in the
+order of seconds) to stabilise, and during this period a decreasing amount
+of far-end signal will come through. When the environment changes, for
+example because somebody opens a door or moves a chair, more of the far-end
+signal will become audible, and the filter has to relearn and remove the
+far-end signal as much as possible.
+
+This learning process is the adaptive part of the filter, and the
+application program controls when and how much the echo cancellers are
+adapting.
+
+* Typically, the application may execute a Voice-Activity-Detector
+  on each frame of one of the residual signal or input signal: if the VAD
+  returns negative, it would instruct all echo cancellers to adapt, and
+  improve its echo reduction capability.
+
+* By default, the adaption speed is governed by the error estimate and is
+  adjusted automatically. However, the application program can override
+  this and speed-up adaptation, slow it down, or reset the echo control.
+
+Resource Requirements
+.....................
+
+NNN threads,
+MMM memory
+
+Library specification
+.....................
+
+.. include:: ../../../../../lib_aec/lib_aec/doc/rst/aec-internals.rst
+
+BF: Beamformer
+--------------
+
+The beamformer takes a multitude of microphone signals, and creates a
+single signal that attenuates sound coming from undesirable places in the
+room. The attenuation is achieved by two means. First, using knowledge of
+the expected delay on the microphones, the beamformer will delay the
+microphone signals in such a way that only signals from a specific location
+will be synchronised. When summing those signals, this will partially cancel
+signals from locations other than the desired one. Second, without any
+knowledge of the relative microphone locations, the beamformer can learn
+which signals are undesirable (under supervision of the application
+program). This will try and find directions to cancel, regardless of the
+microphone topology. Either or both methods can be used.
+
+To achieve this functionality the beamformer comprises three blocks, as
+shown in :ref:`vocalfusion_classic_diagram_beamformer`:
+
+* A steering block that aligns the data from the microphones, anticipating
+  a specific angle from which the signal will arrive.
+
+* A generalised side-lobe canceller. This takes the data
+  from up to eight microphones, and a filter state, and removes side-lobes
+  from the signal to end up with a residual signal.
+
+* An error estimator, which takes the residual signal, and identifies how
+  the state should be modified to improve the side-lobe cancellation.
+
+The residual signal is the beam that we are after. The green block in
+:ref:`vocalfusion_classic_diagram_beamformer` is the application program,
+and the arrows in that block depict a possible way that the Application
+program can control the steering and side-lobe cancelling.
+
+.. _vocalfusion_classic_diagram_beamformer:
+
+.. figure:: diagram-beamformer.pdf
+            :width: 100%
+
+            VocalFusion VoiceToolBox Beamformer Structure
+
+The first control that the application program has is the beamsteerer. The
+beamsteerer needs to know how many samples to delay each microphone by, and
+these values are all set at once when there is no signal of interest. It is
+up to the application to compute the delays required. For example, the
+application could obtain those delays from a TDOA module ((Time Difference
+Of Arrival), when a desirable signal is heard. This method works if there
+is knowledge that the signal is present. Alternatively, a model can be
+build that tracks people using different sensors, and with knowledge of the
+topology of the microphones the relative delays can be computed.
+
+The second control that the application program has is to train the
+side-lobe canceller. The side-lobe canceller can be
+
+#. Told to train and try and get rid of the current residual signal
+
+#. Train faster or slower.
+
+#. Forget (some) of its training (also known as leaky)
+
+It is up to the application program to use those controls appropriately.
+For example, it could use a VAD (Voice Activity Detector) on the residual
+signal. If the VAD does not spot any voice, the GSC could be instructed to
+get rid of the signal.
+
+The input to the beamformer is frequency domain data, 512-sample frames
+(sampled at 16 kHz), with a 256-sample overlap, for each of the microphone
+channels. At 32 bits, this accounts for 2 kByte of data per frame per
+channel, or 16 kByte of data for eight channels.
+The output of the beamformer is frequency domain data too, but only a
+single channel.
+
+The error estimate comprises 2 kBytes of data per microphone channel. This
+is normally not stored, but if the decision on whether to adapt or not
+takes longer than a frame, then this data is to be stored until this
+decision is taken.
+
+Resource Requirements
+.....................
+
+A beamformer requires a single 62.5 MIPS logical core. The amount of memory
+is dependent on the number of microphones. The state stored is 2 kByte per
+microphone, plus 6 kByte. The input frame size is 2 kByte per microphone.
+The output frame is 2 kByte. Total memory required is between 16 and 40
+kBytes, depending on the number of microphones. Multiple beamformers can be
+instantiated; but they must all use the same number of microphones.
+
+Library specification
+.....................
+
+.. include:: ../../../../../lib_beamsteering/lib_beamsteering/doc/rst/beamsteering-internals.rst
+
+
+
+
+
+
+
+
+
+
+
+|newpage|
+
+NS: Noise Suppressor
+--------------------
+
+The Noise Suppressor attenuates noise. It does so by building up a model
+of stationary noise over time, and removing this noise on the fly.
+
+The Noise Suppressor structure is shown in
+:ref:`vocalfusion_classic_diagram_ns`.
+The control of the noise structure is through setting five parameters that
+control how fast noise is learned, and how much noise is removed.
+
+.. _vocalfusion_classic_diagram_ns:
+
+.. figure:: diagram-ns.pdf
+            :width: 80%
+
+            VocalFusion VoiceToolBox Noise Suppressor Structure
+
+
+Library specification
+.....................
+
+.. include:: ../../../../../lib_noise_suppression/lib_noise_suppression_new/doc/rst/noise_suppression-internals.rst
+
+   
+
+|newpage|
+
+AGC: Automatic Gain Control
+---------------------------
+
+The AGC unit controls the gain of the output signal. It ensures both that
+the output signal is at the desired level, and it ensures that the voice
+pipeline can output 32-bit integer signals, rather than the floating point
+numbers used elsewhere in the pipeline. The AGC is typically the last stage
+of the pipeline. In particular, noise suppresion is important prior to the
+AGC.
+
+AGC works by increasing or decreasing gain so that the signal will get to
+a desired average energy level. To achieve this, the AGC has a state
+machine as shown in :ref:`vocalfusion_classic_agc_states`, which governs
+how the gain of the AGC is adjusted.
+
+.. _vocalfusion_classic_agc_states:
+
+.. figure:: diagram-agc-states.pdf
+            :width: 80%
+
+            VocalFusion VoiceToolBox AGC state diagram
+
+There are four states. The default state is ``STABLE`` in which the AGC
+gain is constant. If the output signal is too strong, the AGC will move to
+a state ``DOWN`` where it quickly and smoorthly reduces the gain to a
+level where the signal is acceptable.
+If the output signal is too weak, the state
+machine will wait to see if the output signal
+will stay weak for a period of time.
+If so, it will move to an ``UP`` state where the gain is gradually
+increased to a level where the signal gets to an acceptable level.
+
+.. _vocalfusion_classic_agc_graph:
+
+.. figure:: diagram-agc-graph.pdf
+            :width: 80%
+
+            VocalFusion VoiceToolBox AGC effects
+
+The effects of this process are sketched in
+:ref:`vocalfusion_classic_agc_graph`. The horizontal axis is time, the
+vertical axis denotes energy level. The red line is the energy of the input
+signal to the AGC; the green line is the gain that is applied, and the blue
+line is the energy level of the output of the AGC. The horizontal blue and
+red bands denote the lower and higher parts of the ideal energy zone. If
+the output signal strays out of above the higher part, the state machine
+immediately and aggressively reduces the gain. If the output signal strays
+below the lower part, the state machine enters a grace period, and when
+this expires, the gain is slowly increased. Where the state machine is not
+stable the state is shown along the top of the graph.
+
+Note that although the effects on the gain are sudden and large, the
+gain is modified on a sample by sample basis, and the results are a
+impercetably gentle change in volume.
+
+The AGC structure is shown in :ref:`vocalfusion_classic_diagram_agc`.
+
+.. _vocalfusion_classic_diagram_agc:
+
+.. figure:: diagram-agc.pdf
+            :width: 80%
+
+            VocalFusion VoiceToolBox AGC Structure
+
+The controls all comprise changing the settings of the gain control. The
+parameters that can be changed are the speed of increase (in dB per
+second), the speed of decrease (in dB per second), the minimum and maximum
+gain (in dB), and the desired energy level (in dB(C) relative to full
+scale). In addition, the AGC can be tasked to look-ahead in the signal in
+order to estimate the current energy (this will delay the signal), and the
+AGC can use past frames for energy estimation.
+
+Library specification
+.....................
+
+.. include:: ../../../../../lib_agc/lib_agc/doc/rst/agc-internals.rst
+
+
+
+
+
+TDOA
+----
+
+Interface
+.........
+
+Resource Requirements
+.....................
+
+API
+...
+
+
+
+
+
+DOA
+---
+
+Interface
+.........
+
+Resource Requirements
+.....................
+
+API
+...
+
+
+
+
+
+VAD
+---
+
+Interface
+.........
+
+The VAD comprises a single function that given a set of time domain inputs
+classifies the input to be voice or not voice. The VAD is parameterised
+with a model that is trained to recognise voice under a specific set of
+conditions. For example, the model might be trained on an SNR of 0 dB,
+or +20 dB, and it may be trained to accept small or large frames of data.
+
+Resource Requirements
+.....................
+
+Classification: 200,000 issue slots
+
+API
+...
+
+The VAD comprises a single function that is to be called with the time
+domain input (todo: frequency?), the VAD model, and some temporary storage.
+The length of the time input and the size of the temporary storage are
+dependent on the chosen model. The function returns a number in the range
++256..-256, where +256 indicates very likely voice, and -256 indicates
+very unlikely to be voice. A typical threshold to decide on voice would be
+0, but oen can pick a lower threshold to reduce the number of false
+negatives.
+
+The VAD function has the following prototype::
+
+  int32_t vad_is_voice(int32_t time_domain_input[],
+                       uint32_t vad_model[],
+                       uint32_t vad_tmp[]);
+
+Where ``time_domain_input`` is an array of samples, ``vad_model`` is the
+desired VAD model, and ``vad_tmp`` is a temporary array for use by
+``vad_is_voice``. Several VAD models are available, each of them defines a
+window length (the number of samples that should be passed in on
+``time_domain_input`` on each call), a model, and a defined temporary
+storage length. For example, the declarations below pertain to the model
+that is trained on an SNR of -3 dB::
+
+  #define VAD_MODEL_SNRm3_WINDOWN_LENGTH  256
+  #define VAD_MODEL_SNRm3_TMP_WORDS       115
+  extern uint32_t vad_model_SNRm3[];
+
+Note that for each model used, the model will be stored in memory
+permanently, adding to the memory footprint. The available models are:
+
++-----------------+-------------------------------------+-------------+
+| Model name      | Condition                           | Memory size |
++-----------------+-------------------------------------+-------------+
+| SNRm3           | SNR of -3 dB                        | 7 kByte     |
++-----------------+-------------------------------------+-------------+
+| SNRm3 Large     | SNR of -3 dB, better discrimination | 14 kByte    |
++-----------------+-------------------------------------+-------------+
+
+
+	   
+References
+----------
+
+.. nopoints::
+
+  * XMOS Tools User Guide
+
+    http://www.xmos.com/published/xtimecomposer-user-guide
+
+  * XMOS xCORE Programming Guide
+
+    http://www.xmos.com/published/xmos-programming-guide
+
+  * XMOS Microphone Array Library
+
+    http://www.xmos.com/support/libraries/lib_mic_array
+

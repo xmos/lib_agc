@@ -1,25 +1,17 @@
 .. include:: ../../../README.rst
 
-External Signal Description
----------------------------
-
-[optional section on the hardware characteristics of peripherals and how to connect them to the xCORE device]
-
 Usage
 -----
 
-[optional section describing how to use the library if use model is complex]
+.. include:: agc-internals.rst
 
-API
----
-
-[API reference]
+|newpage|
 
 |appendix|
 
 Known Issues
 ------------
 
-[list of known issues]
+None
 
 .. include:: ../../../CHANGELOG.rst

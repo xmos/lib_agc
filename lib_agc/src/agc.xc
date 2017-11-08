@@ -304,8 +304,8 @@ static uint32_t agc_set_gain_no_shift(int32_t db) {
 
 static int32_t agc_get_gain_2(uint32_t shift, uint32_t gain) {
     int db = dsp_math_log(gain);
-    db += (shift * 11629080LL); // add ln(2^shift)
-    db = (db * 72862523LL) >> 31;      // convert to 20*log(10) and into 16.16
+    db += (shift * 11629080LL);     // add ln(2^shift)
+    db = (db * 72862523LL) >> 31;   // convert to 20*log(10) and into 16.16
     return db;
 }
 
@@ -404,11 +404,11 @@ static int32_t clamp(int64_t sample) {
     return sample;
 }
 
-void agc_block(agc_state_t &agc,
-               int32_t samples[],
-               int32_t shr,
-               int32_t (&?sample_buffer)[],
-               uint32_t (&?energy_buffer)[]) {
+void agc_process_frame(agc_state_t &agc,
+                       int32_t samples[],
+                       int32_t shr,
+                       int32_t (&?sample_buffer)[],
+                       uint32_t (&?energy_buffer)[]) {
     
     uint64_t sss = 0; // Sum of Square Signals
     int logN = 31 - clz(agc.frame_length);

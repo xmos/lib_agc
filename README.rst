@@ -27,11 +27,11 @@ Typical Resource Usage
 Software version and dependencies
 .................................
 
-  .. libdeps:: lib_dsp
+  .. libdeps::
 
 Related application notes
 .........................
 
 The following application notes use this library:
 
-  * ANxxxx - Example use of gain control and noise suppression
+  * AN00244 - Noise Suppression and Automatic Gain Control example application note
