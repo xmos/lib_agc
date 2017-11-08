@@ -64,8 +64,9 @@ void noise_suppression_automatic_gain_control_task(chanend audio_input,
             uint32_t x;
             asm("ldaw %0,dp[buffer_out]" : "=r" (x));
             asm("stw %0, %1[%2]" :: "r" (samples_out[i]), "r" (x), "r" ((out_buff * SYSTEM_FRAME_ADVANCE) + i));
-            
         }
-        audio_output :> out_buff;
+        outuchar(audio_output, out_buff);
+        outct(audio_output, 1);
+        out_buff = !out_buff;
     }
 }

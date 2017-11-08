@@ -16,10 +16,10 @@ int32_t buffer_out[2][SYSTEM_FRAME_ADVANCE];
 int32_t buffer_in [2][SYSTEM_FRAME_ADVANCE][IN_CHANNELS];
 
 [[distributable]] static void i2s_handler_no_buffer(server i2s_callback_if i2s,
-                                             client i2c_master_if i2c, 
-                                             chanend need_more,
-                                             out port p_rst
-    ) {
+                                                    client i2c_master_if i2c, 
+                                                    chanend need_more,
+                                                    chanend in_buff_channel,
+                                                    out port p_rst) {
     p_rst <: 0xF;
     mabs_init_pll(i2c, SMART_MIC_BASE);
     for(int addr = 0x4A; addr < 0x4C; addr++) {
@@ -42,7 +42,8 @@ int32_t buffer_in [2][SYSTEM_FRAME_ADVANCE][IN_CHANNELS];
     int us_sub_sample = 0;
     int ds_sub_sample = 0;
     uint64_t sum[IN_CHANNELS] = {0};
-
+    int ready_for_next_out_buff = 1;
+    int in_synchronised = 0;
     while (1) {
         select {
         case i2s.init(i2s_config_t &?i2s_config, tdm_config_t &?tdm_config):
@@ -56,7 +57,7 @@ int32_t buffer_in [2][SYSTEM_FRAME_ADVANCE][IN_CHANNELS];
 
         case i2s.receive(size_t ch, int32_t sample):
             // Capture stereo reference signal
-#if 1
+
             if (ds_sub_sample == 0) {
                 sum[ch] = src_ds3_voice_add_sample(sum[ch],
                                                    ds_data[ch][0],
@@ -80,13 +81,27 @@ int32_t buffer_in [2][SYSTEM_FRAME_ADVANCE][IN_CHANNELS];
                 if (ch == 1) {
                     in_cnt++;
                     if (in_cnt == SYSTEM_FRAME_ADVANCE) {
+                        if (in_synchronised) {
+                            outuchar(in_buff_channel, in_buff);
+                            outct(in_buff_channel, 1);
+                        }
                         in_buff = !in_buff;
                         in_cnt = 0;
                         // swap buffers within a 1 us window
                     }
+                    unsigned char c;
+                    select {
+                    case chkct(in_buff_channel, 1):
+                        in_cnt = 0;
+                        in_buff = 0;
+                        in_synchronised = 1;
+                        break;
+                    default:
+                        break;
+                    }
                 }
             }
-#endif
+
             break;
 
         case i2s.send(size_t index) -> int32_t sample:
@@ -108,9 +123,21 @@ int32_t buffer_in [2][SYSTEM_FRAME_ADVANCE][IN_CHANNELS];
                 if (us_sub_sample == 0) {
                     out_cnt++;
                     if (out_cnt == SYSTEM_FRAME_ADVANCE) {
-                        need_more <: out_buff;
-                        out_buff = !out_buff;
+                        ready_for_next_out_buff = 1;
                         out_cnt = 0;
+                    }
+                }
+                if (ready_for_next_out_buff) {
+                    unsigned char c;
+                    select {
+                    case inuchar_byref(need_more, c):
+                        chkct(need_more, 1);
+                        out_cnt = 0;
+                        out_buff = c;
+                        ready_for_next_out_buff = 0;
+                        break;
+                    default:
+                        break;
                     }
                 }
             }
@@ -129,7 +156,7 @@ on tile[1]: port p_rst_shared                  = PORT_DAC_RST_N;
 on tile[1]: clock mclk                         = XS1_CLKBLK_3;
 on tile[1]: clock bclk                         = XS1_CLKBLK_4;
 
-void i2s_main(chanend c_agc_to_i2s) {
+void i2s_main(chanend c_agc_to_i2s, chanend c_i2s_to_far_end) {
     i2s_callback_if i_i2s_interfaces;
     i2c_master_if i_i2c[1];
     
@@ -142,6 +169,7 @@ void i2s_main(chanend c_agc_to_i2s) {
                    p_bclk, p_lrclk, bclk, mclk);
         [[distribute]] i2c_master_single_port(i_i2c, 1, p_i2c, 100, 0, 1, 0);
         [[distribute]] i2s_handler_no_buffer(i_i2s_interfaces, i_i2c[0],
-                                             c_agc_to_i2s, p_rst_shared);
+                                             c_agc_to_i2s, c_i2s_to_far_end,
+                                             p_rst_shared);
     }
 }

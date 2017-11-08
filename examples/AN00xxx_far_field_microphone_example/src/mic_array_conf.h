@@ -5,7 +5,7 @@
 #include "system_defines.h"
 
 #define MIC_ARRAY_WORD_LENGTH_SHORT    0 // 32 bit samples
-#define MIC_ARRAY_MAX_FRAME_SIZE_LOG2  8 // TODO: hmm.
+#define MIC_ARRAY_MAX_FRAME_SIZE_LOG2  4 // TODO: hmm.
 #define MIC_ARRAY_NUM_MICS             (SYSTEM_MICROPHONE_CHANNELS)
 
 // TODO: make rest of the code accept 4.

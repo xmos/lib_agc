@@ -20,8 +20,6 @@
 #include "noise_suppression.h"
 #include "far_end_audio_server.h"
 
-#define SYSTEM_FRAME_ADVANCE    256
-
 
 on tile[3]: out port leds = XS1_PORT_8C;
 
@@ -46,7 +44,8 @@ int sineWave24[24] = {
 };
 
 void get_pdm(chanend audio_out,
-             streaming chanend c_ds_output[DECIMATOR_COUNT]){
+             streaming chanend c_ds_output[DECIMATOR_COUNT],
+             chanend far_end_audio){
     unsafe{
         dsp_complex_t databuf[BS_INPUT_CHANNELS][BS_FRAME_ADVANCE];
         unsigned buffer;
@@ -63,7 +62,6 @@ void get_pdm(chanend audio_out,
           {&dcc, data[4], {INT_MAX, INT_MAX, INT_MAX, INT_MAX}, 4}
         };
         
-        assert((1<<MIC_ARRAY_MAX_FRAME_SIZE_LOG2) == BS_FRAME_ADVANCE);
         assert(MIC_ARRAY_NUM_MICS >= BS_INPUT_CHANNELS);
         assert(BS_FRAME_ADVANCE == NS_FRAME_ADVANCE);
         
@@ -72,28 +70,41 @@ void get_pdm(chanend audio_out,
         mic_array_init_time_domain_frame(c_ds_output, DECIMATOR_COUNT, buffer, audio, dc);
         int cnt = 0;
         unsigned int gain = 0x10000;
-
+        unsigned mic_samples =(1<<MIC_ARRAY_MAX_FRAME_SIZE_LOG2);
+        int wait_for_sync = 3;
         while(1){
-            mic_array_frame_time_domain *  current =
-                               mic_array_get_next_time_domain_frame(c_ds_output, DECIMATOR_COUNT, buffer, audio, dc);
-            
-            // Copy the current sample to the delay buffer
-            uint32_t mask = 0;
-            for(unsigned j=0;j<BS_FRAME_ADVANCE;j++){
-                cnt++;
-                for(unsigned i=0;i<BS_INPUT_CHANNELS;i+=2){
+            int collected = 0;
+            while (collected < BS_FRAME_ADVANCE) {
+                mic_array_frame_time_domain *  current =
+                    mic_array_get_next_time_domain_frame(c_ds_output, DECIMATOR_COUNT, buffer, audio, dc);
+                
+                // Copy the current sample to the delay buffer
+                uint32_t mask = 0;
+                for(unsigned j=0;j<mic_samples;j++){
+                    cnt++;
+                    for(unsigned i=0;i<BS_INPUT_CHANNELS;i+=2){
 //#define REPLACE_WITH_SINE_WAVE
 #ifdef REPLACE_WITH_SINE_WAVE
-                    current->data[i+0][j] = sineWave24[(cnt+i+0)%24] * gain;
-                    current->data[i+1][j] = sineWave24[(cnt+i+1)%24] * gain;
+                        current->data[i+0][j] = sineWave24[(cnt+i+0)%24] * gain;
+                        current->data[i+1][j] = sineWave24[(cnt+i+1)%24] * gain;
 #endif
-                    databuf[i>>1][j].re = current->data[i+0][j];
-                    databuf[i>>1][j].im = current->data[i+1][j];
+                        databuf[i>>1][collected].re = current->data[i+0][j];
+                        databuf[i>>1][collected].im = current->data[i+1][j];
+                    }
+                    collected++;
+                    gain = (gain * 0x7FFA0000LL) >> 31;
+                    if (gain < 3000) gain = 65536;
                 }
-                gain = (gain * 0x7FFA0000LL) >> 31;
-                if (gain < 3000) gain = 65536;
             }
-
+            if (wait_for_sync) {
+                wait_for_sync--;
+                if (wait_for_sync == 0) {
+                    outct(far_end_audio, 1);
+                }
+            } else {
+                int in_buff = inuchar(far_end_audio);
+                chkct(far_end_audio, 1);
+            }
             // GET DATA FROM I2S.
             // Run Pharell Williams on tile[3]
             // Post data to I2S, then block and send on to AEC 
@@ -129,10 +140,10 @@ void buttoncheck(chanend suppress, chanend adapt) {
 int main(){
     chan c_agc_to_i2s, c_microphone_to_bs, c_bs_to_ns;
     chan c_button_vad, c_button_suppress;
-    chan c_music_for_speaker;
+    chan c_music_for_speaker, c_far_end_audio;
     par{
         on tile[0]: far_end_audio_server(c_music_for_speaker);
-        on tile[1]: i2s_main(c_agc_to_i2s);
+        on tile[1]: i2s_main(c_agc_to_i2s, c_far_end_audio);
         on tile[1]: noise_suppression_automatic_gain_control_task(c_bs_to_ns, c_agc_to_i2s, c_button_suppress);
 
         on tile[2]: bs_task(c_microphone_to_bs, c_bs_to_ns, c_button_vad);
@@ -150,7 +161,7 @@ int main(){
                 mic_array_decimate_to_pcm_4ch(c_4x_pdm_mic_0, c_ds_output[0], MIC_ARRAY_NO_INTERNAL_CHANS);
                 mic_array_decimate_to_pcm_4ch(c_4x_pdm_mic_1, c_ds_output[1], MIC_ARRAY_NO_INTERNAL_CHANS);
 
-                get_pdm(c_microphone_to_bs, c_ds_output);
+                get_pdm(c_microphone_to_bs, c_ds_output, c_far_end_audio);
             }
         }
     }
