@@ -91,6 +91,8 @@ void get_pdm(chanend audio_out,
                         databuf[i>>1][collected].re = current->data[i+0][j];
                         databuf[i>>1][collected].im = current->data[i+1][j];
                     }
+//                    timer tmr; int t; tmr:>t; tmr when timerafter(t+100):>void;
+//                    xscope_int(CH1, databuf[0][collected].re);
                     collected++;
                     gain = (gain * 0x7FFA0000LL) >> 31;
                     if (gain < 3000) gain = 65536;
@@ -105,19 +107,12 @@ void get_pdm(chanend audio_out,
                 int in_buff = inuchar(far_end_audio);
                 chkct(far_end_audio, 1);
             }
-            // GET DATA FROM I2S.
-            // Run Pharell Williams on tile[3]
             // Post data to I2S, then block and send on to AEC 
             
             dsp_bfp_tx_pairs(audio_out,
                              (databuf, dsp_complex_t[]),
                              BS_INPUT_CHANNELS, BS_FRAME_ADVANCE,
                              0);
-//            timer tmr; int t; tmr :> t;
-//            for(int i = 0; i < BS_FRAME_ADVANCE; i++) {
-//                xscope_int(CH1, databuf[0][i].re);
-//                tmr when timerafter(t += 5000) :> void;
-//            }
         }
     }
 }
@@ -137,13 +132,15 @@ void buttoncheck(chanend suppress, chanend adapt) {
     }
 }
 
+#define FAR_END_TYPE    FAR_END_MUSIC   // one of WHITE_NOISE, PINK_NOISE, MUSIC
 int main(){
     chan c_agc_to_i2s, c_microphone_to_bs, c_bs_to_ns;
     chan c_button_vad, c_button_suppress;
-    chan c_music_for_speaker, c_far_end_audio;
+    chan c_far_end_audio;
+    streaming chan c_fake_music_for_speaker;
     par{
-        on tile[0]: far_end_audio_server(c_music_for_speaker);
-        on tile[1]: i2s_main(c_agc_to_i2s, c_far_end_audio);
+        on tile[0]: far_end_audio_server(c_fake_music_for_speaker, FAR_END_TYPE);
+        on tile[1]: i2s_main(c_agc_to_i2s, c_far_end_audio, c_fake_music_for_speaker);
         on tile[1]: noise_suppression_automatic_gain_control_task(c_bs_to_ns, c_agc_to_i2s, c_button_suppress);
 
         on tile[2]: bs_task(c_microphone_to_bs, c_bs_to_ns, c_button_vad);
