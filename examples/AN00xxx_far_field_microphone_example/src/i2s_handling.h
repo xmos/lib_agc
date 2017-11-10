@@ -4,6 +4,7 @@
 #include "i2s.h"
 #include "i2c.h"
 
-extern void i2s_main(chanend c_agc_to_i2s, chanend c_i2s_to_far_end);
+extern void i2s_main(chanend c_agc_to_i2s, chanend c_i2s_to_far_end,
+                     streaming chanend fake_far_end_signal);
 
 #endif
