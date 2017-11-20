@@ -840,7 +840,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.053084"
-     inkscape:cx="246.11268"
+     inkscape:cx="108.42186"
      inkscape:cy="142.83369"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -872,7 +872,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -917,12 +917,12 @@
          x="350"
          y="305.36234"
          style="font-size:12.5px"
-         id="tspan22205">Time domain data; 1 channels; 16 kHz; 32 bit block floats</tspan><tspan
+         id="tspan22205">Time domain data; 1 channels; 32 bit block floats</tspan><tspan
          sodipodi:role="line"
          x="350"
          y="317.86234"
          style="font-size:12.5px"
-         id="tspan22207">Programmable frame size</tspan></text>
+         id="tspan22207">Typical input frame size of 240 samples</tspan></text>
     <text
        xml:space="preserve"
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Arial;-inkscape-font-specification:Arial;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"
@@ -953,12 +953,12 @@
          style="font-size:12.5px"
          y="513.3623"
          x="350"
-         sodipodi:role="line">Time domain data; 1 channels; 16 kHz; 32 bit integers</tspan><tspan
+         sodipodi:role="line">Time domain data; 1 channels; 32 bit integers</tspan><tspan
          style="font-size:12.5px"
          y="525.8623"
          x="350"
          sodipodi:role="line"
-         id="tspan8393">Programmable frame delay</tspan></text>
+         id="tspan8393">One frame of data</tspan></text>
     <text
        xml:space="preserve"
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Symbol;-inkscape-font-specification:Symbol;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"

@@ -15,7 +15,7 @@
    id="svg2"
    version="1.1"
    inkscape:version="0.91 r13725"
-   sodipodi:docname="diagram-beamformer.svg">
+   sodipodi:docname="diagram-beamsteerer.svg">
   <defs
      id="defs4">
     <marker
@@ -983,7 +983,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.053084"
-     inkscape:cx="222.98634"
+     inkscape:cx="161.26287"
      inkscape:cy="168.34277"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
@@ -1015,7 +1015,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -1084,12 +1084,12 @@
          x="350"
          y="187.36229"
          style="font-size:12.5px"
-         id="tspan22205">Frequency domain data; 2-8 channels; 16 kHz; 32 bits</tspan><tspan
+         id="tspan22205">Time domain data; 2-8 channels; 16 kHz; 32 bits</tspan><tspan
          sodipodi:role="line"
          x="350"
          y="199.86229"
          style="font-size:12.5px"
-         id="tspan22207">512 sample frames (32 ms), 256 sample overlap (16 ms)</tspan></text>
+         id="tspan22207">512 sample frames (32 ms), 240 sample advance (15 ms)</tspan></text>
     <text
        xml:space="preserve"
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Arial;-inkscape-font-specification:Arial;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"
@@ -1380,12 +1380,12 @@
          style="font-size:12.5px"
          y="512.3623"
          x="350"
-         sodipodi:role="line">Frequency domain data; one channel; 16 kHz; 32 bits</tspan><tspan
+         sodipodi:role="line">Time domain data; one channel; 16 kHz; 32 bits</tspan><tspan
          id="tspan22643"
          style="font-size:12.5px"
          y="524.8623"
          x="350"
-         sodipodi:role="line">512 sample frames (32 ms), 256 sample overlap (16 ms)</tspan></text>
+         sodipodi:role="line">240 sample blocks (15 ms)</tspan></text>
     <circle
        style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#808080;stroke-width:1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;marker-start:none;marker-mid:none;marker-end:none;enable-background:accumulate"
        id="path23269"

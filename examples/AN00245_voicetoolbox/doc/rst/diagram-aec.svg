@@ -1080,9 +1080,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.74464284"
-     inkscape:cx="357.88388"
-     inkscape:cy="138.08574"
+     inkscape:zoom="1.4892857"
+     inkscape:cx="324.31074"
+     inkscape:cy="136.25637"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -1170,12 +1170,12 @@
          x="350"
          y="187.36229"
          style="font-size:12.5px"
-         id="tspan22205">Frequency domain data; 1 or more channels; 16 kHz; 32 bits</tspan><tspan
+         id="tspan22205">Time domain data; 1 or more channels; 32 bits</tspan><tspan
          sodipodi:role="line"
          x="350"
          y="199.86229"
          style="font-size:12.5px"
-         id="tspan22207">XX sample frames (YY ms), XX sample overlap (YY ms)</tspan></text>
+         id="tspan22207">typical: 512 sample frames, 240 samples advance (15 ms)</tspan></text>
     <text
        xml:space="preserve"
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Arial;-inkscape-font-specification:Arial;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"
@@ -1240,18 +1240,6 @@
        id="path15291"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="ccc" />
-    <text
-       sodipodi:linespacing="100%"
-       id="text22639"
-       y="522.3623"
-       x="340"
-       style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Arial;-inkscape-font-specification:Arial;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"
-       xml:space="preserve"><tspan
-         id="tspan22643"
-         style="font-size:12.5px"
-         y="522.3623"
-         x="340"
-         sodipodi:role="line">Output format is identical to input format</tspan></text>
     <text
        xml:space="preserve"
        style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Symbol;-inkscape-font-specification:Symbol;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"
@@ -1583,25 +1571,6 @@
        id="path21177"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cc" />
-    <rect
-       style="color:#000000;display:inline;overflow:visible;visibility:visible;fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;marker:none;enable-background:accumulate;fill-opacity:1"
-       id="rect27756"
-       width="50"
-       height="20"
-       x="140"
-       y="437.36234" />
-    <text
-       xml:space="preserve"
-       style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Arial;-inkscape-font-specification:Arial;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"
-       x="165"
-       y="452.36234"
-       id="text27758"
-       sodipodi:linespacing="100%"><tspan
-         sodipodi:role="line"
-         x="165"
-         y="452.36234"
-         style="font-size:15px;text-align:center;text-anchor:middle"
-         id="tspan27760">VAD</tspan></text>
     <path
        sodipodi:nodetypes="cc"
        inkscape:connector-curvature="0"
@@ -1640,5 +1609,22 @@
          y="-302"
          style="font-size:10px;text-align:start;text-anchor:start"
          id="tspan31028">Error</tspan></text>
+    <text
+       sodipodi:linespacing="100%"
+       id="text4770"
+       y="512.3623"
+       x="360"
+       style="color:#000000;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:30px;line-height:100%;font-family:Arial;-inkscape-font-specification:Arial;text-indent:0;text-align:center;text-decoration:none;text-decoration-line:none;letter-spacing:0px;word-spacing:0px;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:middle;display:inline;overflow:visible;visibility:visible;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker:none;enable-background:accumulate"
+       xml:space="preserve"><tspan
+         id="tspan4772"
+         style="font-size:12.5px"
+         y="512.3623"
+         x="360"
+         sodipodi:role="line">Time domain data; same number of channels; 16 kHz; 32 bits</tspan><tspan
+         id="tspan4774"
+         style="font-size:12.5px"
+         y="524.8623"
+         x="360"
+         sodipodi:role="line">240 samples (15 ms)</tspan></text>
   </g>
 </svg>

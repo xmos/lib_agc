@@ -11,13 +11,28 @@ the toolkit include:
 
 * A library to perform Adaptive Echo Cancellation (AEC). This will remove a
   known sound from the input signal, for example, it can remove music
-  played by the device.
+  played by the device. At present, this library removes mono sound only.
 
-* A library to perform Beamforming on 2 to 8 microphone channels. This will
+* A library to perform Beamsteering on 2 to 8 microphone channels. This will
   attenuate surrounding signals and enhance a specific source of interest.
 
+* A library to estimate the Time Difference On Arrival (TDOA) on 2 to 8
+  microphone channels. This library will calculate an estimate for the
+  delays that the signal has incurred on each of the channels.
+
+* A library to estimate the Direction Of Arrival (DOA) on topologies
+  with at least two microphones. This library will calculate the likely
+  direction that a signal has come from, given the TDOA information.
+
 * A library to perform Voice Activity Detection (VAD). This classifies
-  sound as to whether it is likely voice or not.
+  sound as to whether it is likely voice or not. The VAD library can be
+  retrained on other sounds.
+
+* A library to perform Noise Suppression (NS). This library suppresses static
+  noise.
+
+* A library to perform Automatic Gain Control (AGC). This library will
+  adjust the gain of the signal so that the output has a desired energy level.
 
 As an example, the toolkit contains application programs to:
 
@@ -40,9 +55,11 @@ a product that deploys multiple beamformers.
 Glossary of terms
 -----------------
 
-* AEC: Adaptive Echo Canceller
+* AEC: Adaptive Echo Canceller (the process of removing a known audio
+  source from the signal on each microphone)
   
-* BF: Beamformer
+* BS: Beamsteering (the process of enhancing the signal from one specific
+  direction) 
 
 * VAD: Voice Activity Detector (detecting presence of human voice)
 
@@ -51,7 +68,7 @@ Glossary of terms
 
 * NS: Noise Suppression (removal of low level noise)
 
-* TDOA: Time Difference Of Arrival (estimate of differences in time between
+* TDOA: Time Difference On Arrival (estimate of differences in time between
   a signal arriving on pairs of microphones)
 
 * DOA: Direction Of Arrival (estimate of direction where signal arrives from)
@@ -65,7 +82,8 @@ left:
 
 #. The Voice Pipeline (blue): the audio data flows from the microphones on
    the top, to the ASR unit on the bottom. The purple box (dereverberation)
-   is a future component; not present at the moment.
+   is a future component; not present at the moment. Also note that at
+   present the AEC is mono only.
 
 #. The Application Program (green): This controls the voice pipeline,
    using information from both the voice pipeline and ancillary components
@@ -88,8 +106,8 @@ These components run all concurrently on an xCORE200 processor; taking
 advantage of the real-time concurrency offered by xCORE200. The number of
 xCORE200 tiles required for the voice pipeline depends on the number of
 microhones, number of VADs, etc. In its smallest form, a single tile can
-execute a two microphone beamformer. An eight microphone beamformer
-requires two tiles.
+execute a two-microphone beamsteering algorithm with AEC. An
+eight-microphone beamsteering system requires two tiles.
 
 |newpage|
 
@@ -127,8 +145,8 @@ Detailed in XXX
 Adaptive Echo Canceller interface
 ---------------------------------
 
-The adaptive echo canceller cancels the mono audio signals that may be
-produced by a speaker that is attached to the device. The interface is
+The adaptive echo canceller cancels the mono audio signal that are produced
+by a speaker driven by the system. The interface is
 shown in :ref:`vocalfusion_classic_diagram_aec`:
 
 .. _vocalfusion_classic_diagram_aec:
@@ -159,45 +177,48 @@ far-end signal as much as possible.
 
 This learning process is the adaptive part of the filter, and the
 application program controls when and how much the echo cancellers are
-adapting.
-
-* Typically, the application may execute a Voice-Activity-Detector
-  on each frame of one of the residual signal or input signal: if the VAD
-  returns negative, it would instruct all echo cancellers to adapt, and
-  improve its echo reduction capability.
-
-* By default, the adaption speed is governed by the error estimate and is
-  adjusted automatically. However, the application program can override
-  this and speed-up adaptation, slow it down, or reset the echo control.
+adapting. By default, the adaption speed is governed by the error estimate
+and is adjusted automatically. However, the application program can
+override this and speed-up adaptation, slow it down, or reset the echo
+control.
 
 Resource Requirements
 .....................
 
-NNN threads,
-MMM memory
+At least one thread is required, up to eight threads can be used.
+
+The amount of memory depends on the tail length that can be cancelled, and
+comprises 64,000 bytes per microphone channel per second of tail length.
+For a typical tail length of 150 ms (sufficient for many moderate strength
+signals) this translates to just under 10 kByte per microphone channel.
+
+For very loud far-end signals, the tail length may need to be increased.
+Indeed, this trade-off can be made at run-time, using for example fewer
+micropohones with a longer tail when the signal is loud. 
 
 Library specification
 .....................
 
 .. include:: ../../../../../lib_aec/lib_aec/doc/rst/aec-internals.rst
 
-BF: Beamformer
---------------
+BS: Beamsteering
+----------------
 
-The beamformer takes a multitude of microphone signals, and creates a
+The beamsteering algorithm takes a multitude of microphone signals, and creates a
 single signal that attenuates sound coming from undesirable places in the
-room. The attenuation is achieved by two means. First, using knowledge of
-the expected delay on the microphones, the beamformer will delay the
+environment. The attenuation is achieved by two means. First, using knowledge of
+the expected delay on the microphones, the beamsteerer will shift the phase of
 microphone signals in such a way that only signals from a specific location
-will be synchronised. When summing those signals, this will partially cancel
+will be synchronous. When summing those signals, this will partially cancel
 signals from locations other than the desired one. Second, without any
-knowledge of the relative microphone locations, the beamformer can learn
+knowledge of the relative microphone locations, the beamsteerer can learn
 which signals are undesirable (under supervision of the application
 program). This will try and find directions to cancel, regardless of the
-microphone topology. Either or both methods can be used.
+microphone topology. Either or both methods can be used. The second method
+can be much more effective than the first method.
 
-To achieve this functionality the beamformer comprises three blocks, as
-shown in :ref:`vocalfusion_classic_diagram_beamformer`:
+To achieve this functionality the beamsteerer comprises three blocks, as
+shown in :ref:`vocalfusion_classic_diagram_beamsteerer`:
 
 * A steering block that aligns the data from the microphones, anticipating
   a specific angle from which the signal will arrive.
@@ -210,22 +231,22 @@ shown in :ref:`vocalfusion_classic_diagram_beamformer`:
   the state should be modified to improve the side-lobe cancellation.
 
 The residual signal is the beam that we are after. The green block in
-:ref:`vocalfusion_classic_diagram_beamformer` is the application program,
+:ref:`vocalfusion_classic_diagram_beamsteerer` is the application program,
 and the arrows in that block depict a possible way that the Application
 program can control the steering and side-lobe cancelling.
 
-.. _vocalfusion_classic_diagram_beamformer:
+.. _vocalfusion_classic_diagram_beamsteerer:
 
-.. figure:: diagram-beamformer.pdf
+.. figure:: diagram-beamsteerer.pdf
             :width: 100%
 
-            VocalFusion VoiceToolBox Beamformer Structure
+            VocalFusion VoiceToolBox Beamsteerer Structure
 
 The first control that the application program has is the beamsteerer. The
 beamsteerer needs to know how many samples to delay each microphone by, and
 these values are all set at once when there is no signal of interest. It is
 up to the application to compute the delays required. For example, the
-application could obtain those delays from a TDOA module ((Time Difference
+application could obtain those delays from a TDOA module (Time Difference
 Of Arrival), when a desirable signal is heard. This method works if there
 is knowledge that the signal is present. Alternatively, a model can be
 build that tracks people using different sensors, and with knowledge of the
@@ -245,27 +266,34 @@ For example, it could use a VAD (Voice Activity Detector) on the residual
 signal. If the VAD does not spot any voice, the GSC could be instructed to
 get rid of the signal.
 
-The input to the beamformer is frequency domain data, 512-sample frames
-(sampled at 16 kHz), with a 256-sample overlap, for each of the microphone
-channels. At 32 bits, this accounts for 2 kByte of data per frame per
-channel, or 16 kByte of data for eight channels.
-The output of the beamformer is frequency domain data too, but only a
-single channel.
+The input to the beamsteerer is time domain data. The time domain should be
+presented in frames that a power-of-2 length
+(``BS_PROC_FRAME_LENGTH_LOG2``) which defaults to 9 for 512-sample frames.
+The frames should be advanced by a fixed number of samples
+(``BS_FRAME_ADVANCE``) which defaults to 240 samples advance, giving a 272
+sample overlap. The beamsteering works on between 2 and 8 input channels
+(``BS_INPUT_CHANNELS``), which defaults to 4. The output of the
+beamsteerer is time-domain data too, but only a single channel, and
+``BS_FRAME_ADVANCE`` samples are produced on every iteration.
 
-The error estimate comprises 2 kBytes of data per microphone channel. This
-is normally not stored, but if the decision on whether to adapt or not
-takes longer than a frame, then this data is to be stored until this
-decision is taken.
+The frame size, advance, and number of channels are all compile time fixed
+parameters. Multiple beamsteerers can be instantiated; but they must all
+use the same number of microphones.
+
 
 Resource Requirements
 .....................
 
-A beamformer requires a single 62.5 MIPS logical core. The amount of memory
-is dependent on the number of microphones. The state stored is 2 kByte per
-microphone, plus 6 kByte. The input frame size is 2 kByte per microphone.
-The output frame is 2 kByte. Total memory required is between 16 and 40
-kBytes, depending on the number of microphones. Multiple beamformers can be
-instantiated; but they must all use the same number of microphones.
+A beamsteerer requires 62.5 MIPS for up to 8 microphones, and can hence
+execute inside a single "logical core".
+
+The amount of memory required is linear in the frame size and the number of
+microphones. The filter data requires four bytes per sample in a frame, per
+microphone channel. For the default settings above this accounts for 4 x
+512 x 4 = 8 kBytes. The error estimate requires that much information
+again. This data is normally not persistent; unless the decision as to
+whether to adapt is deferred, in which case multiple error frames may need
+to be stored.
 
 Library specification
 .....................
@@ -274,11 +302,106 @@ Library specification
 
 
 
+TDOA
+----
+
+Interface
+.........
+
+Resource Requirements
+.....................
+
+API
+...
 
 
 
 
 
+DOA
+---
+
+Interface
+.........
+
+Resource Requirements
+.....................
+
+API
+...
+
+
+
+
+
+VAD
+---
+
+Interface
+.........
+
+The VAD comprises a single function that given a set of time domain inputs
+classifies the input to be voice or not voice. The VAD is parameterised
+with a model that is trained to recognise voice under a specific set of
+conditions. For example, the model might be trained on an SNR of 0 dB,
+or +20 dB, and it may be trained to accept small or large frames of data.
+
+Resource Requirements
+.....................
+
+Classification: 200,000 issue slots
+
+API
+...
+
+The VAD comprises a single function that is to be called with the time
+domain input, the VAD model, and some temporary storage.
+The length of the time input and the size of the temporary storage are
+dependent on the chosen model. The function returns a number in the range
++256..-256, where +256 indicates voice, and 0 indicates not voice. The
+threshold can be picked anywhere between those numbers, with lower
+thresholds producing fewer false negatives and more false positives.
+In order for the beamsteering algorithm to perform well, the VAD should
+have a very, very, low false negative rate. Ie, the VAD should hardly ever
+fail to classify something as voice. The false positive rate of the VAD
+affects how fast the beamsteering algorithm can adapt; if 90% of noise is
+misclassified as voice, then the beamsteerer will adapt 10x slower.
+Therefore, we typically pick a low threshold in the range 20-30.
+
+The VAD function has the following prototype::
+
+  int32_t vad_is_voice(int32_t time_domain_input[],
+                       uint32_t vad_model[],
+                       uint32_t vad_tmp[]);
+
+Where ``time_domain_input`` is an array of samples, ``vad_model`` is the
+desired VAD model, and ``vad_tmp`` is a temporary array for use by
+``vad_is_voice``. Several VAD models are available, each of them defines a
+window length (the number of samples that should be passed in on
+``time_domain_input`` on each call), a window advance (the number of
+samples that are new in each frame), the delay (signalling which part in
+the past is being classified), a model, and a defined temporary
+storage length. For example, the declarations below pertain to the model
+that is trained on an SNR of -3 dB::
+
+  #define VAD_MODEL_SNR5_PROC_FRAME_LENGTH_LOG2    9
+  #define VAD_MODEL_SNR5_ADVANCE                 240
+  #define VAD_MODEL_SNR5_PREDICTION_DELAY          0
+  #define VAD_MODEL_SNR5_TMP_WORDS              2048
+  extern uint32_t vad_model_SNR5[];
+
+Note that the model itself is stored in memory permanently, adding to the
+memory footprint. The available models are:
+
++-----------------+-------------------------------------+-------------+
+| Model name      | Condition                           | Memory size |
++-----------------+-------------------------------------+-------------+
+| SNR5            | SNR of 5 dB                         | 5 kByte     |
++-----------------+-------------------------------------+-------------+
+| SNR5 Large      | SNR of 5 dB, better discrimination  | 25 kByte    |
++-----------------+-------------------------------------+-------------+
+
+The models are trained on a variety of speech, music, and noise.
 
 
 
@@ -390,98 +513,6 @@ Library specification
 .. include:: ../../../../../lib_agc/lib_agc/doc/rst/agc-internals.rst
 
 
-
-
-
-TDOA
-----
-
-Interface
-.........
-
-Resource Requirements
-.....................
-
-API
-...
-
-
-
-
-
-DOA
----
-
-Interface
-.........
-
-Resource Requirements
-.....................
-
-API
-...
-
-
-
-
-
-VAD
----
-
-Interface
-.........
-
-The VAD comprises a single function that given a set of time domain inputs
-classifies the input to be voice or not voice. The VAD is parameterised
-with a model that is trained to recognise voice under a specific set of
-conditions. For example, the model might be trained on an SNR of 0 dB,
-or +20 dB, and it may be trained to accept small or large frames of data.
-
-Resource Requirements
-.....................
-
-Classification: 200,000 issue slots
-
-API
-...
-
-The VAD comprises a single function that is to be called with the time
-domain input (todo: frequency?), the VAD model, and some temporary storage.
-The length of the time input and the size of the temporary storage are
-dependent on the chosen model. The function returns a number in the range
-+256..-256, where +256 indicates very likely voice, and -256 indicates
-very unlikely to be voice. A typical threshold to decide on voice would be
-0, but oen can pick a lower threshold to reduce the number of false
-negatives.
-
-The VAD function has the following prototype::
-
-  int32_t vad_is_voice(int32_t time_domain_input[],
-                       uint32_t vad_model[],
-                       uint32_t vad_tmp[]);
-
-Where ``time_domain_input`` is an array of samples, ``vad_model`` is the
-desired VAD model, and ``vad_tmp`` is a temporary array for use by
-``vad_is_voice``. Several VAD models are available, each of them defines a
-window length (the number of samples that should be passed in on
-``time_domain_input`` on each call), a model, and a defined temporary
-storage length. For example, the declarations below pertain to the model
-that is trained on an SNR of -3 dB::
-
-  #define VAD_MODEL_SNRm3_WINDOWN_LENGTH  256
-  #define VAD_MODEL_SNRm3_TMP_WORDS       115
-  extern uint32_t vad_model_SNRm3[];
-
-Note that for each model used, the model will be stored in memory
-permanently, adding to the memory footprint. The available models are:
-
-+-----------------+-------------------------------------+-------------+
-| Model name      | Condition                           | Memory size |
-+-----------------+-------------------------------------+-------------+
-| SNRm3           | SNR of -3 dB                        | 7 kByte     |
-+-----------------+-------------------------------------+-------------+
-| SNRm3 Large     | SNR of -3 dB, better discrimination | 14 kByte    |
-+-----------------+-------------------------------------+-------------+
 
 
 	   
