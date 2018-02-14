@@ -1,0 +1,9 @@
+def use_module(bld):
+    sources = bld.path.ant_glob(['src/*.xc', 'src/*.c', 'src/*.S'])
+      
+    bld.env.MODULE_XCC_FLAGS = bld.env.XCC_FLAGS + ['-Os']
+    bld.module(
+        source=sources,
+        includes=['api','src'],
+        depends_on='lib_dsp',
+        version='0.0.1')
