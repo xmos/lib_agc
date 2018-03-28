@@ -8,10 +8,15 @@
  * passed an AGC structure, and the initial gain setting in dB. The gain
  * controller is initialised with the following default values:
  *
+ * - initial gain:         0 dB
+ * - desired energy:     -30 dB
  * - minimum gain:      -127 dB
  * - maximum gain:       127 dB
  * - rate of gain down:  -70 dB per second
  * - rate of gain up  :    7 dB per second
+ * - grace period before up 6s      THIS SHOULD BE 4?
+ * - lookahead frames:     0
+ * - lookpast frames:      0
  *
  * All of these can be changed using the access functions below.
  * 
@@ -21,22 +26,9 @@
  * represented in a small dynamic range of integers in the range
  * [-2^31..2^31-1]. The AGCs purpose is to perform this range reduction in
  * a meaningful way.
- * 
- * The important value that is set in this call is the desired energy
- * level. This is given in dB of the whole output scale. For example, a
- * value of -20 indicates that the energy should be 10x below whole scale.
- * If the input is a pure sine wave, then the energy is sqrt(1/2) times the
- * amplitude of the sine wave, hence at a setting of -20 dB the amplitude
- * of the output sine wave will be 10/sqrt(1/2) or 0.1414 of whole scale,
- * or +/- 303700050. The actual level of the sine wave will be slightly
- * higher or lower, since the AGC algorithm uses a hysteresis around the
- * desired energy level. Note that if the desired output is set to 0 dB
- * (meaning whole scale), the actual output of a sine-wave will be
- * (10^(0/20))/sqrt(1/2) = 1.414 of whole scale, which will lead to
- * wide-spread clipping. Hence, in order to avoid clipping, keep the
- * desired output level at least a few dB below zero.
  *
- * The other important parameter is the initial gain setting. A good guess
+ * The initial gain setting and the desired energy level may have to be set
+ * using one of the setters below before starting the AGC. A good guess
  * for the initial setting enables the AGC to operate without warm-up. The
  * initial setting should compensate for the sensitivity of the microphones
  * and the gain applied by any previous stages in the voice pipeline. For
@@ -45,31 +37,10 @@
  * 
  * \param[out] agc              gain controller structure, initialised on return
  *
- * \param[in] initial_gain_db   Initial gain in dB. The initial gain must be
- *                              in the range [-127..127]. If you are uncertain
- *                              estimate it on the high side; it will adjust
- *                              quickly down to the right value.
- *
- * \param[in] desired_energy_db desired energy in dB. -6 is a good number. The
- *                              desired energy must be in the range [-127..-1].
- *
  * \param[in] frame_length      Number of samples on which AGC operates.
- *
- * \param[in] look_past_frames  Number of frames to look in the past for energy
- *                              If this is larger than zero, than a buffer 
- *                              needs to be passed to agc_process_block()
- * 
- * \param[in] look_ahead_frames Number of frames to look ahead for energy
- *                              If this is larger than zero, than a buffer 
- *                              needs to be passed to agc_process_block()
- * 
  */
-void agc_init_state(agc_state_t &agc,
-                    int32_t initial_gain_db,
-                    int32_t desired_energy_db,
-                    uint32_t frame_length,
-                    uint32_t look_past_frames,
-                    uint32_t look_ahead_frames);
+void agc_init(agc_state_t &agc, uint32_t frame_length);
+
 
 /** Function that sets the maximum gain allowed on the automatic gain
  * control. This value must be larger than or equal to the initial gain,
@@ -98,6 +69,19 @@ void agc_set_gain_min_db(agc_state_t &agc, int32_t db);
  * clipping. This function can be used to change the volume of the output.
  * Note that changes will not happen immediately and are governed by the
  * delay, and the maximum up and down rates.
+ *
+ * For example, a value of -20 indicates that the energy should be 10x
+ * below whole scale. If the input is a pure sine wave, then the energy is
+ * sqrt(1/2) times the amplitude of the sine wave, hence at a setting of
+ * -20 dB the amplitude of the output sine wave will be 10/sqrt(1/2) or
+ * 0.1414 of whole scale, or +/- 303700050. The actual level of the sine
+ * wave will be slightly higher or lower, since the AGC algorithm uses a
+ * hysteresis around the desired energy level. Note that if the desired
+ * output is set to 0 dB (meaning whole scale), the actual output of a
+ * sine-wave will be (10^(0/20))/sqrt(1/2) = 1.414 of whole scale, which
+ * will lead to wide-spread clipping. Hence, in order to avoid clipping,
+ * keep the desired output level at least a few dB below zero.
+
  *
  * \param[in,out] agc Gain controller structure
  * \param[in] db      Desired output energy in dB
@@ -128,6 +112,25 @@ void agc_set_rate_up_dbps(agc_state_t &agc, int32_t dbps);
  * \param[in] milliseconds Time between quiescence and gain increasing
  */
 void agc_set_wait_for_up_ms(agc_state_t &agc, uint32_t milliseconds);
+
+/** Function that sets the number of frames to look in the past.
+ *
+ * \param[in] look_past_frames  Number of frames to look in the past for energy
+ *                              If this is larger than zero, than a buffer 
+ *                              needs to be passed to agc_process_frame()
+ */
+extern void agc_set_look_past_frames(agc_state_t &agc, uint32_t look_past_frames);
+
+/** Function that sets the number of frames to look in the future. If this
+ * is set, then the data signal will be delayed by as many frames.
+ *
+ * \param[in] look_ahead_frames Number of frames to look ahead for energy
+ *                              If this is larger than zero, than a buffer 
+ *                              needs to be passed to agc_process_frame()
+ */
+
+extern void agc_set_look_ahead_frames(agc_state_t &agc, uint32_t look_ahead_frames);
+
 
 /** Function that processes a block of data.
  *
