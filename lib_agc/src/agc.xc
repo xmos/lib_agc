@@ -349,23 +349,25 @@ void agc_set_wait_for_up_ms(agc_state_t &agc, uint32_t milliseconds) {
     agc.wait_for_up_samples = milliseconds * 16;
 }
 
-void agc_init_state(agc_state_t &agc,
-                    int32_t initial_gain_db,
-                    int32_t desired_energy_db,
-                    uint32_t frame_length,
-                    uint32_t look_past_frames,
-                    uint32_t look_ahead_frames) {
-    agc.frame_length = frame_length;
+void agc_set_look_past_frames(agc_state_t &agc, uint32_t look_past_frames) {
     agc.look_past_frames = look_past_frames;
+}
+
+void agc_set_look_ahead_frames(agc_state_t &agc, uint32_t look_ahead_frames) {
     agc.look_ahead_frames = look_ahead_frames;
+}
+
+void agc_init(agc_state_t &agc, uint32_t frame_length) {
     agc.state = AGC_STABLE;
-    agc_set_gain_db(agc, initial_gain_db);
-    agc_set_desired_db(agc, desired_energy_db);
+    agc.look_past_frames = 0;
+    agc.look_ahead_frames = 0;
+    agc_set_gain_db(agc, 0);
+    agc_set_desired_db(agc, -30);
     agc_set_gain_max_db(agc, 127);
     agc_set_gain_min_db(agc, -127);
     agc_set_rate_up_dbps(agc, 7);
     agc_set_rate_down_dbps(agc, -70);
-    agc_set_wait_for_up_ms(agc, 4000);
+    agc_set_wait_for_up_ms(agc, 6000);
 }
 
 static void multiply_gain(agc_state_t &agc, int mult) {
