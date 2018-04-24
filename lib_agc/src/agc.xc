@@ -1,255 +1,4 @@
 // Copyright (c) 2017, XMOS Ltd, All rights reserved
-#include <math.h>
-
-#include "agc.h"
-
-#if 0
-#include <math.h>
-#include <stdio.h>
-#include <fftw3.h>
-
-#define WAIT_FOR_DECAY_FRAMES 500
-#define MAX_GAIN  (8*65536*2)
-#define INIT_GAIN  (MAX_GAIN)
-
-#define FRAME_LENGTH 128
-
-typedef struct {
-    double re, im;
-    double phase;
-    double mag;
-    double mm;
-} lib_dsp_fft_complex_t;
-
-fftw_plan p, pi;
-fftw_complex *in, *out;
-
-double window[FRAME_LENGTH];
-
-static void fft_in() {
-#define N FRAME_LENGTH
-    in = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
-    out = (fftw_complex*) fftw_malloc(sizeof(fftw_complex) * N);
-    p = fftw_plan_dft_1d(N, in, out, FFTW_FORWARD, FFTW_ESTIMATE);
-    pi = fftw_plan_dft_1d(N, in, out, FFTW_BACKWARD, FFTW_ESTIMATE);
-    for(int i = 0; i < FRAME_LENGTH; i++) {
-        window[i] = sqrt(0.5 * (1-cos(i/(double)(FRAME_LENGTH-1) * 3.1415926536 * 2)));
-    }
-}
-
-void fft(lib_dsp_fft_complex_t pts[],
-                         int inp[]) {
-    for(int i = 0; i < FRAME_LENGTH; i++) {
-        in[i][0]     = inp[i] * window[i];
-        in[i][1]     = 0;
-//        printf("%3d %f %d %f\n", i, in[i][0], inp[i], window[i]);
-    }
-         
-    fftw_execute(p);
-    
-    for(int i = 0; i < FRAME_LENGTH; i++) {
-        pts[i].re = out[i][0];
-        pts[i].im = out[i][1];
-//        printf("%3d %f %f\n", i, out[i][0], out[i][1]);
-    }
-}
-
-void fft_inverse(double outp[],lib_dsp_fft_complex_t inp[]) {
-    for(int i = 0; i < FRAME_LENGTH; i++) {
-        in[i][0]     = inp[i].re;//*window[i];
-        in[i][1]     = inp[i].im;//*window[i];
-//        printf("%3d %f %d %f\n", i, in[i][0], inp[i], window[i]);
-    }
-         
-    fftw_execute(pi);
-    
-    for(int i = 0; i < FRAME_LENGTH; i++) {
-        outp[i] = out[i][0]/FRAME_LENGTH;
-//        printf("%3d %f %f\n", i, out[i][0], out[i][1]);
-    }
-}
-
-
-int past[7][FRAME_LENGTH];
-
-int read_sample(FILE *fd) {
-    unsigned c0 = getc(fd);
-    unsigned c1 = getc(fd);
-    short i = c0 | c1 << 8;
-    return i;
-}
-
-void write_sample(FILE *fd, short i) {
-    unsigned c0 = i & 0xff;
-    unsigned c1 = (i >> 8) & 0xff;
-    putc(c0, fd);
-    putc(c1, fd);
-}
-
-
-double wavelength[FRAME_LENGTH/2];
-lib_dsp_fft_complex_t spectre[FRAME_LENGTH];
-lib_dsp_fft_complex_t avgspectre[FRAME_LENGTH];
-double output[FRAME_LENGTH];
-double real_output[FRAME_LENGTH];
-int past[7][FRAME_LENGTH];
-
-int clip(double v) {
-    if (v > 0x7fff) return 0x7fff;
-    if (v < -0x8000) return -0x8000;
-    return v;
-}
-int main(int argc, char *argv[]) {
-    FILE *fd = fopen(argv[1], "rb");
-    fft_in();
-    FILE *ofd = fopen(argv[2], "wb");
-    for(int i = 0; i < 44; i++) {
-        unsigned c = getc(fd);
-        putc(c, ofd);
-    }
-
-    int mode = AGC_STABLE;
-    int wait_frames = 100;
-    double gain = INIT_GAIN;
-    double maxfactor = 0.0625;
-    double factors[FRAME_LENGTH/2];
-    double is_noise[FRAME_LENGTH/2];
-    double last_mag[FRAME_LENGTH/2];
-    
-    for(int n = 0; n < FRAME_LENGTH/2; n++) {
-        factors[n] = maxfactor;
-        is_noise[n] = 1.0;
-        last_mag[n] = 0;
-    }
-    while(!feof(fd)) {
-        for(int n = 0; n < FRAME_LENGTH/2; n++) {
-            for(int i = 0; i < 7; i++) {
-                past[i][n] = past[i][n+FRAME_LENGTH/2];
-            }
-            real_output[n] = real_output[n+FRAME_LENGTH/2];
-            real_output[n+FRAME_LENGTH/2] = 0;
-        }
-        for(int n = 0; n < FRAME_LENGTH/2; n++) {
-            for(int i = 0; i < 7; i++) {
-                past[i][n+FRAME_LENGTH/2] = read_sample(fd);
-            }
-        }
-        fft(spectre, past[1]);
-        spectre[0].re = 0;
-        spectre[1].re = 0;
-        spectre[FRAME_LENGTH-1].re = 0;
-        spectre[0].im = 0;
-        spectre[1].im = 0;
-        spectre[FRAME_LENGTH-1].im = 0;
-        double energy = 0.0;
-        double sum = 0;
-        for(int n = 0; n < FRAME_LENGTH/2; n++) {
-            double mag = hypot(spectre[n].im, spectre[n].re);
-            sum += mag;
-        }
-        for(int n = 0; n < FRAME_LENGTH/2; n++) {
-            double mag = hypot(spectre[n].im, spectre[n].re);
-            avgspectre[n].mag = 0.99 * avgspectre[n].mag + 0.01 * mag;
-//            printf("%.0f,", mag);
-#if 0
-            double f;
-            avgspectre[n].mag = 900 + 500 * n / 64.0;
-            double newfactor;
-            if (mag > 1.5 * avgspectre[n].mag) {
-                newfactor = 1;
-            } else {
-                newfactor = maxfactor;
-            }
-            factors[n] = factors[n] * 0.9 + newfactor * 0.1;
-            f = factors[n];
-#endif
-#if 1
-            double f;
-            double avg = 550 + 500 * n / 64.0;
-            double stddev = 300;
-            double lower_limit = avg + 0*stddev;
-            double upper_limit = avg + 2*stddev;
-            if (is_noise[n]) {
-                if (last_mag[n] + mag > 2  * upper_limit) {
-                    is_noise[n] = 0;
-                }
-            } else {
-                if (last_mag[n] + mag < 2  * lower_limit) {
-                    is_noise[n] = 1;
-                }
-            }
-            last_mag[n] = mag;
-            f = is_noise[n] ? 0.0625 : 1.000 ;
-#endif
-//            f = (1/(1+exp(-mag/120.0+10.0)));
-//            if (f < maxfactor)  f = maxfactor;
-//            f = 1/((2000.0/mag)+1);
-            spectre[n].im *= f;
-            spectre[n].re *= f;
-            spectre[FRAME_LENGTH - n].im *= f;
-            spectre[FRAME_LENGTH - n].re *= f;
-            energy += f * mag;
-        }
-        fft_inverse(output, spectre);
-        for(int n = 0; n < FRAME_LENGTH; n++) {
-            real_output[n] += output[n] * window[n];
-        }
-        
-        double desired_max = 2000000.0*65536.0 * 0.7;
-        double desired_mid = 2000000.0*32768.0;
-        double desired_min = 2000000.0*16384.0 * 1.4;
-//        printf("Energy %f gain %f\n", energy, gain);
-        energy *= gain;
-        
-        switch(mode) {
-        case AGC_STABLE:
-            if (energy > desired_max) {
-                mode = AGC_DOWN;
-            } else if (energy < desired_min) {
-                mode = WAIT_FOR_DECAY;
-                wait_frames = WAIT_FOR_DECAY_FRAMES;
-            }
-            break;
-        case AGC_UP:
-            if (energy > desired_mid) {
-                mode = AGC_STABLE;
-            }
-            break;
-        case AGC_DOWN:
-            if (energy < desired_mid) {
-                mode = AGC_STABLE;
-            }
-            break;
-        case WAIT_FOR_DECAY:
-            if (energy > desired_max) {
-                mode = AGC_DOWN;
-            } else if (energy < desired_min) {
-                wait_frames--;
-                if (wait_frames <= 0) {
-                    mode = AGC_UP;
-                }
-            } else {
-                mode = AGC_STABLE;
-            }
-            break;
-        }
-        for(int n = 0; n < FRAME_LENGTH/2; n++) {
-            gained_sample[n] = clip(real_output[n]*gain/65536);
-            switch(mode) {
-            case AGC_UP:
-                gain = gain * 1.0001;
-                break;
-            case AGC_DOWN:
-                gain = gain * 0.999;
-                break;
-            }
-            if (gain > MAX_GAIN) gain = MAX_GAIN;
-            if (gain < 1) gain = 1;
-        }
-    }
-}
-#endif
-
 #include <stdio.h>
 #include <stdint.h>
 #include <dsp.h>
@@ -342,7 +91,7 @@ void agc_set_rate_up_dbps(agc_state_t &agc, int32_t db) {
 
 void agc_set_rate_down_dbps(agc_state_t &agc, int32_t db) {
     ASSERT(db < 0);
-    agc.down = agc_set_gain_no_shift(db * 1049);
+    agc.down = agc_set_gain_no_shift(db * 104900);
 }
 
 void agc_set_wait_for_up_ms(agc_state_t &agc, uint32_t milliseconds) {
@@ -368,6 +117,7 @@ void agc_init(agc_state_t &agc, uint32_t frame_length) {
     agc_set_rate_up_dbps(agc, 7);
     agc_set_rate_down_dbps(agc, -70);
     agc_set_wait_for_up_ms(agc, 6000);
+    agc.frame_length = frame_length;
 }
 
 static void multiply_gain(agc_state_t &agc, int mult) {
@@ -414,7 +164,7 @@ void agc_process_frame(agc_state_t &agc,
     
     uint64_t sss = 0; // Sum of Square Signals
     int logN = 31 - clz(agc.frame_length);
-    for(int n = 0; n < agc.frame_length; n++) {
+    for(uint32_t n = 0; n < agc.frame_length; n++) {
         sss += (samples[n] * (int64_t) samples[n]) >> logN;
     }
     sss = sss >> (shr * 2);
@@ -438,7 +188,7 @@ void agc_process_frame(agc_state_t &agc,
 //    printf("Actual energy %u  postgain %lld desired %d\n", sqrt_energy, energy, agc.desired);
 //    printf("[%d..%d]  %d\n", agc.desired_min, agc.desired_max, agc.state);
     
-    for(int n = 0; n < agc.frame_length; n++) {
+    for(uint32_t n = 0; n < agc.frame_length; n++) {
         switch(agc.state) {
         case AGC_STABLE:
             if (energy > agc.desired_max) {
@@ -472,6 +222,9 @@ void agc_process_frame(agc_state_t &agc,
             } else {
                 agc.state = AGC_STABLE;
             }
+            break;
+        default:
+            __builtin_unreachable();
             break;
         }
         energy = (sqrt_energy * (uint64_t) agc.gain) >> (24 - agc.gain_shl);

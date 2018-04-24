@@ -102,7 +102,7 @@ void agc_set_rate_down_dbps(agc_state_t &agc, int32_t dbps);
  * in the range [-1023..-1]
  *
  * \param[in,out] agc Gain controller structure
- * \param[in] dbps    Desired adaptation speed in dB per second
+ * \param[in] dbps    Desired adaptation speed in dB per 10 milliseconds
  */
 void agc_set_rate_up_dbps(agc_state_t &agc, int32_t dbps);
 
