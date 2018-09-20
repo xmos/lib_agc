@@ -1,0 +1,8 @@
+def use_module(bld):
+    sources = bld.path.ant_glob(['src/**/*.xc', 'src/**/*.S'])
+    bld.env.MODULE_XCC_XC_FLAGS = ['-O2', '-g']
+    bld.module(
+        source=sources,
+        includes=['api'],
+        depends_on=['lib_dsp', 'audio_test_tools'],
+        version='0.0.1')
