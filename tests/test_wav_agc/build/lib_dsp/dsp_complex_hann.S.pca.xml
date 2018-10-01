@@ -1,7 +1,0 @@
-<preCompilationAnalysis file="lib_dsp/dsp_complex_hann.S.o">
-  <fCall global="true" name="dsp_complex_window_hanning_post_fft_half"/>
-  <fCall global="true" name="dsp_complex_window_hanning_post_fft_half.nstackwords"/>
-  <fCall global="true" name="dsp_complex_window_hanning_post_fft_half.maxcores"/>
-  <fCall global="true" name="dsp_complex_window_hanning_post_fft_half.maxtimers"/>
-  <fCall global="true" name="dsp_complex_window_hanning_post_fft_half.maxchanends"/>
-</preCompilationAnalysis>

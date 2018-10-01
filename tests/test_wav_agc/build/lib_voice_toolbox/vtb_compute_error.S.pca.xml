@@ -1,7 +1,0 @@
-<preCompilationAnalysis file="lib_voice_toolbox/vtb_compute_error.S.o">
-  <fCall global="true" name="vtb_compute_Error_wrapped_asm"/>
-  <fCall global="true" name="vtb_compute_Error_wrapped_asm.nstackwords"/>
-  <fCall global="true" name="vtb_compute_Error_wrapped_asm.maxcores"/>
-  <fCall global="true" name="vtb_compute_Error_wrapped_asm.maxtimers"/>
-  <fCall global="true" name="vtb_compute_Error_wrapped_asm.maxchanends"/>
-</preCompilationAnalysis>

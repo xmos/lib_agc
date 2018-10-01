@@ -1,7 +1,0 @@
-<preCompilationAnalysis file="lib_dsp/dsp_fft_split_spectrum.S.o">
-  <fCall global="true" name="dsp_fft_split_spectrum_xs2"/>
-  <fCall global="true" name="dsp_fft_split_spectrum_xs2.nstackwords"/>
-  <fCall global="true" name="dsp_fft_split_spectrum_xs2.maxcores"/>
-  <fCall global="true" name="dsp_fft_split_spectrum_xs2.maxtimers"/>
-  <fCall global="true" name="dsp_fft_split_spectrum_xs2.maxchanends"/>
-</preCompilationAnalysis>

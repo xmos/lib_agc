@@ -1,7 +1,0 @@
-<preCompilationAnalysis file="lib_dsp/dsp_min_vector.S.o">
-  <fCall global="true" name="dsp_vector_minv"/>
-  <fCall global="true" name="dsp_vector_minv.nstackwords"/>
-  <fCall global="true" name="dsp_vector_minv.maxcores"/>
-  <fCall global="true" name="dsp_vector_minv.maxtimers"/>
-  <fCall global="true" name="dsp_vector_minv.maxchanends"/>
-</preCompilationAnalysis>

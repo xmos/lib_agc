@@ -1,7 +1,0 @@
-<preCompilationAnalysis file="lib_dsp/dsp_bfp_bit_reverse_shl.S.o">
-  <fCall global="true" name="dsp_bfp_bit_reverse_shl"/>
-  <fCall global="true" name="dsp_bfp_bit_reverse_shl.nstackwords"/>
-  <fCall global="true" name="dsp_bfp_bit_reverse_shl.maxcores"/>
-  <fCall global="true" name="dsp_bfp_bit_reverse_shl.maxtimers"/>
-  <fCall global="true" name="dsp_bfp_bit_reverse_shl.maxchanends"/>
-</preCompilationAnalysis>

@@ -1,7 +1,0 @@
-<preCompilationAnalysis file="lib_voice_toolbox/vtb_compute_T.S.o">
-  <fCall global="true" name="vtb_compute_T_asm"/>
-  <fCall global="true" name="vtb_compute_T_asm.nstackwords"/>
-  <fCall global="true" name="vtb_compute_T_asm.maxcores"/>
-  <fCall global="true" name="vtb_compute_T_asm.maxtimers"/>
-  <fCall global="true" name="vtb_compute_T_asm.maxchanends"/>
-</preCompilationAnalysis>

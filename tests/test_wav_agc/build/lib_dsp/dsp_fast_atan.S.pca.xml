@@ -1,7 +1,0 @@
-<preCompilationAnalysis file="lib_dsp/dsp_fast_atan.S.o">
-  <fCall global="true" name="dsp_math_atan2_hypot"/>
-  <fCall global="true" name="dsp_math_atan2_hypot.nstackwords"/>
-  <fCall global="true" name="dsp_math_atan2_hypot.maxcores"/>
-  <fCall global="true" name="dsp_math_atan2_hypot.maxtimers"/>
-  <fCall global="true" name="dsp_math_atan2_hypot.maxchanends"/>
-</preCompilationAnalysis>

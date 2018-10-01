@@ -1,7 +1,0 @@
-<preCompilationAnalysis file="lib_dsp/dsp_fft_bit_reverse.S.o">
-  <fCall global="true" name="dsp_fft_bit_reverse"/>
-  <fCall global="true" name="dsp_fft_bit_reverse.nstackwords"/>
-  <fCall global="true" name="dsp_fft_bit_reverse.maxcores"/>
-  <fCall global="true" name="dsp_fft_bit_reverse.maxtimers"/>
-  <fCall global="true" name="dsp_fft_bit_reverse.maxchanends"/>
-</preCompilationAnalysis>
