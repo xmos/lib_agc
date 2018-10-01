@@ -1,0 +1,7 @@
+<preCompilationAnalysis file="lib_dsp/dsp_fft_zero_reverse_forward.S.o">
+  <fCall global="true" name="dsp_fft_zero_reverse_forward"/>
+  <fCall global="true" name="dsp_fft_zero_reverse_forward.nstackwords"/>
+  <fCall global="true" name="dsp_fft_zero_reverse_forward.maxcores"/>
+  <fCall global="true" name="dsp_fft_zero_reverse_forward.maxtimers"/>
+  <fCall global="true" name="dsp_fft_zero_reverse_forward.maxchanends"/>
+</preCompilationAnalysis>

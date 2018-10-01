@@ -58,69 +58,70 @@ static int32_t agc_get_gain_2(uint32_t shift, uint32_t gain) {
     return db;
 }
 
-int32_t agc_get_gain(agc_state_t &agc) {
-    return agc_get_gain_2(agc.gain_shl, agc.gain);
+int32_t agc_get_gain(agc_state_t &agc, unsigned channel) {
+    return agc_get_gain_2(agc.channel_state[channel].gain_shl, agc.channel_state[channel].gain);
 }
 
-void agc_set_gain_db(agc_state_t &agc, int32_t db) {
+void agc_set_gain_db(agc_state_t &agc, unsigned channel, int32_t db) {
     ASSERT(db < 128 && db > -128);
-    agc_set_gain(agc.gain_shl, agc.gain, db << 24);
+    agc_set_gain(agc.channel_state[channel].gain_shl, agc.channel_state[channel].gain, db << 24);
 }
 
-void agc_set_gain_max_db(agc_state_t &agc, int32_t db) {
+void agc_set_gain_max_db(agc_state_t &agc, unsigned channel, int32_t db) {
     ASSERT(db < 128 && db > -128);
-    agc_set_gain(agc.max_gain_shl, agc.max_gain, db << 24);
+    agc_set_gain(agc.channel_state[channel].max_gain_shl, agc.channel_state[channel].max_gain, db << 24);
 }
 
-void agc_set_gain_min_db(agc_state_t &agc, int32_t db) {
+void agc_set_gain_min_db(agc_state_t &agc, unsigned channel, int32_t db) {
     ASSERT(db < 128 && db > -128);
-    agc_set_gain(agc.min_gain_shl, agc.min_gain, db << 24);
+    agc_set_gain(agc.channel_state[channel].min_gain_shl, agc.channel_state[channel].min_gain, db << 24);
 }
 
-void agc_set_desired_db(agc_state_t &agc, int32_t db) {
-    agc.desired = agc_set_gain_no_shift(db << 24);
-    agc.desired <<= 7;
-    agc.desired_min = (agc.desired/3) * 2;
-    agc.desired_max = (agc.desired>>1) * 3;
+void agc_set_desired_db(agc_state_t &agc, unsigned channel, int32_t db) {
+    agc.channel_state[channel].desired = agc_set_gain_no_shift(db << 24);
+    agc.channel_state[channel].desired <<= 7;
+    agc.channel_state[channel].desired_min = (agc.channel_state[channel].desired/3) * 2;
+    agc.channel_state[channel].desired_max = (agc.channel_state[channel].desired>>1) * 3;
 }
 
-void agc_set_rate_up_dbps(agc_state_t &agc, int32_t db) {
+void agc_set_rate_up_dbps(agc_state_t &agc, unsigned channel, int32_t db) {
     ASSERT(db > 0);
-    agc.up = agc_set_gain_no_shift(db * 1049);
+    agc.channel_state[channel].up = agc_set_gain_no_shift(db * 1049);
 }
 
-void agc_set_rate_down_dbps(agc_state_t &agc, int32_t db) {
+void agc_set_rate_down_dbps(agc_state_t &agc, unsigned channel, int32_t db) {
     ASSERT(db < 0);
-    agc.down = agc_set_gain_no_shift(db * 104900);
+    agc.channel_state[channel].down = agc_set_gain_no_shift(db * 104900);
 }
 
-void agc_set_wait_for_up_ms(agc_state_t &agc, uint32_t milliseconds) {
-    agc.wait_for_up_samples = milliseconds * 16;
+void agc_set_wait_for_up_ms(agc_state_t &agc, unsigned channel, uint32_t milliseconds) {
+    agc.channel_state[channel].wait_for_up_samples = milliseconds * 16;
 }
 
-void agc_set_look_past_frames(agc_state_t &agc, uint32_t look_past_frames) {
-    agc.look_past_frames = look_past_frames;
+void agc_set_look_past_frames(agc_state_t &agc, unsigned channel, uint32_t look_past_frames) {
+    agc.channel_state[channel].look_past_frames = look_past_frames;
 }
 
-void agc_set_look_ahead_frames(agc_state_t &agc, uint32_t look_ahead_frames) {
-    agc.look_ahead_frames = look_ahead_frames;
+void agc_set_look_ahead_frames(agc_state_t &agc, unsigned channel, uint32_t look_ahead_frames) {
+    agc.channel_state[channel].look_ahead_frames = look_ahead_frames;
 }
 
-void agc_init(agc_state_t &agc, uint32_t frame_length) {
-    agc.state = AGC_STABLE;
-    agc.look_past_frames = 0;
-    agc.look_ahead_frames = 0;
-    agc_set_gain_db(agc, 0);
-    agc_set_desired_db(agc, -30);
-    agc_set_gain_max_db(agc, 127);
-    agc_set_gain_min_db(agc, -127);
-    agc_set_rate_up_dbps(agc, 7);
-    agc_set_rate_down_dbps(agc, -70);
-    agc_set_wait_for_up_ms(agc, 6000);
-    agc.frame_length = frame_length;
+void agc_init(agc_state_t &agc, unsigned channel, uint32_t frame_length) {
+    agc.channel_state[channel].state = AGC_STABLE;
+    agc.channel_state[channel].look_past_frames = 0;
+    agc.channel_state[channel].look_ahead_frames = 0;
+    agc_set_gain_db(agc,channel, 0);
+    agc_set_desired_db(agc,channel, -30);
+    agc_set_gain_max_db(agc,channel, 127);
+    agc_set_gain_min_db(agc,channel, -127);
+    agc_set_rate_up_dbps(agc,channel, 7);
+    agc_set_rate_down_dbps(agc,channel, -70);
+    agc_set_wait_for_up_ms(agc,channel, 6000);
+    agc.channel_state[channel].frame_length = frame_length;
 }
 
-static void multiply_gain(agc_state_t &agc, int mult) {
+static void multiply_gain(agc_channel_state_t &agc, int mult) {
+
     agc.gain = (agc.gain * (uint64_t) mult) >> 24;
 
     if (agc.gain < AGC_MANTISSA_LOWER_LIMIT) {
@@ -156,8 +157,9 @@ static int32_t clamp(int64_t sample) {
     return sample;
 }
 
-void agc_process_frame(agc_state_t &agc,
-                       int32_t samples[],
+void agc_process_frame2(agc_channel_state_t &agc,
+                       dsp_complex_t samples[AGC_FRAME_ADVANCE],
+
                        int32_t shr,
                        int32_t (&?sample_buffer)[],
                        uint32_t (&?energy_buffer)[]) {
@@ -275,5 +277,12 @@ void agc_process_frame(agc_state_t &agc,
         sample_buffer[n+(agc.look_ahead_frames-1)*(agc.frame_length+1)] =
             shr;
     }
+}
+
+
+void agc_process_frame(agc_state_t &agc,
+                       int32_t frame[AGC_CHANNEL_PAIRS][AGC_FRAME_ADVANCE]){
+
+
 }
 

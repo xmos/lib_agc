@@ -1,0 +1,7 @@
+BINDIR = '/usr/local/bin'
+CPPPATH_ST = '-I%s'
+LIBDIR = '/usr/local/lib'
+LIBPATH_ST = '-L%s'
+LIB_ST = '-l%s'
+PREFIX = '/usr/local'
+PROJECT_ROOT = '../../..'

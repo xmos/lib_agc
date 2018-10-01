@@ -1,0 +1,131 @@
+<preCompilationAnalysis file="../../../../lib_voice_toolbox/lib_voice_toolbox/src/utils.xc">
+<fDef name="shr64" global="false" unit="../../../../lib_voice_toolbox/lib_voice_toolbox/src/utils.xc" noreturn="false" doNotSpecialize="false" numParams="2"/>
+<fDef name="dsp_math_cos" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
+<fDef name="dsp_math_cosh" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
+<fDef name="dsp_math_sinh" global="true" noreturn="false" doNotSpecialize="true" numParams="1"/>
+<fDef name="vtb_clz64" global="true" noreturn="false" doNotSpecialize="false" numParams="1"/>
+<fDef name="vtb_get_channel_hr" global="true" noreturn="false" doNotSpecialize="false" numParams="3"/>
+<fDef name="vtb_get_fd_frame_power" global="true" noreturn="false" doNotSpecialize="false" numParams="3"/>
+<fDef name="vtb_get_td_frame_power" global="true" noreturn="false" doNotSpecialize="false" numParams="4"/>
+<fCall name="dsp_math_sin" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="dsp_math_sinh_" global="true" numArgs="2">
+  <arg num="0">
+    <passThroughArg param="0" caller="dsp_math_sinh" global="true"/>
+    <values>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="intval"><intval isSigned="true" val="0"/></value>
+    </values>
+  </arg>
+</fCall>
+<fCall name="dsp_math_sinh_" global="true" numArgs="2">
+  <arg num="0">
+    <passThroughArg param="0" caller="dsp_math_cosh" global="true"/>
+    <values>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="intval"><intval isSigned="true" val="1"/></value>
+    </values>
+  </arg>
+</fCall>
+<fCall name="__builtin_clz" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="__builtin_clz" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="__builtin_clz" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="dsp_bfp_cls" global="true" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="__builtin_clz" global="true" numArgs="1">
+  <arg num="0">
+    <passThroughArg param="2" caller="vtb_get_fd_frame_power" global="true"/>
+    <values>
+    </values>
+  </arg>
+</fCall>
+<fCall name="shr64" global="false" unit="../../../../lib_voice_toolbox/lib_voice_toolbox/src/utils.xc" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="__builtin_clz" global="true" numArgs="1">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="__builtin_clz" global="true" numArgs="1">
+  <arg num="0">
+    <passThroughArg param="2" caller="vtb_get_td_frame_power" global="true"/>
+    <values>
+    </values>
+  </arg>
+</fCall>
+<fCall name="shr64" global="false" unit="../../../../lib_voice_toolbox/lib_voice_toolbox/src/utils.xc" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+<fCall name="shr64" global="false" unit="../../../../lib_voice_toolbox/lib_voice_toolbox/src/utils.xc" numArgs="2">
+  <arg num="0">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+  <arg num="1">
+    <values>
+      <value type="unknown"/>
+    </values>
+  </arg>
+</fCall>
+</preCompilationAnalysis>

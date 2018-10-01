@@ -1,0 +1,22 @@
+<preCompilationAnalysis file="lib_dsp/dsp_complex_mul_vector.S.o">
+  <fCall global="true" name="dsp_complex_mul_vector"/>
+  <fCall global="true" name="dsp_complex_mul_vector.nstackwords"/>
+  <fCall global="true" name="dsp_complex_mul_vector.maxcores"/>
+  <fCall global="true" name="dsp_complex_mul_vector.maxtimers"/>
+  <fCall global="true" name="dsp_complex_mul_vector.maxchanends"/>
+  <fCall global="true" name="dsp_complex_mul_conjugate_vector"/>
+  <fCall global="true" name="dsp_complex_mul_conjugate_vector.nstackwords"/>
+  <fCall global="true" name="dsp_complex_mul_conjugate_vector.maxcores"/>
+  <fCall global="true" name="dsp_complex_mul_conjugate_vector.maxtimers"/>
+  <fCall global="true" name="dsp_complex_mul_conjugate_vector.maxchanends"/>
+  <fCall global="true" name="dsp_complex_mul_conjugate_vector3"/>
+  <fCall global="true" name="dsp_complex_mul_conjugate_vector3.nstackwords"/>
+  <fCall global="true" name="dsp_complex_mul_conjugate_vector3.maxcores"/>
+  <fCall global="true" name="dsp_complex_mul_conjugate_vector3.maxtimers"/>
+  <fCall global="true" name="dsp_complex_mul_conjugate_vector3.maxchanends"/>
+  <fCall global="true" name="dsp_complex_scalar_vector3"/>
+  <fCall global="true" name="dsp_complex_scalar_vector3.nstackwords"/>
+  <fCall global="true" name="dsp_complex_scalar_vector3.maxcores"/>
+  <fCall global="true" name="dsp_complex_scalar_vector3.maxtimers"/>
+  <fCall global="true" name="dsp_complex_scalar_vector3.maxchanends"/>
+</preCompilationAnalysis>

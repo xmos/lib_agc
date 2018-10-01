@@ -1,0 +1,7 @@
+<preCompilationAnalysis file="lib_dsp/dsp_bfp_cls.S.o">
+  <fCall global="true" name="dsp_bfp_cls"/>
+  <fCall global="true" name="dsp_bfp_cls.nstackwords"/>
+  <fCall global="true" name="dsp_bfp_cls.maxcores"/>
+  <fCall global="true" name="dsp_bfp_cls.maxtimers"/>
+  <fCall global="true" name="dsp_bfp_cls.maxchanends"/>
+</preCompilationAnalysis>

@@ -1,0 +1,7 @@
+<preCompilationAnalysis file="lib_dsp/dsp_logistics.S.o">
+  <fCall global="true" name="dsp_math_logistics_fast"/>
+  <fCall global="true" name="dsp_math_logistics_fast.nstackwords"/>
+  <fCall global="true" name="dsp_math_logistics_fast.maxcores"/>
+  <fCall global="true" name="dsp_math_logistics_fast.maxtimers"/>
+  <fCall global="true" name="dsp_math_logistics_fast.maxchanends"/>
+</preCompilationAnalysis>

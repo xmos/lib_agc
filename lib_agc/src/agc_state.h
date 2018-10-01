@@ -4,6 +4,8 @@
 
 #include <stdint.h>
 
+#include "agc_conf.h"
+
 /* AGC state machine, only used internally */
 
 typedef enum {
@@ -14,7 +16,6 @@ typedef enum {
 } agc_mode;
 
 /* structure to hold AGC state, only used internally */
-
 typedef struct {
     agc_mode state;
     uint32_t frame_length;
@@ -39,6 +40,11 @@ typedef struct {
 
     uint32_t look_past_frames;
     uint32_t look_ahead_frames;
+
+} agc_channel_state_t;
+
+typedef struct {
+    agc_channel_state_t channel_state[AGC_CHANNELS];
 } agc_state_t;
 
 

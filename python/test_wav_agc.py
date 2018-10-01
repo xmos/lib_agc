@@ -1,14 +1,13 @@
 import numpy as np
 import scipy.io.wavfile
-#import matplotlib.pyplot as plt
-import utils.audio_utils as au
+import audio_utils as au
+import agc 
 import argparse
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("x", help="point_noise wav file")
-    parser.add_argument("e", help="voice wav file")
-    parser.add_argument("-g", default='30.0', help="Gain value in dB")
+    parser.add_argument("input", help="inpout wav file")
+    parser.add_argument("output", help="output wav file")
     parser.parse_args()
     args = parser.parse_args()
     return args
@@ -18,19 +17,18 @@ if __name__ == "__main__":
 
     frame_advance = 240
 
-    rate, mix_wav_file = scipy.io.wavfile.read(args.x, 'r')
-    mix_wav_data, channel_count, file_length = au.parse_audio(mix_wav_file)
+    rate, mix_wav_file = scipy.io.wavfile.read(args.input, 'r')
+    wav_data, channel_count, file_length = au.parse_audio(mix_wav_file)
         
     frame_count = file_length/frame_advance
 
-    output = np.zeros((len(mix_wav_data), file_length), dtype=np.int16)
+    output = np.zeros((channel_count, file_length))
 
-    gc = agc.automatic_gain_control(frame_advance, automatic = False, gain_db = float(args.g))
+    gc = agc.agc(frame_advance, gain_db = 20.0)
 
     for frame_start in range(0, file_length-frame_advance, frame_advance):
-        x_mix = au.get_frame(mix_wav_data, frame_start, frame_advance)
-        o = gc.process_frame(x_mix)
-        output[:, frame_start: frame_start + frame_advance] = o
+        x = au.get_frame(wav_data, frame_start, frame_advance)
+        output[:, frame_start: frame_start + frame_advance] = gc.process_frame(x)
 
-    scipy.io.wavfile.write(args.e, rate, output.T)
+    scipy.io.wavfile.write(args.output, rate, output.T)
 
