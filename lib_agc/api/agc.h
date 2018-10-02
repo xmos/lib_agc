@@ -2,11 +2,8 @@
 #ifndef _agc_h_
 #define _agc_h_
 
+#include "dsp.h"
 #include "agc_state.h"
-
-
-#define AGC_CHANNEL_PAIRS ((AGC_CHANNELS+1)/2)
-#define AGC_PROC_FRAME_LENGTH (1<<AGC_PROC_FRAME_LENGTH_LOG2)
 
 void agc_test_task(chanend c_data_input, chanend c_data_output,
                 chanend ?c_control);
@@ -46,7 +43,8 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
  *
  * \param[in] frame_length      Number of samples on which AGC operates.
  */
-void agc_init(agc_state_t &agc, unsigned channel, uint32_t frame_length);
+void agc_init(agc_state_t &agc);
+void agc_init_channel(agc_state_t &agc, unsigned channel);
 
 
 /** Function that sets the maximum gain allowed on the automatic gain
@@ -138,34 +136,14 @@ extern void agc_set_look_past_frames(agc_state_t &agc, unsigned channel, uint32_
 
 extern void agc_set_look_ahead_frames(agc_state_t &agc, unsigned channel, uint32_t look_ahead_frames);
 
-
 /** Function that processes a block of data.
  *
  * \param[in,out] agc     Gain controller structure
  * \param[in,out] samples On input this array contains the sample data.
- *                        If headroom has been removed, then the shr parameter
- *                        should be set to the amount of headroom that has been
- *                        removed. 
  *                        On output this array contains the data with AGC
  *                        applied. Headroom has been reintroduced, and samples
  *                        have been clamped as appropriate. 
- * \param[in] shr         Number of bits that samples have been shifted left by
- * 
- * \param[in,out] sample_buffer Buffer that holds historic samples. Must be an
- *                        array of at least (LOOK_AHEAD_FRAMES+1) * FRAME_SIZE
- *                        words, where LOOK_AHEAD_FRAMES is the number of frames
- *                        that shall be looked ahead for energy, and FRAME_SIZE
- *                        is the number of samples per frame. If
- *                        LOOK_AHEAD_FRAMES is zero then null can be passed in.
- *
- * \param[in,out] energy_buffer Buffer that holds historic energy samples.
- *                        Must be an array of at least (LOOK_PAST_FRAMES +
- *                        LOOK_AHEAD_FRAMES + 1) words which is the number
- *                        of past frames to use for energy estimation. If
- *                        LOOK_PAST_FRAMES and LOOK_AHEAD_FRAMES are 0 then
- *                        null can be used for this parameter.
  */
-
 void agc_process_frame(agc_state_t &agc,
                        dsp_complex_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_FRAME_ADVANCE]);
 

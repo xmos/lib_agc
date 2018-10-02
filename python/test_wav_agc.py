@@ -24,11 +24,14 @@ if __name__ == "__main__":
 
     output = np.zeros((channel_count, file_length))
 
-    gc = agc.agc(frame_advance, gain_db = 20.0)
+    gc = agc.agc(channel_count, frame_advance, gain_db = 20.0)
 
     for frame_start in range(0, file_length-frame_advance, frame_advance):
         x = au.get_frame(wav_data, frame_start, frame_advance)
-        output[:, frame_start: frame_start + frame_advance] = gc.process_frame(x)
+        output[:, frame_start: frame_start + frame_advance] = gc.process_frame(x, verbose = True)
+
+        if frame_start/frame_advance == 4:
+            break
 
     scipy.io.wavfile.write(args.output, rate, output.T)
 
