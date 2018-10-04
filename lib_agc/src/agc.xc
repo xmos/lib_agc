@@ -1,10 +1,36 @@
 // Copyright (c) 2017, XMOS Ltd, All rights reserved
-#include <stdio.h>
-#include <stdint.h>
-#include <dsp.h>
 #include <xclib.h>
-#include <xs1.h>
 #include "agc.h"
+#include "voice_toolbox.h"
+
+/*
+ * AGC_DEBUG_MODE       Will enable all self checking, it will make it
+ *                      MUCH slower however.
+ * AGC_DEBUG_PRINT      Will enable printing of internal state to be
+ *                      compared to higher models.
+ * AGC_WARNING_PRINT    This enables warnings (events that might be bad
+ *                      but not catastrophic).
+ */
+#ifndef AGC_DEBUG_MODE
+#define AGC_DEBUG_MODE 0
+#endif
+
+#ifndef AGC_DEBUG_PRINT
+#define AGC_DEBUG_PRINT 0
+#endif
+
+#ifndef AGC_WARNING_PRINT
+#define AGC_WARNING_PRINT 0
+#endif
+#include <stdio.h>
+#if AGC_DEBUG_MODE | AGC_DEBUG_PRINT | AGC_WARNING_PRINT
+#include <stdio.h>
+#include "audio_test_tools.h"
+#endif
+
+#if AGC_DEBUG_PRINT
+static int frame_counter = 0;
+#endif
 
 #define ASSERT(x)    asm("ecallf %0" :: "r" (x))
 
@@ -14,10 +40,6 @@
 
 #define AGC_MANTISSA_UPPER_LIMIT (2U << 24)
 #define AGC_MANTISSA_LOWER_LIMIT (1U << 24)
-
-#define LOG_AGC_WINDOW_LENGTH   7
-#define AGC_WINDOW_LENGTH   (1<<LOG_AGC_WINDOW_LENGTH)
-
 
 static uint32_t cls64(int64_t x) {
     if (x < 0) {
@@ -31,7 +53,7 @@ static uint32_t cls64(int64_t x) {
     return x + 32;
 }
 
-static void agc_set_gain(int32_t &shift, uint32_t &gain, int32_t db) {
+static void agc_set_gain(int &shift, uint32_t &gain, int32_t db) {
     // First convert dB to log-base-2, in 10.22 format
     db = (db * 5573271LL) >> 27;
     shift = db >> 22;  // Now split in shift and fraction; offset shift
@@ -41,7 +63,7 @@ static void agc_set_gain(int32_t &shift, uint32_t &gain, int32_t db) {
 }
 
 static uint32_t agc_set_gain_no_shift(int32_t db) {
-    int32_t shl;
+    int shl;
     uint32_t gain;
     agc_set_gain(shl, gain, db);
     if (shl < 0) {
@@ -51,97 +73,92 @@ static uint32_t agc_set_gain_no_shift(int32_t db) {
     }
 }
 
-static int32_t agc_get_gain_2(uint32_t shift, uint32_t gain) {
+static int32_t agc_get_gain_2(int shift, uint32_t gain) {
     int db = dsp_math_log(gain);
     db += (shift * 11629080LL);     // add ln(2^shift)
     db = (db * 72862523LL) >> 31;   // convert to 20*log(10) and into 16.16
     return db;
 }
 
-int32_t agc_get_gain(agc_state_t &agc) {
-    return agc_get_gain_2(agc.gain_shl, agc.gain);
+int32_t agc_get_gain(agc_state_t &agc, unsigned channel) {
+    return agc_get_gain_2(agc.channel_state[channel].gain_exp, agc.channel_state[channel].gain);
 }
 
-void agc_set_gain_db(agc_state_t &agc, int32_t db) {
+void agc_set_gain_db(agc_state_t &agc, unsigned channel, int32_t db) {
     ASSERT(db < 128 && db > -128);
-    agc_set_gain(agc.gain_shl, agc.gain, db << 24);
+    agc_set_gain(agc.channel_state[channel].gain_exp, agc.channel_state[channel].gain, db << 24);
 }
 
-void agc_set_gain_max_db(agc_state_t &agc, int32_t db) {
+void agc_set_gain_max_db(agc_state_t &agc, unsigned channel, int32_t db) {
     ASSERT(db < 128 && db > -128);
-    agc_set_gain(agc.max_gain_shl, agc.max_gain, db << 24);
+    agc_set_gain(agc.channel_state[channel].max_gain_exp, agc.channel_state[channel].max_gain, db << 24);
 }
 
-void agc_set_gain_min_db(agc_state_t &agc, int32_t db) {
+void agc_set_gain_min_db(agc_state_t &agc, unsigned channel, int32_t db) {
     ASSERT(db < 128 && db > -128);
-    agc_set_gain(agc.min_gain_shl, agc.min_gain, db << 24);
+    agc_set_gain(agc.channel_state[channel].min_gain_exp, agc.channel_state[channel].min_gain, db << 24);
 }
 
-void agc_set_desired_db(agc_state_t &agc, int32_t db) {
-    agc.desired = agc_set_gain_no_shift(db << 24);
-    agc.desired <<= 7;
-    agc.desired_min = (agc.desired/3) * 2;
-    agc.desired_max = (agc.desired>>1) * 3;
+void agc_set_desired_db(agc_state_t &agc, unsigned channel, int32_t db) {
+    agc.channel_state[channel].desired = agc_set_gain_no_shift(db << 24);
+    agc.channel_state[channel].desired <<= 7;
+    agc.channel_state[channel].desired_min = (agc.channel_state[channel].desired/3) * 2;
+    agc.channel_state[channel].desired_max = (agc.channel_state[channel].desired>>1) * 3;
 }
 
-void agc_set_rate_up_dbps(agc_state_t &agc, int32_t db) {
+void agc_set_rate_up_dbps(agc_state_t &agc, unsigned channel, int32_t db) {
     ASSERT(db > 0);
-    agc.up = agc_set_gain_no_shift(db * 1049);
+    agc.channel_state[channel].up = agc_set_gain_no_shift(db * 1049);
 }
 
-void agc_set_rate_down_dbps(agc_state_t &agc, int32_t db) {
+void agc_set_rate_down_dbps(agc_state_t &agc, unsigned channel, int32_t db) {
     ASSERT(db < 0);
-    agc.down = agc_set_gain_no_shift(db * 104900);
+    agc.channel_state[channel].down = agc_set_gain_no_shift(db * 104900);
 }
 
-void agc_set_wait_for_up_ms(agc_state_t &agc, uint32_t milliseconds) {
-    agc.wait_for_up_samples = milliseconds * 16;
+void agc_set_wait_for_up_ms(agc_state_t &agc, unsigned channel, uint32_t milliseconds) {
+    agc.channel_state[channel].wait_for_up_samples = milliseconds * 16;
 }
 
-void agc_set_look_past_frames(agc_state_t &agc, uint32_t look_past_frames) {
-    agc.look_past_frames = look_past_frames;
+void agc_init(agc_state_t &agc){
+    for(unsigned ch=0;ch<AGC_CHANNELS;ch++){
+        agc_init_channel(agc, ch);
+    }
+}
+void agc_init_channel(agc_state_t &agc, unsigned channel) {
+    agc.channel_state[channel].state = AGC_STABLE;
+    agc_set_gain_db(agc,channel, 0);
+    agc_set_desired_db(agc,channel, -30);
+    agc_set_gain_max_db(agc,channel, 127);
+    agc_set_gain_min_db(agc,channel, -127);
+    agc_set_rate_up_dbps(agc,channel, 7);
+    agc_set_rate_down_dbps(agc,channel, -70);
+    agc_set_wait_for_up_ms(agc,channel, 6000);
 }
 
-void agc_set_look_ahead_frames(agc_state_t &agc, uint32_t look_ahead_frames) {
-    agc.look_ahead_frames = look_ahead_frames;
-}
+static void multiply_gain(agc_channel_state_t &agc, int mult) {
 
-void agc_init(agc_state_t &agc, uint32_t frame_length) {
-    agc.state = AGC_STABLE;
-    agc.look_past_frames = 0;
-    agc.look_ahead_frames = 0;
-    agc_set_gain_db(agc, 0);
-    agc_set_desired_db(agc, -30);
-    agc_set_gain_max_db(agc, 127);
-    agc_set_gain_min_db(agc, -127);
-    agc_set_rate_up_dbps(agc, 7);
-    agc_set_rate_down_dbps(agc, -70);
-    agc_set_wait_for_up_ms(agc, 6000);
-    agc.frame_length = frame_length;
-}
-
-static void multiply_gain(agc_state_t &agc, int mult) {
     agc.gain = (agc.gain * (uint64_t) mult) >> 24;
 
     if (agc.gain < AGC_MANTISSA_LOWER_LIMIT) {
         agc.gain <<= 1;
-        agc.gain_shl--;
+        agc.gain_exp--;
     } else if (agc.gain >= AGC_MANTISSA_UPPER_LIMIT) {
         agc.gain >>= 1;
-        agc.gain_shl++;
+        agc.gain_exp++;
     }
-    uint32_t maxedout = (agc.gain_shl > agc.max_gain_shl ||
-                         (agc.gain_shl == agc.max_gain_shl &&
+    uint32_t maxedout = (agc.gain_exp > agc.max_gain_exp ||
+                         (agc.gain_exp == agc.max_gain_exp &&
                           agc.gain > agc.max_gain));
     if (maxedout) {
-        agc.gain_shl = agc.max_gain_shl;
+        agc.gain_exp = agc.max_gain_exp;
         agc.gain     = agc.max_gain;
     }
-    uint32_t minedout = (agc.gain_shl < agc.min_gain_shl ||
-                         (agc.gain_shl == agc.min_gain_shl &&
+    uint32_t minedout = (agc.gain_exp < agc.min_gain_exp ||
+                         (agc.gain_exp == agc.min_gain_exp &&
                           agc.gain < agc.min_gain));
     if (minedout) {
-        agc.gain_shl = agc.min_gain_shl;
+        agc.gain_exp = agc.min_gain_exp;
         agc.gain     = agc.min_gain;
     }
 }
@@ -156,39 +173,36 @@ static int32_t clamp(int64_t sample) {
     return sample;
 }
 
-void agc_process_frame(agc_state_t &agc,
-                       int32_t samples[],
-                       int32_t shr,
-                       int32_t (&?sample_buffer)[],
-                       uint32_t (&?energy_buffer)[]) {
+void agc_process_channel(agc_channel_state_t &agc,
+                       dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned channel_number) {
+    int imag_channel = channel_number&1;
+    int input_exponent = -31;
     
-    uint64_t sss = 0; // Sum of Square Signals
-    int logN = 31 - clz(agc.frame_length);
-    for(uint32_t n = 0; n < agc.frame_length; n++) {
-        sss += (samples[n] * (int64_t) samples[n]) >> logN;
-    }
-    sss = sss >> (shr * 2);
-    uint32_t sqrt_energy = dsp_math_int_sqrt64(sss);
+#if AGC_DEBUG_PRINT
+    printf("x[%u] = ", channel_number); att_print_python_td(samples, AGC_PROC_FRAME_LENGTH, input_exponent, imag_channel);
+#endif
+    uint32_t frame_energy;
+    int frame_energy_exp;
+    {frame_energy, frame_energy_exp} = vtb_get_td_frame_power(samples, input_exponent, AGC_FRAME_ADVANCE, imag_channel);
 
-    if (!isnull(energy_buffer)) {
-        uint32_t energy_nitems =  agc.look_ahead_frames + agc.look_past_frames + 1;
-        for(uint32_t i = 1; i < energy_nitems; i++) {
-            energy_buffer[i-1] = energy_buffer[i];
-        }
-        energy_buffer[energy_nitems-1] = sqrt_energy;
-        uint64_t total_energy = 0;
-        for(uint32_t i = 0; i < energy_nitems; i++) {
-            total_energy += energy_buffer[i];
-        }
-        sqrt_energy = total_energy / energy_nitems;
+    int sqrt_energy_exp = frame_energy_exp;
+    uint32_t sqrt_energy = frame_energy;
+
+    vtb_sqrt(sqrt_energy, sqrt_energy_exp, 0);
+
+#if AGC_DEBUG_PRINT
+    printf("sqrt_energy[%u] = %.22f\n", channel_number, att_uint32_to_double(sqrt_energy, sqrt_energy_exp));
+#endif
+
+    if (sizeof(agc.sqrt_energy_fifo)) {
+        //TODO add sqrt_energy to sqrt_energy_fifo
+        //TODO sqrt_energy =  average all energy in the sqrt_energy_fifo
     }
     
-    uint64_t energy = (sqrt_energy * (uint64_t) agc.gain) >> (24 - agc.gain_shl);
-
-//    printf("Actual energy %u  postgain %lld desired %d\n", sqrt_energy, energy, agc.desired);
-//    printf("[%d..%d]  %d\n", agc.desired_min, agc.desired_max, agc.state);
+    //average_energy_buffer_energy_p
+    uint64_t energy = (sqrt_energy * (uint64_t) agc.gain) >> (24 - agc.gain_exp);
     
-    for(uint32_t n = 0; n < agc.frame_length; n++) {
+    for(unsigned n = 0; n < AGC_FRAME_ADVANCE; n++) {
         switch(agc.state) {
         case AGC_STABLE:
             if (energy > agc.desired_max) {
@@ -227,26 +241,28 @@ void agc_process_frame(agc_state_t &agc,
             __builtin_unreachable();
             break;
         }
-        energy = (sqrt_energy * (uint64_t) agc.gain) >> (24 - agc.gain_shl);
+        energy = (sqrt_energy * (uint64_t) agc.gain) >> (24 - agc.gain_exp);
 
         int32_t input_sample;
-        int32_t input_shr;
-        if (agc.look_ahead_frames != 0) {
-            input_sample = sample_buffer[n];
-            input_shr = sample_buffer[agc.frame_length];
+        int32_t input_exp;
+        if (agc.look_ahead_frames > 0) {
+#if AGC_LOOK_AHEAD_FRAMES > 0
+            input_sample = agc.sample_buffer[n];
+            input_exp = agc.sample_buffer[AGC_PROC_FRAME_LENGTH];
             for(uint32_t k = 1; k < agc.look_ahead_frames; k++) {
-                sample_buffer[n+(k-1)*(agc.frame_length+1)] = 
-                    sample_buffer[n+k*(agc.frame_length+1)];
+                agc.sample_buffer[n+(k-1)*(AGC_PROC_FRAME_LENGTH+1)] =
+                        agc.sample_buffer[n+k*(AGC_PROC_FRAME_LENGTH+1)];
             }
-            sample_buffer[n+(agc.look_ahead_frames-1)*(agc.frame_length+1)] =
-                samples[n];
+            agc.sample_buffer[n+(agc.look_ahead_frames-1)*(AGC_PROC_FRAME_LENGTH+1)] =
+                    (samples[n], int32_t[2])[imag_channel];
+#endif
         } else {
-            input_sample = samples[n];
-            input_shr = shr;
+            input_sample = (samples[n], int32_t[2])[imag_channel];
+            input_exp = input_exponent;
         }
         
         int64_t gained_sample = input_sample * (int64_t) agc.gain;
-        int32_t gained_shift_r = 24 - agc.gain_shl + input_shr;
+        int32_t gained_shift_r = 24 - agc.gain_exp;
         int32_t output_sample;
         if (gained_shift_r > 0) {
             gained_sample >>= gained_shift_r;
@@ -263,17 +279,27 @@ void agc_process_frame(agc_state_t &agc,
                 output_sample = 0x7FFFFFFF;
             }
         }
-//        printf("%08x -> %016llx -> %08x %2d %08x\n", samples[n], gained_sample, output_sample, agc.gain_shl, agc.gain);
-        samples[n] = output_sample;
+        (samples[n], int32_t[2])[imag_channel] = output_sample;
     }
     if (agc.look_ahead_frames != 0) {
-        const uint32_t n = agc.frame_length;
+        const uint32_t n = AGC_PROC_FRAME_LENGTH;
         for(uint32_t k = 1; k < agc.look_ahead_frames; k++) {
-            sample_buffer[n+(k-1)*(agc.frame_length+1)] = 
-                sample_buffer[n+k*(agc.frame_length+1)];
+            agc.sample_buffer[n+(k-1)*(AGC_PROC_FRAME_LENGTH+1)] =
+                agc.sample_buffer[n+k*(AGC_PROC_FRAME_LENGTH+1)];
         }
-        sample_buffer[n+(agc.look_ahead_frames-1)*(agc.frame_length+1)] =
-            shr;
+        agc.sample_buffer[n+(agc.look_ahead_frames-1)*(AGC_PROC_FRAME_LENGTH+1)] =
+            input_exponent;
     }
+}
+
+void agc_process_frame(agc_state_t &agc,
+        dsp_complex_t frame[AGC_CHANNEL_PAIRS][AGC_FRAME_ADVANCE]){
+#if AGC_DEBUG_PRINT
+    printf("\n#%u\n", frame_counter++);
+#endif
+    for(unsigned ch=0;ch<AGC_CHANNELS;ch++){
+        agc_process_channel(agc.channel_state[ch], frame[ch/2], ch);
+    }
+
 }
 

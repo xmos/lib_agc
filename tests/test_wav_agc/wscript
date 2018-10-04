@@ -1,0 +1,16 @@
+def options(ctx):
+        ctx.add_option('--target', action='store', default='test_wav_ap.xe')
+
+def configure(conf):
+	conf.load('xwaf.compiler_xcc')
+	conf.env.PROJECT_ROOT = '../../..'
+
+def build(bld):
+        target_path = 'bin/' + bld.options.target
+	bld.env.TARGET_ARCH = 'XCORE-200-EXPLORER'
+	bld.env.XSCOPE = bld.path.find_resource('config.xscope')
+
+	depends_on = ['lib_agc', 'audio_test_tools', 'lib_voice_toolbox']
+	bld.env.XCC_FLAGS = ['-O2', '-g', '-Wall', '-report']
+	source = bld.path.ant_glob('src/**/*.xc')
+	bld.program(source=source, depends_on=depends_on,target=target_path)

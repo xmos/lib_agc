@@ -4,6 +4,18 @@
 
 #include <stdint.h>
 
+#include "agc_conf.h"
+
+#ifndef AGC_LOOK_PAST_FRAMES
+#define AGC_LOOK_PAST_FRAMES 0
+#endif
+
+#ifndef AGC_LOOK_AHEAD_FRAMES
+#define AGC_LOOK_AHEAD_FRAMES 0
+#endif
+
+#define AGC_CHANNEL_PAIRS ((AGC_CHANNELS+1)/2)
+
 /* AGC state machine, only used internally */
 
 typedef enum {
@@ -14,31 +26,36 @@ typedef enum {
 } agc_mode;
 
 /* structure to hold AGC state, only used internally */
-
 typedef struct {
+
+    int32_t sample_buffer[(AGC_LOOK_AHEAD_FRAMES+1) * AGC_PROC_FRAME_LENGTH];
+    uint32_t sqrt_energy_fifo[(AGC_LOOK_PAST_FRAMES + AGC_LOOK_AHEAD_FRAMES + 1)];
     agc_mode state;
-    uint32_t frame_length;
 
     uint32_t desired;
     uint32_t desired_min;
     uint32_t desired_max;
     
     uint32_t gain;
-    int32_t gain_shl;
+    int gain_exp;
     
     uint32_t max_gain;
-    int32_t max_gain_shl;
+    int max_gain_exp;
     
     uint32_t min_gain;
-    int32_t min_gain_shl;
+    int min_gain_exp;
     
     uint32_t down, up;
     
     uint32_t wait_samples;
     uint32_t wait_for_up_samples;
 
-    uint32_t look_past_frames;
-    uint32_t look_ahead_frames;
+    unsigned look_ahead_frames;
+    unsigned look_past_frames;
+} agc_channel_state_t;
+
+typedef struct {
+    agc_channel_state_t channel_state[AGC_CHANNELS];
 } agc_state_t;
 
 
