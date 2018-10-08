@@ -59,23 +59,21 @@ class agc:
             for ch in range(self.channel_count):
                 print "average_energy_buffer_energy_p[" +str(ch)+"] = " +str(average_energy_buffer_energy[ch])
 
-        if self.automatic:
-            print "Error - only fixed gain control implemented"
-        else:
-            negative = input_frame < 0
-            negative = - 2 * negative + 1
-            output_frame = np.abs(input_frame)
-            
-            if self.soft_clip_enabled:
-                linear = self.gain * output_frame
-                linear_part = linear < self.AGC_FIXED_LIMIT
-                nonlinear = 2 * self.AGC_FIXED_LIMIT - self.AGC_FIXED_LIMIT ** 2 / (self.gain * output_frame + 1e-38)
-                output_frame = linear * linear_part + nonlinear * (1-linear_part)
-            else:
-                output_frame = self.gain * output_frame
-                clips = output_frame > 1.0
-                output_frame = output_frame * (1-clips) + 1.0 * clips
-            output_frame = negative * output_frame
-            # output16 = np.asarray(output_frame*np.iinfo(np.int16).max, dtype= np.int16)
+
+        negative = input_frame < 0
+        negative = - 2 * negative + 1
+
+        output_frame = np.abs(input_frame)
+        
+        linear = self.gain * output_frame
+        
+        linear_part = linear < self.AGC_FIXED_LIMIT
+        nonlinear = 2 * self.AGC_FIXED_LIMIT - self.AGC_FIXED_LIMIT ** 2 / (self.gain * output_frame + 1e-38)
+        output_frame = linear * linear_part + nonlinear * (1-linear_part)
+        output_frame = negative * output_frame
+
         return output_frame
+
+
+
 

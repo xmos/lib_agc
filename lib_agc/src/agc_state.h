@@ -31,25 +31,10 @@ typedef struct {
     int32_t sample_buffer[(AGC_LOOK_AHEAD_FRAMES+1) * AGC_PROC_FRAME_LENGTH];
     uint32_t sqrt_energy_fifo[(AGC_LOOK_PAST_FRAMES + AGC_LOOK_AHEAD_FRAMES + 1)];
     agc_mode state;
-
-    uint32_t desired;
-    uint32_t desired_min;
-    uint32_t desired_max;
     
     uint32_t gain;
     int gain_exp;
     
-    uint32_t max_gain;
-    int max_gain_exp;
-    
-    uint32_t min_gain;
-    int min_gain_exp;
-    
-    uint32_t down, up;
-    
-    uint32_t wait_samples;
-    uint32_t wait_for_up_samples;
-
     unsigned look_ahead_frames;
     unsigned look_past_frames;
 } agc_channel_state_t;
