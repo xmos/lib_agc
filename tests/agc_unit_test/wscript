@@ -1,0 +1,17 @@
+import os
+import subprocess
+
+
+def configure(conf):
+	conf.load('xwaf.compiler_xcc')
+	conf.env.PROJECT_ROOT = '../../..'
+
+def build(bld):
+
+	bld.env.TARGET_ARCH = 'XCORE-200-EXPLORER'
+	bld.env.XSCOPE = bld.path.find_resource('config.xscope')
+
+	depends_on = ['lib_voice_toolbox', 'lib_dsp', 'audio_test_tools', 'lib_agc']
+	bld.env.XCC_FLAGS = ['-O2', '-g', '-Wall']
+	source = bld.path.ant_glob('src/**/*.xc')
+	bld.program(source=source, depends_on=depends_on, includes=['.'])

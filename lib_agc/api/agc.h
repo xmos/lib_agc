@@ -5,6 +5,16 @@
 #include "dsp.h"
 #include "agc_state.h"
 
+
+{int32_t, int} multiply(int32_t a, int a_exp, uint32_t b, int b_exp);
+{uint32_t, int} absolute(int32_t a, int a_exp);
+int is_greater_than(uint32_t a, int a_exp, uint32_t b, int b_exp);
+{uint32_t, int} subtract(uint32_t a, int a_exp, uint32_t b, int b_exp);
+{uint32_t, int} divide(uint32_t a, int a_exp, uint32_t b, int b_exp);
+int32_t normalise_and_saturate(int32_t gained_sample, int gained_sample_exp, int input_exponent);
+
+
+
 void agc_test_task(chanend c_data_input, chanend c_data_output,
                 chanend ?c_control);
 
