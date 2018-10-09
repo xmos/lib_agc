@@ -1,3 +1,4 @@
+// Copyright (c) 2018, XMOS Ltd, All rights reserved
 #ifndef AGC_UNIT_TESTS_H_
 #define AGC_UNIT_TESTS_H_
 #include <xs1.h>
