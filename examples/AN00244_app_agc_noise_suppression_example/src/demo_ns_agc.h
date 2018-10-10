@@ -1,3 +1,4 @@
+// Copyright (c) 2017, XMOS Ltd, All rights reserved
 #ifndef _DEMO_NS_AGC_H_
 #define _DEMO_NS_AGC_H_
 

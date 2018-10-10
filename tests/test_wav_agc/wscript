@@ -1,5 +1,5 @@
 def options(ctx):
-        ctx.add_option('--target', action='store', default='test_wav_ap.xe')
+        ctx.add_option('--target', action='store', default='test_wav_agc.xe')
 
 def configure(conf):
 	conf.load('xwaf.compiler_xcc')
