@@ -22,7 +22,7 @@
 #ifndef AGC_WARNING_PRINT
 #define AGC_WARNING_PRINT 0
 #endif
-#include <stdio.h>
+
 #if AGC_DEBUG_MODE | AGC_DEBUG_PRINT | AGC_WARNING_PRINT
 #include <stdio.h>
 #include "audio_test_tools.h"
@@ -58,13 +58,11 @@ void agc_init(agc_state_t &agc){
         agc_init_channel(agc, ch);
     }
 }
-#include "audio_test_tools.h"
 void agc_init_channel(agc_state_t &agc, unsigned channel) {
     agc_set_gain_db(agc, channel, 20);
 
     agc.channel_state[channel].gain = 18;
     agc.channel_state[channel].gain_exp = 0;
-    printf("gain: %f\n", att_uint32_to_double( agc.channel_state[channel].gain,agc.channel_state[channel].gain_exp) );
 }
 
 {int32_t, int} multiply(int32_t a, int a_exp, uint32_t b, int b_exp){
