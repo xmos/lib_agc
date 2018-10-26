@@ -118,11 +118,22 @@ int is_greater_than(uint32_t a, int a_exp, uint32_t b, int b_exp){
     }
 }
 
+/* Return the abs difference between A and B.
+ */
 {uint32_t, int} subtract(uint32_t a, int a_exp, uint32_t b, int b_exp){
-   if(is_greater_than(a, a_exp, b, b_exp)){
+   if(is_greater_than(a, a_exp, b, b_exp))
+   {
+       unsigned b_hr = clz(b);
+       b <<= b_hr;
+       b_exp -= b_hr;
        uint32_t r = a - (b >> (a_exp - b_exp));
        return {r, a_exp};
-   } else {
+   }
+   else
+   {
+       unsigned a_hr = clz(a);
+       a <<= a_hr;
+       a_exp -= a_hr;
        uint32_t r = b - (a >> (b_exp - a_exp));
        return {r, b_exp};
    }
@@ -180,7 +191,7 @@ void agc_process_channel(agc_channel_state_t &agc,
                        dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned channel_number) {
     int imag_channel = channel_number&1;
     int input_exponent = -31;
-    
+
 #if AGC_DEBUG_PRINT
     printf("x[%u] = ", channel_number); att_print_python_td(samples, AGC_PROC_FRAME_LENGTH, input_exponent, imag_channel);
 #endif
@@ -250,4 +261,3 @@ void agc_process_frame(agc_state_t &agc,
     }
 
 }
-
