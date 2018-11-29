@@ -6,13 +6,7 @@
 #include "agc_state.h"
 
 
-{int32_t, int} multiply(int32_t a, int a_exp, uint32_t b, int b_exp);
-{uint32_t, int} absolute(int32_t a, int a_exp);
-int is_greater_than(uint32_t a, int a_exp, uint32_t b, int b_exp);
-{uint32_t, int} subtract(uint32_t a, int a_exp, uint32_t b, int b_exp);
-{uint32_t, int} divide(uint32_t a, int a_exp, uint32_t b, int b_exp);
 int32_t normalise_and_saturate(int32_t gained_sample, int gained_sample_exp, int input_exponent);
-
 
 
 void agc_test_task(chanend c_data_input, chanend c_data_output,
@@ -33,7 +27,7 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
  * - lookpast frames:      0
  *
  * All of these can be changed using the access functions below.
- * 
+ *
  * The processing function that performs the actual AGC inputs a block in
  * block-floating-point format, and outputs a block of integers. The input
  * can represent a very large dynamic range, whereas the output is
@@ -48,103 +42,12 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
  * and the gain applied by any previous stages in the voice pipeline. For
  * example, if the microphones have a low sensitivity then a higher initial
  * value should be picked than if microphones have a high sensitivity.
- * 
+ *
  * \param[out] agc              gain controller structure, initialised on return
  *
- * \param[in] frame_length      Number of samples on which AGC operates.
  */
 void agc_init(agc_state_t &agc);
-void agc_init_channel(agc_state_t &agc, unsigned channel);
 
-
-/** Function that sets the maximum gain allowed on the automatic gain
- * control. This value must be larger than or equal to the initial gain,
- * and larger than or equal to the minimum gain. The gain must be in the
- * range [-127..127]. This function is typically not used as the default
- * used by agc_init_state() will do the trick.
- *
- * \param[in,out] agc Gain controller structure
- * \param[in] db      Desired maximum gain in dB
- */
-void agc_set_gain_max_db(agc_state_t &agc, unsigned channel, int32_t db);
-
-/** Function that sets the minimum gain allowed on the automatic gain
- * control. This value must be less than or equal to the initial gain, and
- * less than or equal to the maximum gain. The gain must be in the
- * range [-127..127]. This function is typically not used as the default
- * used by agc_init_state() will do the trick.
- *
- * \param[in,out] agc Gain controller structure
- * \param[in] db      Desired minimum gain in dB
- */
-void agc_set_gain_min_db(agc_state_t &agc, unsigned channel, int32_t db);
-
-/** Function that sets the desired energy level of the output. Must be
- * negative in the range [-127..-1]. Values too close to zero will cause
- * clipping. This function can be used to change the volume of the output.
- * Note that changes will not happen immediately and are governed by the
- * delay, and the maximum up and down rates.
- *
- * For example, a value of -20 indicates that the energy should be 10x
- * below whole scale. If the input is a pure sine wave, then the energy is
- * sqrt(1/2) times the amplitude of the sine wave, hence at a setting of
- * -20 dB the amplitude of the output sine wave will be 10/sqrt(1/2) or
- * 0.1414 of whole scale, or +/- 303700050. The actual level of the sine
- * wave will be slightly higher or lower, since the AGC algorithm uses a
- * hysteresis around the desired energy level. Note that if the desired
- * output is set to 0 dB (meaning whole scale), the actual output of a
- * sine-wave will be (10^(0/20))/sqrt(1/2) = 1.414 of whole scale, which
- * will lead to wide-spread clipping. Hence, in order to avoid clipping,
- * keep the desired output level at least a few dB below zero.
-
- *
- * \param[in,out] agc Gain controller structure
- * \param[in] db      Desired output energy in dB
- */
-void agc_set_desired_db(agc_state_t &agc, unsigned channel, int32_t db);
-
-/** Function that sets the speed at which the gain controller adapts whilst
- * increasing gain. The value is expressed in dB per second, and must be
- * in the range [1..1023]
- *
- * \param[in,out] agc Gain controller structure
- * \param[in] dbps    Desired adaptation speed in dB per second
- */
-void agc_set_rate_down_dbps(agc_state_t &agc, unsigned channel, int32_t dbps);
-
-/** Function that sets the speed at which the gain controller adapts whilst
- * decreasing gain. The value is expressed in dB per second, and must be
- * in the range [-1023..-1]
- *
- * \param[in,out] agc Gain controller structure
- * \param[in] dbps    Desired adaptation speed in dB per 10 milliseconds
- */
-void agc_set_rate_up_dbps(agc_state_t &agc, unsigned channel, int32_t dbps);
-
-/** Function that sets the grace period before the gain starts increasing
- *
- * \param[in,out] agc      Gain controller structure
- * \param[in] milliseconds Time between quiescence and gain increasing
- */
-void agc_set_wait_for_up_ms(agc_state_t &agc, unsigned channel, uint32_t milliseconds);
-
-/** Function that sets the number of frames to look in the past.
- *
- * \param[in] look_past_frames  Number of frames to look in the past for energy
- *                              If this is larger than zero, than a buffer 
- *                              needs to be passed to agc_process_frame()
- */
-extern void agc_set_look_past_frames(agc_state_t &agc, unsigned channel, uint32_t look_past_frames);
-
-/** Function that sets the number of frames to look in the future. If this
- * is set, then the data signal will be delayed by as many frames.
- *
- * \param[in] look_ahead_frames Number of frames to look ahead for energy
- *                              If this is larger than zero, than a buffer 
- *                              needs to be passed to agc_process_frame()
- */
-
-extern void agc_set_look_ahead_frames(agc_state_t &agc, unsigned channel, uint32_t look_ahead_frames);
 
 /** Function that processes a block of data.
  *
@@ -152,16 +55,9 @@ extern void agc_set_look_ahead_frames(agc_state_t &agc, unsigned channel, uint32
  * \param[in,out] samples On input this array contains the sample data.
  *                        On output this array contains the data with AGC
  *                        applied. Headroom has been reintroduced, and samples
- *                        have been clamped as appropriate. 
+ *                        have been clamped as appropriate.
  */
 void agc_process_frame(agc_state_t &agc,
                        dsp_complex_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_FRAME_ADVANCE]);
-
-/** Function that gets the current gain.
- * \param[in] agc Gain controller structure
- * \returns       gain in dB, multiplied by 2^16. Ie, 0x0001 0000 = 1 dB.
- */
-int32_t agc_get_gain(agc_state_t &agc, unsigned channel);
-
 
 #endif // _agc_h_

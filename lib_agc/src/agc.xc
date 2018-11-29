@@ -34,6 +34,7 @@ static int frame_counter = 0;
 
 #define ASSERT(x)    asm("ecallf %0" :: "r" (x))
 
+
 /** Gain is a real number between 0 and 128. It is represented by a
  * multiplier which in unsigned 8.24 format, and a shift right value.
  */
@@ -55,38 +56,39 @@ void agc_set_gain_db(agc_state_t &agc, unsigned channel, int32_t db) {
 
 void agc_init(agc_state_t &agc){
     for(unsigned ch=0;ch<AGC_CHANNELS;ch++){
-        agc_init_channel(agc, ch);
+        agc_set_gain_db(agc, ch, 20);
     }
 }
-void agc_init_channel(agc_state_t &agc, unsigned channel) {
-    agc_set_gain_db(agc, channel, 20);
 
-    agc.channel_state[channel].gain.m = 18;
-    agc.channel_state[channel].gain.e = 0;
+// void agc_init_channel(agc_state_t &agc, unsigned channel) {
+//
+//
+//     agc.channel_state[channel].gain.m = 18;
+//     agc.channel_state[channel].gain.e = 0;
+//
+//     // agc.channel_state[channel].gain_exp = 0;
+// }
 
-    // agc.channel_state[channel].gain_exp = 0;
-}
 
-
-int32_t normalise_and_saturate(int32_t gained_sample, int gained_sample_exp, int input_exponent){
-
-    int32_t v = gained_sample;
-    if(v<0) v=-v;
-    unsigned hr = clz(v)-1;
-
-    gained_sample_exp -= hr;
-    gained_sample <<= hr;
-
-    if(gained_sample_exp > input_exponent){
-        if(gained_sample > 0){
-            return INT_MAX;
-        } else {
-            return INT_MIN;
-        }
-    } else {
-        return gained_sample >> (input_exponent - gained_sample_exp);
-    }
-}
+// int32_t normalise_and_saturate(int32_t gained_sample, int gained_sample_exp, int input_exponent){
+//
+//     int32_t v = gained_sample;
+//     if(v<0) v=-v;
+//     unsigned hr = clz(v)-1;
+//
+//     gained_sample_exp -= hr;
+//     gained_sample <<= hr;
+//
+//     if(gained_sample_exp > input_exponent){
+//         if(gained_sample > 0){
+//             return INT_MAX;
+//         } else {
+//             return INT_MIN;
+//         }
+//     } else {
+//         return gained_sample >> (input_exponent - gained_sample_exp);
+//     }
+// }
 
 void agc_process_channel(agc_channel_state_t &agc,
                        dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned channel_number) {
@@ -96,20 +98,9 @@ void agc_process_channel(agc_channel_state_t &agc,
 #if AGC_DEBUG_PRINT
     printf("x[%u] = ", channel_number); att_print_python_td(samples, AGC_PROC_FRAME_LENGTH, input_exponent, imag_channel);
 #endif
+
     vtb_u32_float_t frame_energy = vtb_get_td_frame_power(samples, input_exponent, AGC_FRAME_ADVANCE, imag_channel);
-
-    // uint32_t sqrt_energy = frame_energy.m;
-    // int sqrt_energy_exp = frame_energy.e;
-    // vtb_sqrt(sqrt_energy, sqrt_energy_exp, 0);
-
     vtb_u32_float_t sqrt_energy = vtb_sqrt_u32(frame_energy); //TODO frame_energy and sqrt_energy aren't used.
-
-    // const int32_t one = INT_MAX;
-    // const int one_exp = -31;
-    // const int32_t half = INT_MAX;
-    // const int half_exp = -31 - 1;
-    // const int32_t quater = INT_MAX;
-    // const int quater_exp = -31 -2;
 
     const vtb_s32_float_t one = {INT_MAX, -31};
     const vtb_s32_float_t half = {INT_MAX, -31-1};
@@ -121,33 +112,26 @@ void agc_process_channel(agc_channel_state_t &agc,
 
     for(unsigned n = 0; n < AGC_FRAME_ADVANCE; n++) {
         vtb_s32_float_t input_sample = {(samples[n], int32_t[2])[imag_channel], input_exponent};
-
-        // int32_t gained_sample;
-        // int gained_sample_exp;
         vtb_s32_float_t gained_sample = vtb_mul_s32_u32(input_sample, agc.gain);
 #if AGC_DEBUG_PRINT
     printf("gained_sample[%u] = %.22f\n", channel_number, att_uint32_to_double(gained_sample.m, gained_sample.e));
 #endif
-        // uint32_t abs_gained_sample;
-        // int abs_gained_sample_exp;
         vtb_u32_float_t abs_gained_sample = vtb_abs_s32_to_u32(gained_sample);
-        vtb_u32_float_t half_unsigned = {(uint32_t)half.m, half.e}; //TODO possible unsigned conversion issue?
-        if(vtb_gte_u32_u32(abs_gained_sample, half_unsigned)){
+        vtb_u32_float_t half_unsigned = vtb_abs_s32_to_u32(half); //TODO possible unsigned conversion issue?
 
-            // int32_t div_result, nl_gain;
-            // int div_result_exp, nl_gain_exp;
+        if(vtb_gte_u32_u32(abs_gained_sample, half_unsigned)){
             vtb_s32_float_t div_result = vtb_div_s32_u32(quarter, abs_gained_sample);
             vtb_s32_float_t nl_gain = vtb_sub_s32_s32(one, div_result);
-
-            int32_t output_sample = normalise_and_saturate(nl_gain.m, nl_gain.e, input_exponent);
+            int32_t output_sample = vtb_denormalise_and_saturate_s32(nl_gain, input_exponent);
 
             if(input_sample.m < 0){
                 output_sample =- output_sample;
             }
 
             (samples[n], int32_t[2])[imag_channel] = output_sample;
+
         } else {
-            int32_t output_sample = normalise_and_saturate(gained_sample.m, gained_sample.e, input_exponent);
+            int32_t output_sample = vtb_denormalise_and_saturate_s32(gained_sample, input_exponent);
             (samples[n], int32_t[2])[imag_channel] = output_sample;
         }
     }
