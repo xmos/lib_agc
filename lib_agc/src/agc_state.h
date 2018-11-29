@@ -3,7 +3,7 @@
 #define _agc_state_h_
 
 #include <stdint.h>
-
+#include "voice_toolbox.h"
 #include "agc_conf.h"
 
 #ifndef AGC_LOOK_PAST_FRAMES
@@ -31,10 +31,11 @@ typedef struct {
     int32_t sample_buffer[(AGC_LOOK_AHEAD_FRAMES+1) * AGC_PROC_FRAME_LENGTH];
     uint32_t sqrt_energy_fifo[(AGC_LOOK_PAST_FRAMES + AGC_LOOK_AHEAD_FRAMES + 1)];
     agc_mode state;
-    
-    uint32_t gain;
-    int gain_exp;
-    
+
+    // uint32_t gain;
+    // int gain_exp;
+    vtb_u32_float_t gain;
+
     unsigned look_ahead_frames;
     unsigned look_past_frames;
 } agc_channel_state_t;
