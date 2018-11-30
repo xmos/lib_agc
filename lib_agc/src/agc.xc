@@ -184,14 +184,14 @@ void agc_process_channel(agc_channel_state_t &agc,
 #if AGC_DEBUG_PRINT
     printf("x[%u] = ", channel_number); att_print_python_td(samples, AGC_PROC_FRAME_LENGTH, input_exponent, imag_channel);
 #endif
-    uint32_t frame_energy;
-    int frame_energy_exp;
-    {frame_energy, frame_energy_exp} = vtb_get_td_frame_power(samples, input_exponent, AGC_FRAME_ADVANCE, imag_channel);
-
-    int sqrt_energy_exp = frame_energy_exp;
-    uint32_t sqrt_energy = frame_energy;
-
-    vtb_sqrt(sqrt_energy, sqrt_energy_exp, 0);
+//    uint32_t frame_energy;
+//    int frame_energy_exp;
+//    {frame_energy, frame_energy_exp} = vtb_get_td_frame_power(samples, input_exponent, AGC_FRAME_ADVANCE, imag_channel);
+//
+//    int sqrt_energy_exp = frame_energy_exp;
+//    uint32_t sqrt_energy = frame_energy;
+//
+//    vtb_sqrt(sqrt_energy, sqrt_energy_exp, 0);
 
     const int32_t one = INT_MAX;
     const int one_exp = -31;
