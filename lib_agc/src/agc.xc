@@ -35,6 +35,9 @@ static int frame_counter = 0;
 #define ASSERT(x)    asm("ecallf %0" :: "r" (x))
 
 
+const vtb_s32_float_t ONE = {INT_MAX, -31};
+const vtb_u32_float_t HALF = {UINT_MAX, -32-1};
+const vtb_s32_float_t QUARTER = {INT_MAX, -31-2};
 
 
 void agc_set_channel_gain(agc_state_t &agc, unsigned channel, uint32_t gain) {
@@ -55,14 +58,8 @@ void agc_init(agc_state_t &agc){
 }
 
 static void agc_process_channel(agc_channel_state_t &agc_state, dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned ch_index) {
-    // const vtb_s32_float_t one = {INT_MAX, -31};
-    const vtb_u32_float_t AGC_LIMIT_POINT = {UINT_MAX, -32-1};
-    const vtb_s32_float_t QUARTER = {INT_MAX, -31-2};
-    const vtb_s32_float_t ONE = {INT_MAX, -31};
-
-    // const vtb_s32_float_t quarter = {INT_MAX, -31-2};
-
-    int input_exponent = -31;
+    const vtb_u32_float_t agc_limit_point = HALF;
+    const int input_exponent = -31;
 
     for(unsigned n = 0; n < AGC_FRAME_ADVANCE; n++) {
         vtb_s32_float_t input_sample = {(samples[n], int32_t[2])[ch_index&1], input_exponent};
@@ -72,19 +69,19 @@ static void agc_process_channel(agc_channel_state_t &agc_state, dsp_complex_t sa
 
         #if AGC_DEBUG_PRINT
             printf("input_sample[%u] = %d\n", ch_index, (samples[n], int32_t[2])[ch_index&1]);
-            printf("input_sample[%u] = %.22f\n", ch_index, att_uint32_to_double(input_sample.m, input_sample.e));
+            printf("input_sample_float[%u] = %.22f\n", ch_index, att_uint32_to_double(input_sample.m, input_sample.e));
             printf("gained_sample[%u] = %.22f\n", ch_index, att_uint32_to_double(gained_sample.m, gained_sample.e));
         #endif
 
         vtb_u32_float_t abs_gained_sample = vtb_abs_s32_to_u32(gained_sample);
 
-        if(vtb_gte_u32_u32(abs_gained_sample, AGC_LIMIT_POINT)){
+        if(vtb_gte_u32_u32(abs_gained_sample, agc_limit_point)){
             vtb_s32_float_t div_result = vtb_div_s32_u32(QUARTER, abs_gained_sample);
             vtb_s32_float_t output_normalised = vtb_sub_s32_s32(ONE, div_result);
             int32_t output_sample = vtb_denormalise_and_saturate_s32(output_normalised, input_exponent);
 
             #if AGC_DEBUG_PRINT
-                printf("output_normalised[%u] = %.22f\n", ch_index, att_uint32_to_double(output_normalised.m, output_normalised.e));
+                printf("output_sample_float[%u] = %.22f\n", ch_index, att_uint32_to_double(output_normalised.m, output_normalised.e));
                 printf("output_sample[%u] = %d\n", ch_index, output_sample);
             #endif
 
@@ -97,6 +94,7 @@ static void agc_process_channel(agc_channel_state_t &agc_state, dsp_complex_t sa
             int32_t output_sample = vtb_denormalise_and_saturate_s32(gained_sample, input_exponent);
             (samples[n], int32_t[2])[ch_index&1] = output_sample;
             #if AGC_DEBUG_PRINT
+                printf("output_sample_float[%u] = %.22f\n", ch_index, att_uint32_to_double(gained_sample.m, input_exponent));
                 printf("output_sample[%u] = %d\n", ch_index, output_sample);
             #endif
         }
