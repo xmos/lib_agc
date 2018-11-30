@@ -37,10 +37,14 @@ static int frame_counter = 0;
 
 
 
-void agc_set_channel_gain(agc_state_t &agc, unsigned channel, int32_t gain) {
-    ASSERT(gain > 0);
+void agc_set_channel_gain(agc_state_t &agc, unsigned channel, uint32_t gain) {
     agc.ch_state[channel].gain.m = gain;
     agc.ch_state[channel].gain.e = 0;
+
+    if(agc.ch_state[channel].gain.m == 0){
+        agc.ch_state[channel].gain.m = 1;
+    }
+
     vtb_normalise_u32(agc.ch_state[channel].gain);
 }
 
@@ -101,9 +105,9 @@ static void agc_process_channel(agc_channel_state_t &agc_state, dsp_complex_t sa
 }
 
 void agc_process_frame(agc_state_t &agc, dsp_complex_t frame[AGC_CHANNEL_PAIRS][AGC_FRAME_ADVANCE]){
-#if AGC_DEBUG_PRINT
-    printf("\n#%u\n", frame_counter++);
-#endif
+    #if AGC_DEBUG_PRINT
+        printf("\n#%u\n", frame_counter++);
+    #endif
     for(unsigned ch=0;ch<AGC_CHANNELS;ch++){
         agc_process_channel(agc.ch_state[ch], frame[ch/2], ch);
     }

@@ -11,7 +11,7 @@ void agc_test_task(chanend c_data_input, chanend c_data_output, chanend ?c_contr
 
 void agc_init(agc_state_t &agc);
 
-void agc_set_channel_gain(agc_state_t &agc, unsigned channel, int32_t gain);
+void agc_set_channel_gain(agc_state_t &agc, unsigned channel,  uint32_t gain);
 
 /** Function that processes a block of data.
  *
