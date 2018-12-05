@@ -1,4 +1,4 @@
-VERSION = 0.0.2
+VERSION = 0.0.3
 
 DEPENDENT_MODULES = lib_dsp(>=4.0.0) lib_voice_toolbox(>=0.0.1) audio_test_tools(>=1.0.0)
 
