@@ -21,4 +21,4 @@
 
 #endif // __XC__
 
-#endif /* VTB_UNIT_TESTS_H_ */
+#endif /* AGC_UNIT_TESTS_H_ */
