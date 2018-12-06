@@ -20,8 +20,31 @@ pipeline {
         xcoreLibraryChecks("${REPO}")
       }
     }
+    stage('Unit Tests') {
+      steps {
+        dir("${REPO}") {
+          dir('tests') {
+            dir('agc_unit_tests') {
+              runXwaf('.')
+              viewEnv() {
+                runPytest()
+              }
+            }
+          }
+        }
+      }
+    }
   }
   post {
+    failure {
+      dir("${REPO}") {
+        dir('tests') {
+          dir('agc_unit_tests') {
+            junit 'pytest_result.xml'
+          }
+        }
+      }
+    }
     cleanup {
       cleanWs()
     }
