@@ -53,7 +53,7 @@ void agc_set_channel_gain(agc_state_t &agc, unsigned channel, uint32_t gain) {
 
 void agc_init(agc_state_t &agc){
     for(unsigned ch=0;ch<AGC_CHANNELS;ch++){
-        agc_set_channel_gain(agc, ch, AGC_INIT_GAIN);
+        agc_set_channel_gain(agc, ch, AGC_GAIN[ch]);
     }
 }
 

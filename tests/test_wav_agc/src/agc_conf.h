@@ -9,4 +9,6 @@
 #define AGC_PROC_FRAME_LENGTH (AGC_FRAME_ADVANCE)
 #define AGC_CHANNELS 2
 
+static const uint32_t AGC_GAIN[AGC_CHANNELS] = {40, 1};
+
 #endif /* AGC_CONF_H_ */
