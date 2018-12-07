@@ -8,11 +8,6 @@
 
 #define AGC_CHANNEL_PAIRS ((AGC_CHANNELS+1)/2)
 
-#ifndef AGC_INIT_GAIN
-#define AGC_INIT_GAIN 1
-#endif
-
-
 /* structure to hold AGC state, only used internally */
 typedef struct {
     vtb_u32_float_t gain;

@@ -33,28 +33,27 @@ static int frame_counter = 0;
 #endif
 
 #define ASSERT(x)    asm("ecallf %0" :: "r" (x))
-
+#define UQ16_16_EXP -16
 
 const vtb_s32_float_t ONE = {INT_MAX, -31};
 const vtb_u32_float_t HALF = {UINT_MAX, -32-1};
 const vtb_s32_float_t QUARTER = {INT_MAX, -31-2};
 
 
-void agc_set_channel_gain(agc_state_t &agc, unsigned channel, uint32_t gain) {
-    agc.ch_state[channel].gain.m = gain;
-    agc.ch_state[channel].gain.e = 0;
-
-    if(agc.ch_state[channel].gain.m == 0){
-        agc.ch_state[channel].gain.m = 1;
+void agc_init(agc_state_t &agc){
+    for(unsigned ch=0;ch<AGC_CHANNELS;ch++){
+        agc_set_channel_gain_linear(agc, ch, UQ16(AGC_GAIN[ch]));
     }
+}
 
+void agc_set_channel_gain_linear(agc_state_t &agc, unsigned channel, uq16_16 gain) {
+    agc.ch_state[channel].gain.m = gain;
+    agc.ch_state[channel].gain.e = UQ16_16_EXP;
     vtb_normalise_u32(agc.ch_state[channel].gain);
 }
 
-void agc_init(agc_state_t &agc){
-    for(unsigned ch=0;ch<AGC_CHANNELS;ch++){
-        agc_set_channel_gain(agc, ch, AGC_GAIN[ch]);
-    }
+uq16_16 agc_get_channel_gain_linear(agc_state_t &agc, unsigned channel){
+    return vtb_denormalise_and_saturate_u32(agc.ch_state[channel].gain, UQ16_16_EXP);
 }
 
 static void agc_process_channel(agc_channel_state_t &agc_state, dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned ch_index) {

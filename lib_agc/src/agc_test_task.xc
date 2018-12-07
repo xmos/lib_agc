@@ -11,6 +11,8 @@
 #define AGC_GAIN_CH0 20
 #define AGC_GAIN_CH1 1
 
+#define AGC_PROC_FRAME_LENGTH 240
+
 void agc_test_task(chanend c_data_input, chanend c_data_output,
                 chanend ?c_control){
     uint64_t state[STATE_SIZE];
@@ -19,8 +21,8 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
     vtb_rx_state_init(state, AGC_CHANNEL_PAIRS*2, INPUT_FRAME_LENGTH, AGC_FRAME_ADVANCE, null, STATE_SIZE);
 
     agc_init(agc_state);
-    agc_set_channel_gain(agc_state, 0, AGC_GAIN_CH0);
-    agc_set_channel_gain(agc_state, 1, AGC_GAIN_CH1);
+    agc_set_channel_gain_linear(agc_state, 0, AGC_GAIN_CH0);
+    agc_set_channel_gain_linear(agc_state, 1, AGC_GAIN_CH1);
 
     while(1){
         dsp_complex_t [[aligned(8)]] frame[AGC_CHANNEL_PAIRS][480];

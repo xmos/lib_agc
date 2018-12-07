@@ -5,13 +5,18 @@
 #include "dsp.h"
 #include "agc_state.h"
 
+typedef uint32_t uq16_16;
+#define UQ16(f) ((uq16_16)(((double)(UINT_MAX>>16))*f))
+
 
 void agc_test_task(chanend c_data_input, chanend c_data_output, chanend ?c_control);
 
 
 void agc_init(agc_state_t &agc);
 
-void agc_set_channel_gain(agc_state_t &agc, unsigned channel,  uint32_t gain);
+void agc_set_channel_gain_linear(agc_state_t &agc, unsigned channel,  uq16_16 gain);
+
+uq16_16 agc_get_channel_gain_linear(agc_state_t &agc, unsigned channel);
 
 /** Function that processes a block of data.
  *
