@@ -8,4 +8,4 @@ INCLUDE_DIRS = api
 
 SOURCE_DIRS = src/*
 
-OPTIONAL_HEADERS += agc_conf.h voice_toolbox_conf.h
+OPTIONAL_HEADERS += agc_conf.h
