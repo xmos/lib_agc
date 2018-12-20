@@ -15,32 +15,44 @@ def dBFS_to_int32(dBFS):
 
 class agc:
 
-    INIT_GAIN = 1
+    # INIT_GAIN = 1
     FIXED_LIMIT = 0.5
-    WAIT_COUNT = 0 #66 * 0.3
+    WAIT_COUNT = 66 * 1
     DBFS_MAX = 0
-    MAX_GAIN = 10 ** float(127/20)
-    MIN_GAIN = 10 ** float(-127/20)
+    MAX_GAIN = 10 ** float(40/20)
+    MIN_GAIN = 10 ** float(-40/20)
     AGC_LOOK_AHEAD_FRAMES = 0
+    AGC_VOICE_FRAME_ENERGY_BUFFER = 20
 
-    def __init__(self, channel_count, desired_dBFS, desired_Error, frame_advance):
+    def __init__(self, channel_count, desired_dBFS, desired_dBFS_max, desired_dBFS_min, frame_advance, ch_gains = []):
         self.channel_count = channel_count
         self.frame_advance = frame_advance
-        self.gain = [agc.INIT_GAIN] * channel_count
         self.state = ['STABLE'] * channel_count
-        self.up_factor = get_factor(10)
+        self.up_factor = get_factor(6)
         self.down_factor = get_factor(-20)
         self.wait_count = [agc.WAIT_COUNT] * channel_count
         self.desired = dBFS_to_int32(desired_dBFS)
-        self.desired_max = dBFS_to_int32(desired_dBFS + desired_Error)
-        self.desired_min = dBFS_to_int32(desired_dBFS - desired_Error)
+        self.desired_max = dBFS_to_int32(desired_dBFS_max)
+        self.desired_min = dBFS_to_int32(desired_dBFS_min)
+        self.error = 0
 
-        self.frame_energy = np.zeros((1 + agc.AGC_LOOK_AHEAD_FRAMES,))
+
+        self.gain = []
+        for i in range(self.channel_count):
+            self.gain.append(ch_gains[i])
+
+
+        self.frame_energy = np.empty((agc.AGC_VOICE_FRAME_ENERGY_BUFFER,))
+        self.frame_energy.fill(float(self.desired)/self.gain[0])
         self.sample_buffer = np.zeros((channel_count, self.frame_advance * (1 + agc.AGC_LOOK_AHEAD_FRAMES)))
 
         print "desired: {} (/{})".format(self.desired, np.finfo(np.float64).max)
         print "up_factor: {}".format(self.up_factor)
         print "down_factor: {}".format(self.down_factor)
+
+        print "frame_energy: {}".format(self.frame_energy[0])
+        print "frame_energy: {}".format(self.frame_energy[1])
+
 
         return
 
@@ -94,12 +106,16 @@ class agc:
         def limit_gain(x):
             return x if abs(x) < agc.FIXED_LIMIT else (np.sign(x) * 2 * agc.FIXED_LIMIT - agc.FIXED_LIMIT ** 2 / x)
 
-        # print np.shape(input_frame)
-        # print np.shape(self.sample_buffer)
 
         # Push new frame energy to the back
-        self.frame_energy[:-1] = self.frame_energy[1:]
-        self.frame_energy[-1] = get_frame_energy(input_frame[0])
+        if vad == True:
+            self.frame_energy[:-1] = self.frame_energy[1:]
+            self.frame_energy[-1] = get_frame_energy(input_frame[0])
+
+        for i, input_ch_frame in enumerate(input_frame):
+            # Adapt on average of look-ahead frame energies
+            self.adapt(input_frame, i, np.mean(self.frame_energy))
+
 
         # Push new frame to the back of sample buffer
         for ch in range(self.channel_count):
@@ -110,10 +126,6 @@ class agc:
                 self.sample_buffer[ch,-self.frame_advance + n] = input_frame[ch, n]
 
         output = np.empty(np.shape(input_frame))
-        if vad == True:
-            for i, input_ch_frame in enumerate(input_frame):
-                self.adapt(input_frame, i, np.mean(self.frame_energy)) # Adapt on average of look-ahead frame energies
-
         for ch in range(self.channel_count):
             for n in range(self.frame_advance):
                 gained_sample = self.gain[ch] * self.sample_buffer[ch, n]
