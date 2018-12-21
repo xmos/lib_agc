@@ -22,11 +22,13 @@ FRAME_ADVANCE = 240
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("input", help="inpout wav file")
-    parser.add_argument("--gain0", type=int, default=20)
-    parser.add_argument("--gain1", type=int, default=1)
+    parser.add_argument("input", help="input wav file")
+    parser.add_argument("--headroom", type=int, default = 6)
+    parser.add_argument("--max_gain", type=int, default = 40)
+    parser.add_argument("--noise_floor", type=int, default = -40)
+
     parser.add_argument("output", help="output wav file")
-    parser.parse_args()
+    parser.add_argument('--plot', action='store_true')
     args = parser.parse_args()
     return args
 
@@ -40,43 +42,43 @@ if __name__ == "__main__":
 
     output = np.zeros((channel_count, file_length))
 
-    agc = agc.agc(channel_count, -10, 6, FRAME_ADVANCE)
-    agc.set_channel_gain(0, args.gain0)
-    agc.set_channel_gain(1, args.gain1)
+    agc = agc.agc(channel_count, args.headroom, args.max_gain, args.noise_floor)
 
-    vad = vad.vad()
 
-    print agc.gain[0]
-    energy = []
-    gain0 = []
-    gain1 = []
-    vad_results = []
+    peak_dB = []
+    frame_gain = []
+
     for frame_start in range(0, file_length-FRAME_ADVANCE, FRAME_ADVANCE):
         x = au.get_frame(wav_data, frame_start, FRAME_ADVANCE)
-        vad_frame = vad.run(x[0])
-        vad_results.append(vad_frame)
-        output[:, frame_start: frame_start + FRAME_ADVANCE] = agc.process_frame(x, vad_frame > 0.4, verbose = False)
-        gain0.append(agc.gain[0])
-        gain1.append(agc.gain[1])
-        energy.append(np.mean(agc.frame_energy))
+        output[:, frame_start: frame_start + FRAME_ADVANCE] = agc.process_frame(x)
 
-    import matplotlib.pyplot as plt
+        peak_dB.append(agc.frame_peak_dB)
+        frame_gain.append(agc.frame_gain)
 
     scipy.io.wavfile.write(args.output, rate, output.T)
 
-    x_axis = [x * 240.0/16000.0 for x in range(len(vad_results))]
-    plt.figure(1)
-    ax1 = plt.subplot(411)
-    ax1.set_title("Frame Energy")
-    plt.plot(x_axis, energy)
-    ax2 = plt.subplot(412)
-    ax2.set_title("VAD Output")
-    plt.plot(x_axis, vad_results)
-    ax3 = plt.subplot(413)
-    ax3.set_title("Gain Ch0")
-    # realgain = [x * round(vad_results[i]) for i, x in enumerate(gain)]
-    plt.plot(x_axis, gain0)
-    ax3 = plt.subplot(414)
-    ax3.set_title("Gain Ch1")
-    plt.plot(x_axis, gain1)
-    plt.show()
+    if args.plot:
+        import matplotlib.pyplot as plt
+        plt.figure(1)
+        plt.plot(peak_dB)
+        plt.title('Input Peaks')
+        plt.xlabel('Frame Index')
+        plt.ylabel('Peak (dB)')
+        plt.grid()
+
+        plt.figure(2)
+        plt.plot(frame_gain)
+        plt.title('Applied Gain')
+        plt.xlabel('Frame Index')
+        plt.ylabel('Gain (dB)')
+        plt.grid()
+
+        plt.figure(3)
+        input = np.linspace(agc.MIN_INPUT_DB, 0, abs(agc.MIN_INPUT_DB) + 1)
+        plt.plot(input, agc.gs_table)
+        plt.title('Gain Curve')
+        plt.xlabel('Input Peak (dB)')
+        plt.ylabel('Gain (dB)')
+        plt.grid()
+
+        plt.show()
