@@ -4,7 +4,7 @@ DEPENDENT_MODULES = lib_dsp(>=4.0.0) lib_voice_toolbox(>=0.0.1) audio_test_tools
 
 MODULE_XCC_XC_FLAGS = $(XCC_XC_FLAGS) -O2
 
-INCLUDE_DIRS = api
+INCLUDE_DIRS = api src
 
 SOURCE_DIRS = src/*
 
