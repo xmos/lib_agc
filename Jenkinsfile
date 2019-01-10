@@ -37,7 +37,7 @@ pipeline {
   }
   post {
     success {
-      updateViewFiles()
+      updateViewfiles()
     }
     failure {
       dir("${REPO}") {
