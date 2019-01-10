@@ -36,6 +36,9 @@ pipeline {
     }
   }
   post {
+    success {
+      updateViewFiles()
+    }
     failure {
       dir("${REPO}") {
         dir('tests') {
