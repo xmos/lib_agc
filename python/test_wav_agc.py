@@ -1,6 +1,8 @@
 # Copyright (c) 2018, XMOS Ltd, All rights reserved
 import os
 import sys
+from math import sqrt
+
 
 package_dir = os.path.dirname(os.path.abspath(__file__))
 path1 = os.path.join(package_dir,'../../audio_test_tools/python/')
@@ -11,7 +13,7 @@ sys.path.append(path2)
 import numpy as np
 import scipy.io.wavfile
 import audio_utils as au
-import agc
+import agc_hansler as agc
 import vad
 import argparse
 
@@ -23,7 +25,7 @@ FRAME_ADVANCE = 240
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("input", help="input wav file")
-    parser.add_argument("--headroom", type=int, default = 6)
+    parser.add_argument("--desired_level", type=int, default = -6)
     parser.add_argument("--max_gain", type=int, default = 40)
     parser.add_argument("--noise_floor", type=int, default = -40)
 
@@ -42,28 +44,41 @@ if __name__ == "__main__":
 
     output = np.zeros((channel_count, file_length))
 
-    agc = agc.agc(channel_count, args.headroom, args.max_gain, args.noise_floor)
+    # agc = agc.agc(channel_count, args.headroom, args.max_gain, args.noise_floor)
+    agc = agc.agc(args.noise_floor, args.desired_level)
 
 
-    peak_dB = []
+    x_slow = []
+    x_fast = []
+    x_peak = []
     frame_gain = []
+    vad = []
+    noise_floor = []
 
     for frame_start in range(0, file_length-FRAME_ADVANCE, FRAME_ADVANCE):
         x = au.get_frame(wav_data, frame_start, FRAME_ADVANCE)
         output[:, frame_start: frame_start + FRAME_ADVANCE] = agc.process_frame(x)
 
-        peak_dB.append(agc.frame_peak_dB)
-        frame_gain.append(agc.frame_gain)
+        x_slow.append(20.0 * np.log10(agc.x_slow))
+        x_fast.append(20.0 * np.log10(agc.x_fast))
+        x_peak.append(20.0 * np.log10(agc.x_peak))
+        # peak_dB.append(agc.frame_peak_dB)
+        frame_gain.append(20.0 * np.log10(agc.gain))
+        vad.append(1 if agc.vad else 0)
+        noise_floor.append(20.0 * np.log10(sqrt(agc.noise.b_power)))
 
     scipy.io.wavfile.write(args.output, rate, output.T)
 
     if args.plot:
         import matplotlib.pyplot as plt
         plt.figure(1)
-        plt.plot(peak_dB)
-        plt.title('Input Peaks')
+        plt.plot(x_slow, label = 'Slow')
+        plt.plot(x_fast, label = 'Fast')
+        plt.plot(x_peak, label = 'Peak')
+        plt.title('Envelope Trackers')
         plt.xlabel('Frame Index')
-        plt.ylabel('Peak (dB)')
+        plt.ylabel('Level')
+        plt.legend()
         plt.grid()
 
         plt.figure(2)
@@ -74,11 +89,24 @@ if __name__ == "__main__":
         plt.grid()
 
         plt.figure(3)
-        input = np.linspace(agc.MIN_INPUT_DB, 0, abs(agc.MIN_INPUT_DB) + 1)
-        plt.plot(input, agc.gs_table)
-        plt.title('Gain Curve')
-        plt.xlabel('Input Peak (dB)')
-        plt.ylabel('Gain (dB)')
+        plt.plot(vad)
+        plt.title('VAD')
+        plt.xlabel('Frame Index')
+        plt.ylabel('Output')
         plt.grid()
 
+        plt.figure(4)
+        plt.plot(noise_floor)
+        plt.title('Noise Floor')
+        plt.xlabel('Frame Index')
+        plt.ylabel('Power (dB)')
+        plt.grid()
+    #     # plt.figure(3)
+    #     # input = np.linspace(agc.MIN_INPUT_DB, 0, abs(agc.MIN_INPUT_DB) + 1)
+    #     # plt.plot(input, agc.gs_table)
+    #     # plt.title('Gain Curve')
+    #     # plt.xlabel('Input Peak (dB)')
+    #     # plt.ylabel('Gain (dB)')
+    #     # plt.grid()
+    #
         plt.show()
