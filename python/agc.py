@@ -1,106 +1,74 @@
 # Copyright (c) 2018, XMOS Ltd, All rights reserved
-from math import sqrt
 import numpy as np
+from math import sqrt
 
-def get_factor(dBps):
-    return float(10 ** (dBps*0.015/20))
-
-def get_frame_energy(frame):
-    energy = np.iinfo(np.int32).max * np.power(frame, 2).sum()
-    return energy
-
-def dBFS_to_int32(dBFS):
-    return np.iinfo(np.int32).max * (10 ** (float(min(dBFS, agc.DBFS_MAX))/20))
-
-def get_peak_dB(input_frame_ch):
-    peak = np.absolute(input_frame_ch).max()
-
-    peak_dB = agc.MIN_INPUT_DB
-    if peak > 10 ** (agc.MIN_INPUT_DB/20):
-        peak_dB = 20.0 * np.log10(peak)
-
-    return peak_dB
-
-
-def get_gain_curve(headroom, max_gain, noise_floor):
-
-    Graw = np.linspace(-agc.MIN_INPUT_DB, 0, abs(agc.MIN_INPUT_DB) + 1)
-    Grawh = Graw - headroom
-    Grawh_clipped = np.clip(Grawh, None, max_gain)
-
-    Gs = np.array(Grawh_clipped)
-    Gs[np.where((Gs < 0))[0]] = 0
-    for i in range(noise_floor - agc.MIN_INPUT_DB):
-        Gs[i] = agc.NOISE_GAIN
-
-    return Gs
-
-def get_linear_gain_curve(headroom, max_gain, noise_floor):
-    m = max(float(max_gain)/(noise_floor+headroom), -1.0)
-    b = m*headroom
-
-    Gs = np.empty(abs(agc.MIN_INPUT_DB) + 1)
-
-    for i in range(len(Gs)):
-        Gs[i] = m * (i - abs(agc.MIN_INPUT_DB)) + b
-
-    Gs[np.where((Gs < 0))[0]] = 0
-    Gs[np.where((Gs > max_gain))[0]] = np.float(max_gain)
-
-    return Gs
 
 class agc:
-    FRAME_ADVANCE = 240
-    LOOK_AHEAD_FRAMES = 0
-    NOISE_GAIN = 10
-    # GAIN_LOOKUP_SIZE = 256
-    MIN_INPUT_DB = -80
+    # Adaption coefficients, do not change
+    SIGMA_SLOW_RISE = 0.8869
+    SIGMA_SLOW_FALL = 0.9646
+    SIGMA_FAST_RISE = 0.3814
+    SIGMA_FAST_FALL = 0.8869
+    SIGMA_PEAK_RISE = 0.5480
+    SIGMA_PEAK_FALL = 0.9646
+    GAIN_INC = 1.0121
+    GAIN_DEC = 1.0 / GAIN_INC
 
-    def __init__(self, channel_count, headroom, max_gain, noise_floor):
+
+    def __init__(self, init_gain, max_gain, desired_level_dBFS, input_channels = 2, active_channels = 1):
+        if active_channels > input_channels:
+            raise Exception("active_channels greater than input_channels.")
+        if init_gain < 0:
+            raise Exception("init_gain must be greater than 0.")
+        if max_gain < 0:
+            raise Exception("max_gain must be greater than 0.")
+        if desired_level_dBFS > 0:
+            raise Exception("desired_level_dBFS must be less than 0.")
+
+        self.input_channels = input_channels
+        self.active_channels = min(self.input_channels, active_channels)
+        self.gain = init_gain
         self.max_gain = max_gain
-        self.noise_floor = noise_floor
-        self.headroom = headroom
+        self.desired_level = (10 ** (float(desired_level_dBFS)/20))
 
-        self.gs_table = get_linear_gain_curve(self.headroom, self.max_gain, self.noise_floor)
-        self.channel_count = channel_count
-        self.frame_advance = agc.FRAME_ADVANCE
-        self.sample_buffer = np.zeros((self.channel_count, self.frame_advance * (1 + agc.LOOK_AHEAD_FRAMES)))
-
-        self.frame_peak_dB = 0
-        self.frame_gain = 0
-
-        return
+        self.x_slow = 0
+        self.x_fast = 0
+        self.x_peak = 0
 
 
-
-    def process_frame(self, input_frame):
-        # Push new frame to the back of sample buffer
-        for ch in range(self.channel_count):
-            for n in range(len(self.sample_buffer[0, ]) - self.frame_advance):
-                self.sample_buffer[ch, n] = self.sample_buffer[ch, n + self.frame_advance]
-
-            for n in range(self.frame_advance):
-                self.sample_buffer[ch,-self.frame_advance + n] = input_frame[ch, n]
-
-        self.frame_peak_dB = get_peak_dB(self.sample_buffer[0, :])
-
-        if self.frame_peak_dB < agc.MIN_INPUT_DB:
-            self.frame_peak_dB = agc.MIN_INPUT_DB
-
-        Gain_new = self.gs_table[np.int(self.frame_peak_dB) - agc.MIN_INPUT_DB]
-
-        clip_flag = (10 ** (float(self.frame_peak_dB)/20.0) * 10 ** (float(self.frame_gain)/20.0)) > 1
-
-        # Incremental change
-        if clip_flag:
-            self.frame_gain = Gain_new
+    def process_frame(self, input_frame, vad):
+        peak_sample = 0
+        if self.input_channels > 1:
+            peak_sample = np.absolute(input_frame[0,]).max() #Sample input from Ch0
         else:
-            self.frame_gain = float(5*self.frame_gain + 3*Gain_new)/8
+            peak_sample = np.absolute(input_frame).max()
 
-        gain_linear = 10 ** (float(self.frame_gain)/20.0)
-        output = np.empty(np.shape(input_frame))
-        for ch in range(self.channel_count):
-            for n in range(self.frame_advance):
-                output[ch, n] = gain_linear * self.sample_buffer[ch, n]
+        rising = peak_sample > abs(self.x_slow)
 
-        return output
+        sigma_slow = agc.SIGMA_SLOW_RISE if rising else agc.SIGMA_SLOW_FALL
+        self.x_slow = (1 - sigma_slow) * peak_sample + sigma_slow * self.x_slow
+
+        sigma_fast = agc.SIGMA_FAST_RISE if rising else agc.SIGMA_FAST_FALL
+        self.x_fast = (1 - sigma_fast) * peak_sample + sigma_fast * self.x_fast
+
+        exceed_desired_level = (peak_sample * self.gain) > self.desired_level
+
+        if vad or exceed_desired_level:
+            sigma_peak = agc.SIGMA_PEAK_RISE if self.x_fast > self.x_peak else agc.SIGMA_PEAK_FALL
+            self.x_peak = (1 - sigma_peak) * self.x_fast + sigma_peak * self.x_peak
+
+            g_mod = agc.GAIN_INC if self.x_peak * self.gain < self.desired_level else agc.GAIN_DEC
+            self.gain = min(g_mod * self.gain, self.max_gain)
+
+        def limit_gain(x):
+            NONLINEAR_POINT = 0.5
+            return x if abs(x) < NONLINEAR_POINT else (np.sign(x) * 2 * NONLINEAR_POINT - NONLINEAR_POINT ** 2 / x)
+
+        gained_input = self.gain * input_frame[:self.active_channels,:]
+        limited_gained_input = [[limit_gain(sample) for sample in ch] for ch in gained_input]
+
+        output_frame = limited_gained_input
+        if self.active_channels < self.input_channels:
+            output_frame = np.concatenate((limited_gained_input, input_frame[self.active_channels:,:]))
+
+        return output_frame
