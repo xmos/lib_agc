@@ -28,6 +28,7 @@ def parse_arguments():
     parser.add_argument("--desired_level", type=int, default = -6)
     parser.add_argument("--max_gain", type=int, default = 40)
     parser.add_argument("--noise_floor", type=int, default = -40)
+    parser.add_argument("--init_gain", type=int, default = 20)
 
     parser.add_argument("output", help="output wav file")
     parser.add_argument('--plot', action='store_true')
@@ -45,27 +46,30 @@ if __name__ == "__main__":
     output = np.zeros((channel_count, file_length))
 
     # agc = agc.agc(channel_count, args.headroom, args.max_gain, args.noise_floor)
-    agc = agc.agc(args.noise_floor, args.desired_level)
+    agc = agc.agc(args.init_gain, args.noise_floor, args.desired_level)
 
+    vad = vad.vad()
 
     x_slow = []
     x_fast = []
     x_peak = []
     frame_gain = []
-    vad = []
+    vad1 = []
+    vad2 = []
     noise_floor = []
 
     for frame_start in range(0, file_length-FRAME_ADVANCE, FRAME_ADVANCE):
         x = au.get_frame(wav_data, frame_start, FRAME_ADVANCE)
-        output[:, frame_start: frame_start + FRAME_ADVANCE] = agc.process_frame(x)
+        vad_result = vad.run(x[0])
+        output[:, frame_start: frame_start + FRAME_ADVANCE] = agc.process_frame(x, vad_result > 0.4)
 
         x_slow.append(20.0 * np.log10(agc.x_slow))
         x_fast.append(20.0 * np.log10(agc.x_fast))
         x_peak.append(20.0 * np.log10(agc.x_peak))
-        # peak_dB.append(agc.frame_peak_dB)
         frame_gain.append(20.0 * np.log10(agc.gain))
-        vad.append(1 if agc.vad else 0)
+        vad1.append(1 if agc.vad else 0)
         noise_floor.append(20.0 * np.log10(sqrt(agc.noise.b_power)))
+        vad2.append(vad_result)
 
     scipy.io.wavfile.write(args.output, rate, output.T)
 
@@ -89,7 +93,8 @@ if __name__ == "__main__":
         plt.grid()
 
         plt.figure(3)
-        plt.plot(vad)
+        plt.plot(vad1, label = "Psuedo VAD")
+        plt.plot(vad2, label = "VAD")
         plt.title('VAD')
         plt.xlabel('Frame Index')
         plt.ylabel('Output')
@@ -101,12 +106,5 @@ if __name__ == "__main__":
         plt.xlabel('Frame Index')
         plt.ylabel('Power (dB)')
         plt.grid()
-    #     # plt.figure(3)
-    #     # input = np.linspace(agc.MIN_INPUT_DB, 0, abs(agc.MIN_INPUT_DB) + 1)
-    #     # plt.plot(input, agc.gs_table)
-    #     # plt.title('Gain Curve')
-    #     # plt.xlabel('Input Peak (dB)')
-    #     # plt.ylabel('Gain (dB)')
-    #     # plt.grid()
-    #
+
         plt.show()

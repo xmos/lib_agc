@@ -9,7 +9,7 @@ def dBFS_to_int32(dBFS):
 
 class agc:
     FRAME_ADVANCE = 240
-    def __init__(self, noise_floor, desired_level):
+    def __init__(self, init_gain,  noise_floor, desired_level):
         self.sigma_slow_rise = sqrt(0.999)
         self.sigma_slow_fall = sqrt(0.9997)
         self.sigma_fast_rise = sqrt(0.992)
@@ -28,7 +28,7 @@ class agc:
 
         self.vad = False
 
-        self.gain = 100
+        self.gain = init_gain
 
         self.desired_level = (10 ** (float(desired_level)/20))
 
@@ -38,26 +38,24 @@ class agc:
         print self.desired_level
 
 
-    def process_frame(self, input_frame):
-        # print(len(input_frame[0,]))
-
+    def process_frame(self, input_frame, vad_flag):
         output_frame = np.empty(np.shape(input_frame))
 
         for i, sample in enumerate(input_frame[0,]):
             sample_abs = abs(sample)
             rising = sample_abs > abs(self.x_slow)
 
-            sigma_slow = self.sigma_slow_rise if rising else self.sigma_slow_fall
-            self.x_slow = (1 - sigma_slow) * sample_abs + sigma_slow * self.x_slow
+            # sigma_slow = self.sigma_slow_rise if rising else self.sigma_slow_fall
+            # self.x_slow = (1 - sigma_slow) * sample_abs + sigma_slow * self.x_slow
 
             sigma_fast = self.sigma_fast_rise if rising else self.sigma_fast_fall
             self.x_fast = (1 - sigma_fast) * sample_abs + sigma_fast * self.x_fast
 
-            self.noise.process_sample(sample)
+            # self.noise.process_sample(sample)
+            #
+            # self.vad = self.x_fast > max(self.x_slow, sqrt(self.noise.b_power) * 1.5)
 
-            self.vad = self.x_fast > max(self.x_slow, sqrt(self.noise.b_power) * 1.5)
-
-            if self.vad:
+            if vad_flag:
                 sigma_peak = self.sigma_peak_rise if self.x_fast > self.x_peak else self.sigma_peak_fall
                 self.x_peak = (1 - sigma_peak) * self.x_fast + sigma_peak * self.x_peak
 
@@ -67,8 +65,7 @@ class agc:
 
             output_frame[:,i] = self.gain * input_frame[:,i]
 
-        # if self.vad:
-        #     print self.x_peak
+
         return output_frame
 
 
