@@ -80,14 +80,14 @@ void agc_init(agc_state_t &agc, agc_config_t config[AGC_INPUT_CHANNELS]){
 }
 
 
-void agc_set_channel_gain_linear(agc_state_t &agc, unsigned channel, uq16_16 gain) {
+void agc_set_channel_gain(agc_state_t &agc, unsigned channel, uq16_16 gain) {
     agc.ch_state[channel].gain.m = gain;
     agc.ch_state[channel].gain.e = UQ16_16_EXP;
     vtb_normalise_u32(agc.ch_state[channel].gain);
 }
 
 
-uq16_16 agc_get_channel_gain_linear(agc_state_t &agc, unsigned channel){
+uq16_16 agc_get_channel_gain(agc_state_t &agc, unsigned channel){
     return vtb_denormalise_and_saturate_u32(agc.ch_state[channel].gain, UQ16_16_EXP);
 }
 

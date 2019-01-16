@@ -23,14 +23,14 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
         {
             1,
             UQ16(AGC_GAIN_CH0),
-            UQ16(AGC_MAX_GAIN),
-            UQ16(AGC_DESIRED_LEVEL)
+            UQ16(AGC_CH0_MAX_GAIN),
+            UQ16(AGC_CH0_DESIRED_LEVEL)
         },
         {
             0,
             UQ16(AGC_GAIN_CH1),
-            UQ16(AGC_MAX_GAIN),
-            UQ16(AGC_DESIRED_LEVEL)
+            UQ16(AGC_CH1_MAX_GAIN),
+            UQ16(AGC_CH1_DESIRED_LEVEL)
         },
     };
 

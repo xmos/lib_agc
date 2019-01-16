@@ -22,9 +22,9 @@ void agc_test_task(chanend c_data_input, chanend c_data_output, chanend ?c_contr
 
 void agc_init(agc_state_t &agc, agc_config_t config[AGC_INPUT_CHANNELS]);
 
-void agc_set_channel_gain_linear(agc_state_t &agc, unsigned channel,  uq16_16 gain);
+void agc_set_channel_gain(agc_state_t &agc, unsigned channel,  uq16_16 gain);
 
-uq16_16 agc_get_channel_gain_linear(agc_state_t &agc, unsigned channel);
+uq16_16 agc_get_channel_gain(agc_state_t &agc, unsigned channel);
 
 /** Function that processes a block of data.
  *

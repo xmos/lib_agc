@@ -40,7 +40,7 @@ void test_agc_init(){
     }
 }
 
-void test_agc_set_channel_gain_linear(){
+void test_agc_set_channel_gain(){
     srand((unsigned) 2);
 
     agc_config_t config[AGC_INPUT_CHANNELS] = {
@@ -70,11 +70,11 @@ void test_agc_set_channel_gain_linear(){
         agc_init(agc, config);
 
         for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
-            agc_set_channel_gain_linear(agc, i, expected_gain[i]);
+            agc_set_channel_gain(agc, i, expected_gain[i]);
         }
 
         for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
-            uq16_16 actual_gain = agc_get_channel_gain_linear(agc, i);
+            uq16_16 actual_gain = agc_get_channel_gain(agc, i);
             TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_gain[i], actual_gain, "Incorrect channel gain");
         }
     }
@@ -102,7 +102,7 @@ void test_agc_set_channel_gain_zero(){
     agc_init(agc, config);
 
     for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
-        agc_set_channel_gain_linear(agc, i, expected_gain);
+        agc_set_channel_gain(agc, i, expected_gain);
     }
 
     for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
@@ -146,7 +146,7 @@ void test_agc_process_frame(){
         uint32_t gain =((uint32_t)rand()) % gain_range;
 
         for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
-            agc_set_channel_gain_linear(agc, i, UQ16((double)gain));
+            agc_set_channel_gain(agc, i, UQ16((double)gain));
         }
         int vad = 1;
         agc_process_frame(agc, frame_in_out, vad);
