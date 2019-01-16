@@ -18,13 +18,19 @@ import argparse
 
 FRAME_ADVANCE = 240
 
+ADAPT_DEFAULT = False
+DESIRED_DB_DEFAULT = -20
+MAX_GAIN_DEFAULT = 1000.0
+INIT_GAIN_DEFAULT = 2.0
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("input", help="input wav file")
-    parser.add_argument("--desired_level", type=int, default = -6)
-    parser.add_argument("--max_gain", type=int, default = 1000)
-    parser.add_argument("--init_gain", type=int, default = 20)
+    parser.add_argument("--adapt", type=bool, default = True, help="Adapt flag for Ch0")
+    parser.add_argument("--desired_dBFS", type=int, default = DESIRED_DB_DEFAULT, help="Desired level (dBFS) for Ch0. Must be negative.")
+    parser.add_argument("--max_gain", type=float, default = MAX_GAIN_DEFAULT, help="Max gain for Ch0")
+    parser.add_argument("--init_gain", type=float, default = 40.0, help="Initial gain for Ch0")
 
     parser.add_argument("output", help="output wav file")
     parser.add_argument('--plot', action='store_true')
@@ -37,7 +43,6 @@ if __name__ == "__main__":
     rate, mix_wav_file = scipy.io.wavfile.read(args.input, 'r')
     wav_data, channel_count, file_length = au.parse_audio(mix_wav_file)
 
-    agc = agc.agc(args.init_gain, args.max_gain, args.desired_level)
     vad = vad.vad()
 
     x_slow = []
@@ -48,15 +53,24 @@ if __name__ == "__main__":
 
     output = np.zeros((channel_count, file_length))
 
+    agcs = []
+    agcs.append(agc.agc(args.adapt, args.init_gain, args.max_gain, args.desired_dBFS))
+    for ch in range(channel_count-1):
+        agcs.append(agc.agc(ADAPT_DEFAULT, INIT_GAIN_DEFAULT, MAX_GAIN_DEFAULT, DESIRED_DB_DEFAULT))
+
+    print len(agcs)
+
     for frame_start in range(0, file_length-FRAME_ADVANCE, FRAME_ADVANCE):
         x = au.get_frame(wav_data, frame_start, FRAME_ADVANCE)
         vad_result = vad.run(x[0])
-        output[:, frame_start: frame_start + FRAME_ADVANCE] = agc.process_frame(x, vad_result > 0.5)
 
-        x_slow.append(20.0 * np.log10(agc.x_slow))
-        x_fast.append(20.0 * np.log10(agc.x_fast))
-        x_peak.append(20.0 * np.log10(agc.x_peak) if agc.x_peak > 0 else np.NaN)
-        frame_gain_dB.append(20.0 * np.log10(agc.gain))
+        for i in range(channel_count):
+            output[i, frame_start: frame_start + FRAME_ADVANCE] = agcs[i].process_frame(x[i], True)
+
+        x_slow.append(20.0 * np.log10(agcs[0].x_slow))
+        x_fast.append(20.0 * np.log10(agcs[0].x_fast))
+        x_peak.append(20.0 * np.log10(agcs[0].x_peak) if agcs[0].x_peak > 0 else np.NaN)
+        frame_gain_dB.append(20.0 * np.log10(agcs[0].gain))
         vad_results.append(vad_result)
 
 

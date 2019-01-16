@@ -3,12 +3,12 @@
 #ifndef AGC_CONF_H_
 #define AGC_CONF_H_
 
-#define AGC_LOOK_PAST_FRAMES 0
-#define AGC_LOOK_AHEAD_FRAMES 0
 #define AGC_FRAME_ADVANCE 240
 #define AGC_PROC_FRAME_LENGTH (AGC_FRAME_ADVANCE)
-#define AGC_CHANNELS 2
 
-static const uint32_t AGC_GAIN[AGC_CHANNELS] = {40, 1};
+#define AGC_INPUT_CHANNELS 2
+#define AGC_MAX_GAIN 1000
+#define AGC_DESIRED_LEVEL 0.1
+
 
 #endif /* AGC_CONF_H_ */
