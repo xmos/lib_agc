@@ -8,9 +8,6 @@
 
 #define STATE_SIZE VTB_RX_STATE_UINT64_SIZE(AGC_CHANNEL_PAIRS*2, INPUT_FRAME_LENGTH, AGC_FRAME_ADVANCE, 0)
 
-#define AGC_GAIN_CH0 40
-#define AGC_GAIN_CH1 2
-
 
 void agc_test_task(chanend c_data_input, chanend c_data_output,
                 chanend ?c_control){
@@ -21,16 +18,16 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
     agc_state_t [[aligned(8)]] agc_state;
     agc_config_t agc_config[AGC_INPUT_CHANNELS] = {
         {
-            1,
-            UQ16(AGC_GAIN_CH0),
+            AGC_CH0_ADAPT,
+            UQ16(AGC_CH0_GAIN),
             UQ16(AGC_CH0_MAX_GAIN),
-            UQ16(AGC_CH0_DESIRED_LEVEL)
+            AGC_CH0_DESIRED_LEVEL
         },
         {
-            0,
-            UQ16(AGC_GAIN_CH1),
+            AGC_CH1_ADAPT,
+            UQ16(AGC_CH1_GAIN),
             UQ16(AGC_CH1_MAX_GAIN),
-            UQ16(AGC_CH1_DESIRED_LEVEL)
+            AGC_CH1_DESIRED_LEVEL
         },
     };
 

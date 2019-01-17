@@ -13,7 +13,7 @@ typedef struct {
     int adapt;
     uq16_16 init_gain;
     uq16_16 max_gain;
-    uq16_16 desired_level;
+    uint32_t desired_level;
 } agc_config_t;
 
 

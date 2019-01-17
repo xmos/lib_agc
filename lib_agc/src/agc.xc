@@ -54,7 +54,7 @@ void agc_init(agc_state_t &agc, agc_config_t config[AGC_INPUT_CHANNELS]){
         vtb_normalise_u32(agc.ch_state[ch].max_gain);
 
         agc.ch_state[ch].desired_level.m = config[ch].desired_level;
-        agc.ch_state[ch].desired_level.e = UQ16_16_EXP;
+        agc.ch_state[ch].desired_level.e = 0;
         vtb_normalise_u32(agc.ch_state[ch].desired_level);
 
         vtb_u32_float_t vtb_float_u32_zero = VTB_FLOAT_U32_ZERO;
@@ -109,13 +109,12 @@ uint32_t get_max_abs_sample(dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned c
 static void agc_process_channel(agc_channel_state_t &agc_state, dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned ch_index, uint8_t vad){
     const vtb_u32_float_t agc_limit_point = HALF;
     const int s32_exponent = -31;
-    const int u32_exponent = -32;
+    // const int u32_exponent = -32;
 
 
     if(agc_state.adapt){
         uint32_t max_sample = get_max_abs_sample(samples, ch_index);
-        vtb_u32_float_t max_abs_value = {max_sample, u32_exponent};
-
+        vtb_u32_float_t max_abs_value = {max_sample, 0};
         vtb_normalise_u32(max_abs_value);
 
         int rising = vtb_gte_u32_u32(max_abs_value, agc_state.x_slow);

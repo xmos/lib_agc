@@ -5,10 +5,10 @@
 
 #define AGC_INPUT_CHANNELS 2
 void test_agc_init(){
-    int expected_adapt[AGC_INPUT_CHANNELS] = {1, 0};
-    uq16_16 expected_init_gain[AGC_INPUT_CHANNELS] = {UQ16(40), UQ16(20.5)};
-    uq16_16 expected_max_gain[AGC_INPUT_CHANNELS] = {UQ16(1000), UQ16(120.5)};
-    uq16_16 expected_desired_level[AGC_INPUT_CHANNELS] = {UQ16(0.1), UQ16(0.01)};
+    int expected_adapt[AGC_INPUT_CHANNELS] = {AGC_CH0_ADAPT, AGC_CH1_ADAPT};
+    uq16_16 expected_init_gain[AGC_INPUT_CHANNELS] = {UQ16(AGC_CH0_GAIN), UQ16(AGC_CH1_GAIN)};
+    uq16_16 expected_max_gain[AGC_INPUT_CHANNELS] = {UQ16(AGC_CH0_MAX_GAIN), UQ16(AGC_CH1_MAX_GAIN)};
+    uint32_t expected_desired_level[AGC_INPUT_CHANNELS] = {AGC_CH0_DESIRED_LEVEL, AGC_CH1_DESIRED_LEVEL};
 
     agc_state_t agc;
     agc_config_t config[AGC_INPUT_CHANNELS] = {
@@ -32,7 +32,7 @@ void test_agc_init(){
         TEST_ASSERT_EQUAL_INT_MESSAGE(expected_adapt[i], agc.ch_state[i].adapt, "Incorrect adapt flag");
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_init_gain[i], vtb_denormalise_and_saturate_u32(agc.ch_state[i].gain, -16), "Incorrect init gain");
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_max_gain[i], vtb_denormalise_and_saturate_u32(agc.ch_state[i].max_gain, -16), "Incorrect max gain");
-        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_desired_level[i], vtb_denormalise_and_saturate_u32(agc.ch_state[i].desired_level, -16), "Incorrect desired level");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_desired_level[i], vtb_denormalise_and_saturate_u32(agc.ch_state[i].desired_level, 0), "Incorrect desired level");
 
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(AGC_GAIN_INC, vtb_denormalise_and_saturate_u32(agc.ch_state[i].gain_inc, -16), "Incorrect gain inc");
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(AGC_GAIN_DEC, vtb_denormalise_and_saturate_u32(agc.ch_state[i].gain_dec, -16), "Incorrect gain inc");
@@ -45,16 +45,16 @@ void test_agc_set_channel_gain(){
 
     agc_config_t config[AGC_INPUT_CHANNELS] = {
         {
-            1,
-            UQ16(1),
-            UQ16(1000),
-            UQ16(0.1),
+            AGC_CH0_ADAPT,
+            UQ16(AGC_CH0_GAIN),
+            UQ16(AGC_CH0_MAX_GAIN),
+            AGC_CH0_DESIRED_LEVEL,
         },
         {
-            0,
-            UQ16(1),
-            UQ16(1000),
-            UQ16(0.1),
+            AGC_CH1_ADAPT,
+            UQ16(AGC_CH1_GAIN),
+            UQ16(AGC_CH1_MAX_GAIN),
+            AGC_CH1_DESIRED_LEVEL,
         }
     };
 
@@ -85,16 +85,16 @@ void test_agc_set_channel_gain_zero(){
 
     agc_config_t config[AGC_INPUT_CHANNELS] = {
         {
-            1,
-            UQ16(1),
-            UQ16(1000),
-            UQ16(0.1),
+            AGC_CH0_ADAPT,
+            UQ16(AGC_CH0_GAIN),
+            UQ16(AGC_CH0_MAX_GAIN),
+            AGC_CH0_DESIRED_LEVEL,
         },
         {
-            0,
-            UQ16(1),
-            UQ16(1000),
-            UQ16(0.1),
+            AGC_CH1_ADAPT,
+            UQ16(AGC_CH1_GAIN),
+            UQ16(AGC_CH1_MAX_GAIN),
+            AGC_CH1_DESIRED_LEVEL,
         }
     };
 
@@ -118,15 +118,15 @@ void test_agc_process_frame(){
     agc_config_t config[AGC_INPUT_CHANNELS] = {
         {
             0,
-            UQ16(1),
-            UQ16(1000),
-            UQ16(0.1),
+            UQ16(AGC_CH0_GAIN),
+            UQ16(AGC_CH0_MAX_GAIN),
+            AGC_CH0_DESIRED_LEVEL,
         },
         {
             0,
-            UQ16(1),
-            UQ16(1000),
-            UQ16(0.1),
+            UQ16(AGC_CH1_GAIN),
+            UQ16(AGC_CH1_MAX_GAIN),
+            AGC_CH1_DESIRED_LEVEL,
         }
     };
 
