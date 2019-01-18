@@ -91,6 +91,17 @@ uq16_16 agc_get_channel_gain(agc_state_t &agc, unsigned channel){
     return vtb_denormalise_and_saturate_u32(agc.ch_state[channel].gain, UQ16_16_EXP);
 }
 
+
+void agc_set_channel_adapt(agc_state_t &agc, unsigned channel, uint32_t adapt){
+    agc.ch_state[channel].adapt = (int)(adapt > 0);
+}
+
+
+int agc_get_channel_adapt(agc_state_t &agc, unsigned channel){
+    return agc.ch_state[channel].adapt;
+}
+
+
 uint32_t get_max_abs_sample(dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned ch_index){
     uint32_t max_abs_value = 0;
     uint32_t abs_value = 0;

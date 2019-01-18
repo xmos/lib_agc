@@ -58,7 +58,6 @@ if __name__ == "__main__":
     for ch in range(channel_count-1):
         agcs.append(agc.agc(ADAPT_DEFAULT, INIT_GAIN_DEFAULT, MAX_GAIN_DEFAULT, DESIRED_DB_DEFAULT))
 
-    print len(agcs)
 
     for frame_start in range(0, file_length-FRAME_ADVANCE, FRAME_ADVANCE):
         x = au.get_frame(wav_data, frame_start, FRAME_ADVANCE)

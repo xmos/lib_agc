@@ -26,6 +26,11 @@ void agc_set_channel_gain(agc_state_t &agc, unsigned channel,  uq16_16 gain);
 
 uq16_16 agc_get_channel_gain(agc_state_t &agc, unsigned channel);
 
+void agc_set_channel_adapt(agc_state_t &agc, unsigned channel,  uint32_t adapt);
+
+int agc_get_channel_adapt(agc_state_t &agc, unsigned channel);
+
+
 /** Function that processes a block of data.
  *
  * \param[in,out] agc     Gain controller structure
