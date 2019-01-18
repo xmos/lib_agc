@@ -1,11 +1,11 @@
 VERSION = 0.0.3
 
-DEPENDENT_MODULES = lib_dsp(>=4.0.0) lib_voice_toolbox(>=0.0.1) audio_test_tools(>=1.0.0)
+DEPENDENT_MODULES = lib_dsp(>=4.0.0) lib_voice_toolbox(>=2.1.0) audio_test_tools(>=1.0.0) lib_vad(>=0.0.1))
 
-MODULE_XCC_XC_FLAGS = $(XCC_XC_FLAGS)
+MODULE_XCC_XC_FLAGS = $(XCC_XC_FLAGS) -O2
 
 INCLUDE_DIRS = api src
 
 SOURCE_DIRS = src/*
 
-OPTIONAL_HEADERS += agc_conf.h voice_toolbox_conf.h
+OPTIONAL_HEADERS += agc_conf.h
