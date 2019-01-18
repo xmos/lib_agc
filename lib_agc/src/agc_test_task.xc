@@ -1,7 +1,9 @@
 // Copyright (c) 2018, XMOS Ltd, All rights reserved
 #include "agc.h"
 #include "voice_toolbox.h"
+#include "vad.h"
 #include <string.h>
+
 
 //This must be more than AGC_FRAME_ADVANCE to work around vtb_rx_tx doesnt support advance==length.
 #define INPUT_FRAME_LENGTH 480
@@ -31,6 +33,12 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
         },
     };
 
+    int32_t vad_data_window[VAD_PROC_FRAME_LENGTH];
+    for(int i = 0; i<VAD_PROC_FRAME_LENGTH; ++i){
+        vad_data_window[i] = 0;
+    }
+    vad_state_t vad_state;
+    vad_init_state(vad_state);
     agc_init(agc_state, agc_config);
 
     while(1){
@@ -44,8 +52,16 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
             memcpy(frame2[ch_pair], &frame1[ch_pair][INPUT_FRAME_LENGTH - AGC_PROC_FRAME_LENGTH], sizeof(frame2[ch_pair]));
         }
 
-        uint8_t vad = 0xFF;
-        agc_process_frame(agc_state, frame2, vad);
+
+        for(int s = VAD_PROC_FRAME_LENGTH - 1 - AGC_FRAME_ADVANCE;s >= 0;s--){
+            vad_data_window[s + AGC_FRAME_ADVANCE] = vad_data_window[s];
+        }
+        for(unsigned s=0;s<AGC_FRAME_ADVANCE;s++){
+            vad_data_window[s] = (frame2[0][s], int32_t[])[0];
+        }
+        int32_t vad_percentage = vad_percentage_voice(vad_data_window, vad_state);
+
+        agc_process_frame(agc_state, frame2, vad_percentage);
 
         vtb_tx_pairs(c_data_output, (dsp_complex_t*)frame2,
                          2*AGC_CHANNEL_PAIRS,

@@ -5,5 +5,5 @@ def use_module(bld):
         source=sources,
         includes=['api'],
         optional_headers=['agc_conf.h'],
-        depends_on=['lib_dsp(>=4.0.0)', 'audio_test_tools(>=1.0.0)', 'lib_voice_toolbox(>=0.0.1)'],
+        depends_on=['lib_dsp(>=4.0.0)', 'audio_test_tools(>=1.0.0)', 'lib_voice_toolbox(>=0.0.1)',  'lib_vad(>=0.0.1)'],
         version='0.0.3')
