@@ -3,7 +3,6 @@
 
 #define TEST_COUNT (1<<14)
 
-#define AGC_INPUT_CHANNELS 2
 void test_agc_init(){
     int expected_adapt[AGC_INPUT_CHANNELS] = {AGC_CH0_ADAPT, AGC_CH1_ADAPT};
     uq16_16 expected_init_gain[AGC_INPUT_CHANNELS] = {UQ16(AGC_CH0_GAIN), UQ16(AGC_CH1_GAIN)};
