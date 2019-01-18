@@ -104,14 +104,17 @@ int agc_get_channel_adapt(agc_state_t &agc, unsigned channel){
 
 uint32_t get_max_abs_sample(dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned ch_index){
     uint32_t max_abs_value = 0;
-    uint32_t abs_value = 0;
     for(unsigned n = 0; n < AGC_FRAME_ADVANCE; n++){
         int32_t sample = (samples[n], int32_t[2])[ch_index&1];
-        int32_t const mask = (sample >> 4) * 8 - 1;
-        abs_value = (sample + mask) ^ mask;
+        uint32_t abs_sample = 0;
+        if(sample < 0){
+            abs_sample = (uint32_t)(-sample);
+        } else {
+            abs_sample = (uint32_t)sample;
+        }
 
-        if(abs_value > max_abs_value){
-            max_abs_value = abs_value;
+        if(abs_sample > max_abs_value){
+            max_abs_value = abs_sample;
         }
     }
     return max_abs_value;
@@ -120,8 +123,6 @@ uint32_t get_max_abs_sample(dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned c
 static void agc_process_channel(agc_channel_state_t &agc_state, dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned ch_index, uint8_t vad){
     const vtb_u32_float_t agc_limit_point = HALF;
     const int s32_exponent = -31;
-    // const int u32_exponent = -32;
-
 
     if(agc_state.adapt){
         uint32_t max_sample = get_max_abs_sample(samples, ch_index);
