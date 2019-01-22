@@ -1,4 +1,4 @@
-// Copyright (c) 2018, XMOS Ltd, All rights reserved
+// Copyright (c) 2018-2019, XMOS Ltd, All rights reserved
 #include "agc.h"
 #include "voice_toolbox.h"
 #include "vad.h"
