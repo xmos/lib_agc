@@ -1,4 +1,4 @@
-# Copyright (c) 2019, XMOS Ltd, All rights reserved
+# opyright (c) 2018-2019, XMOS Ltd, All rights reserved
 import os.path
 import pytest
 import subprocess
