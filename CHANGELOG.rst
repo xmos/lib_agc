@@ -1,6 +1,12 @@
 AGC library change log
 ======================
 
+1.0.0
+-----
+
+  * ADDED: Multiple channel support
+  * ADDED: Gain and adaption control.
+
 0.0.3
 -----
 
@@ -24,4 +30,3 @@ AGC library change log
 -----
 
   * Initial version
-
