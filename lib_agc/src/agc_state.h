@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018, XMOS Ltd, All rights reserved
+// Copyright (c) 2017-2019, XMOS Ltd, All rights reserved
 #ifndef _agc_state_h_
 #define _agc_state_h_
 
@@ -6,34 +6,41 @@
 #include "voice_toolbox.h"
 #include "agc_conf.h"
 
-// #ifndef AGC_LOOK_PAST_FRAMES
-// #define AGC_LOOK_PAST_FRAMES 0
-// #endif
-//
-// #ifndef AGC_LOOK_AHEAD_FRAMES
-// #define AGC_LOOK_AHEAD_FRAMES 0
-// #endif
-//
-#define AGC_CHANNEL_PAIRS ((AGC_CHANNELS+1)/2)
+#define AGC_CHANNEL_PAIRS ((AGC_INPUT_CHANNELS+1)/2)
+
+#define AGC_ALPHA_SLOW_RISE VTB_UQ0_32(0.8869)
+#define AGC_ALPHA_SLOW_FALL VTB_UQ0_32(0.9646)
+#define AGC_ALPHA_FAST_RISE VTB_UQ0_32(0.3814)
+#define AGC_ALPHA_FAST_FALL VTB_UQ0_32(0.8869)
+#define AGC_ALPHA_PEAK_RISE VTB_UQ0_32(0.5480)
+#define AGC_ALPHA_PEAK_FALL VTB_UQ0_32(0.9646)
+
+#define AGC_GAIN_INC        VTB_UQ16_16(1.0121)
+#define AGC_GAIN_DEC        VTB_UQ16_16(0.9880)
 
 
-/* AGC state machine, only used internally */
-//
-// typedef enum {
-//     AGC_UP = 0,
-//     AGC_DOWN = 1,
-//     AGC_WAIT = 2,
-//     AGC_STABLE = 3
-// } agc_mode;
-//
-/* structure to hold AGC state, only used internally */
+/* Structure to hold AGC state, only used internally */
 typedef struct {
+    int adapt;
     vtb_u32_float_t gain;
+    vtb_u32_float_t max_gain;
+    vtb_u32_float_t desired_level;
+    vtb_u32_float_t x_slow;
+    vtb_u32_float_t x_fast;
+    vtb_u32_float_t x_peak;
+    vtb_uq0_32_t alpha_sr;
+    vtb_uq0_32_t alpha_sf;
+    vtb_uq0_32_t alpha_fr;
+    vtb_uq0_32_t alpha_ff;
+    vtb_uq0_32_t alpha_pr;
+    vtb_uq0_32_t alpha_pf;
+    vtb_u32_float_t gain_inc;
+    vtb_u32_float_t gain_dec;
 } agc_channel_state_t;
 
 typedef struct {
-    agc_channel_state_t ch_state[AGC_CHANNELS];
+    agc_channel_state_t ch_state[AGC_INPUT_CHANNELS];
 } agc_state_t;
 
 
-#endif // _agc_state_h_
+#endif // _AGC_STATE_H_
