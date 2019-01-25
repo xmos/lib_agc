@@ -21,14 +21,14 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
     agc_config_t agc_config[AGC_INPUT_CHANNELS] = {
         {
             AGC_CH0_ADAPT,
-            UQ16(AGC_CH0_GAIN),
-            UQ16(AGC_CH0_MAX_GAIN),
+            VTB_UQ16_16(AGC_CH0_GAIN),
+            VTB_UQ16_16(AGC_CH0_MAX_GAIN),
             AGC_CH0_DESIRED_LEVEL
         },
         {
             AGC_CH1_ADAPT,
-            UQ16(AGC_CH1_GAIN),
-            UQ16(AGC_CH1_MAX_GAIN),
+            VTB_UQ16_16(AGC_CH1_GAIN),
+            VTB_UQ16_16(AGC_CH1_MAX_GAIN),
             AGC_CH1_DESIRED_LEVEL
         },
     };

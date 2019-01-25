@@ -34,7 +34,6 @@ static int frame_counter = 0;
 
 #define ASSERT(x)    asm("ecallf %0" :: "r" (x))
 #define UQ16_16_EXP -16
-#define UQ32_EXP -32
 
 const vtb_s32_float_t ONE = {INT_MAX, -31};
 const vtb_u32_float_t HALF = {UINT_MAX, -32-1};
@@ -80,14 +79,14 @@ void agc_init(agc_state_t &agc, agc_config_t config[AGC_INPUT_CHANNELS]){
 }
 
 
-void agc_set_channel_gain(agc_state_t &agc, unsigned channel, uq16_16 gain) {
+void agc_set_channel_gain(agc_state_t &agc, unsigned channel, vtb_uq16_16_t gain) {
     agc.ch_state[channel].gain.m = gain;
     agc.ch_state[channel].gain.e = UQ16_16_EXP;
     vtb_normalise_u32(agc.ch_state[channel].gain);
 }
 
 
-uq16_16 agc_get_channel_gain(agc_state_t &agc, unsigned channel){
+vtb_uq16_16_t agc_get_channel_gain(agc_state_t &agc, unsigned channel){
     return vtb_denormalise_and_saturate_u32(agc.ch_state[channel].gain, UQ16_16_EXP);
 }
 

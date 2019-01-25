@@ -8,15 +8,15 @@
 
 #define AGC_CHANNEL_PAIRS ((AGC_INPUT_CHANNELS+1)/2)
 
-#define AGC_ALPHA_SLOW_RISE UQ32(0.8869)
-#define AGC_ALPHA_SLOW_FALL UQ32(0.9646)
-#define AGC_ALPHA_FAST_RISE UQ32(0.3814)
-#define AGC_ALPHA_FAST_FALL UQ32(0.8869)
-#define AGC_ALPHA_PEAK_RISE UQ32(0.5480)
-#define AGC_ALPHA_PEAK_FALL UQ32(0.9646)
+#define AGC_ALPHA_SLOW_RISE VTB_UQ0_32(0.8869)
+#define AGC_ALPHA_SLOW_FALL VTB_UQ0_32(0.9646)
+#define AGC_ALPHA_FAST_RISE VTB_UQ0_32(0.3814)
+#define AGC_ALPHA_FAST_FALL VTB_UQ0_32(0.8869)
+#define AGC_ALPHA_PEAK_RISE VTB_UQ0_32(0.5480)
+#define AGC_ALPHA_PEAK_FALL VTB_UQ0_32(0.9646)
 
-#define AGC_GAIN_INC        UQ16(1.0121)
-#define AGC_GAIN_DEC        UQ16(0.9880)
+#define AGC_GAIN_INC        VTB_UQ16_16(1.0121)
+#define AGC_GAIN_DEC        VTB_UQ16_16(0.9880)
 
 
 /* Structure to hold AGC state, only used internally */
@@ -28,12 +28,12 @@ typedef struct {
     vtb_u32_float_t x_slow;
     vtb_u32_float_t x_fast;
     vtb_u32_float_t x_peak;
-    uint32_t alpha_sr;
-    uint32_t alpha_sf;
-    uint32_t alpha_fr;
-    uint32_t alpha_ff;
-    uint32_t alpha_pr;
-    uint32_t alpha_pf;
+    vtb_uq0_32_t alpha_sr;
+    vtb_uq0_32_t alpha_sf;
+    vtb_uq0_32_t alpha_fr;
+    vtb_uq0_32_t alpha_ff;
+    vtb_uq0_32_t alpha_pr;
+    vtb_uq0_32_t alpha_pf;
     vtb_u32_float_t gain_inc;
     vtb_u32_float_t gain_dec;
 } agc_channel_state_t;
