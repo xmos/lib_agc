@@ -126,8 +126,9 @@ void agc_process_frame(agc_state_t &agc, dsp_complex_t frame[AGC_CHANNEL_PAIRS][
     #if AGC_DEBUG_PRINT
         printf("\n#%u\n", frame_counter++);
     #endif
+    int vad_flag = (vad > AGC_VAD_THRESHOLD);
     for(unsigned ch=0;ch<AGC_INPUT_CHANNELS;ch++){
-        agc_process_channel(agc.ch_state[ch], frame[ch/2], ch, (vad > AGC_VAD_THRESHOLD));
+        agc_process_channel(agc.ch_state[ch], frame[ch/2], ch, vad_flag);
     }
 }
 
