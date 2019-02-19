@@ -23,7 +23,7 @@ typedef struct {
     int adapt;                  /**< 0 for fixed gain, or 1 for AGC. */
     vtb_uq16_16_t init_gain;    /**< Initial channel gain. Linear UQ16_16. */
     vtb_uq16_16_t max_gain;     /**< Maximum channel gain. Linear UQ16_16. */
-    int32_t desired_level;      /**< Desired output voice level. Set between 0 and INT32_MAX. */
+    int32_t desired_level;      /**< Desired output voice level [0, INT32_MAX]. */
 } agc_config_t;
 
 
@@ -87,8 +87,9 @@ int agc_get_channel_adapt(agc_state_t agc, unsigned channel);
  *
  * \param[in,out] frame_in_out  On input this array contains the sample data.
  *                              On output this array contains the data with AGC
- *                              applied. Headroom has been reintroduced, and samples
- *                              have been clamped as appropriate.
+ *                              applied.
+ *
+ * \param[in] vad               VAD level for input sample data [0, 255].
  */
 void agc_process_frame(agc_state_t &agc, dsp_complex_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_FRAME_ADVANCE], uint8_t vad);
 

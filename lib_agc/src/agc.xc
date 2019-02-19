@@ -32,12 +32,14 @@
 static int frame_counter = 0;
 #endif
 
-#define ASSERT(x)    asm("ecallf %0" :: "r" (x))
-#define UQ16_16_EXP -16
+#define VTB_UQ16_16_EXP -16
 
 const vtb_s32_float_t ONE = {INT_MAX, -31};
 const vtb_u32_float_t HALF = {UINT_MAX, -32-1};
 const vtb_s32_float_t QUARTER = {INT_MAX, -31-2};
+
+
+static void agc_process_channel(agc_ch_state_t &agc_state, dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned ch_index, int vad_flag);
 
 
 void agc_init(agc_state_t &agc, agc_config_t config[AGC_INPUT_CHANNELS]){
@@ -45,11 +47,11 @@ void agc_init(agc_state_t &agc, agc_config_t config[AGC_INPUT_CHANNELS]){
         agc.ch_state[ch].adapt = config[ch].adapt;
 
         agc.ch_state[ch].gain.m = config[ch].init_gain;
-        agc.ch_state[ch].gain.e = UQ16_16_EXP;
+        agc.ch_state[ch].gain.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].gain);
 
         agc.ch_state[ch].max_gain.m = config[ch].max_gain;
-        agc.ch_state[ch].max_gain.e = UQ16_16_EXP;
+        agc.ch_state[ch].max_gain.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].max_gain);
 
         agc.ch_state[ch].desired_level.m = (uint32_t)config[ch].desired_level;
@@ -69,11 +71,11 @@ void agc_init(agc_state_t &agc, agc_config_t config[AGC_INPUT_CHANNELS]){
         agc.ch_state[ch].alpha_pf = AGC_ALPHA_PEAK_FALL;
 
         agc.ch_state[ch].gain_inc.m = AGC_GAIN_INC;
-        agc.ch_state[ch].gain_inc.e = UQ16_16_EXP;
+        agc.ch_state[ch].gain_inc.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].gain_inc);
 
         agc.ch_state[ch].gain_dec.m = AGC_GAIN_DEC;
-        agc.ch_state[ch].gain_dec.e = UQ16_16_EXP;
+        agc.ch_state[ch].gain_dec.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].gain_dec);
     }
 }
@@ -81,13 +83,13 @@ void agc_init(agc_state_t &agc, agc_config_t config[AGC_INPUT_CHANNELS]){
 
 void agc_set_channel_gain(agc_state_t &agc, unsigned channel, vtb_uq16_16_t gain) {
     agc.ch_state[channel].gain.m = gain;
-    agc.ch_state[channel].gain.e = UQ16_16_EXP;
+    agc.ch_state[channel].gain.e = VTB_UQ16_16_EXP;
     vtb_normalise_u32(agc.ch_state[channel].gain);
 }
 
 
 vtb_uq16_16_t agc_get_channel_gain(agc_state_t agc, unsigned channel){
-    return vtb_denormalise_and_saturate_u32(agc.ch_state[channel].gain, UQ16_16_EXP);
+    return vtb_denormalise_and_saturate_u32(agc.ch_state[channel].gain, VTB_UQ16_16_EXP);
 }
 
 
@@ -119,7 +121,18 @@ uint32_t get_max_abs_sample(dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned c
     return max_abs_value;
 }
 
-static void agc_process_channel(agc_ch_state_t &agc_state, dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned ch_index, uint8_t vad){
+
+void agc_process_frame(agc_state_t &agc, dsp_complex_t frame[AGC_CHANNEL_PAIRS][AGC_FRAME_ADVANCE], uint8_t vad){
+    #if AGC_DEBUG_PRINT
+        printf("\n#%u\n", frame_counter++);
+    #endif
+    for(unsigned ch=0;ch<AGC_INPUT_CHANNELS;ch++){
+        agc_process_channel(agc.ch_state[ch], frame[ch/2], ch, (vad > AGC_VAD_THRESHOLD));
+    }
+}
+
+
+static void agc_process_channel(agc_ch_state_t &agc_state, dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned ch_index, int vad_flag){
     const vtb_u32_float_t agc_limit_point = HALF;
     const int s32_exponent = -31;
 
@@ -140,7 +153,6 @@ static void agc_process_channel(agc_ch_state_t &agc_state, dsp_complex_t samples
 
         vtb_u32_float_t gained_max_abs_value = vtb_mul_u32_u32(max_abs_value, agc_state.gain);
         int exceed_desired_level = vtb_gte_u32_u32(gained_max_abs_value, agc_state.desired_level);
-        int vad_flag = vad >> 7; //above 50%
 
         if(exceed_desired_level || vad_flag){
             int peak_rising = vtb_gte_u32_u32(agc_state.x_fast, agc_state.x_peak);
@@ -208,15 +220,4 @@ static void agc_process_channel(agc_ch_state_t &agc_state, dsp_complex_t samples
             #endif
         }
     }
-}
-
-
-void agc_process_frame(agc_state_t &agc, dsp_complex_t frame[AGC_CHANNEL_PAIRS][AGC_FRAME_ADVANCE], uint8_t vad){
-    #if AGC_DEBUG_PRINT
-        printf("\n#%u\n", frame_counter++);
-    #endif
-    for(unsigned ch=0;ch<AGC_INPUT_CHANNELS;ch++){
-        agc_process_channel(agc.ch_state[ch], frame[ch/2], ch, vad);
-    }
-
 }

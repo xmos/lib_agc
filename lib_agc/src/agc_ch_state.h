@@ -18,6 +18,7 @@
 #define AGC_GAIN_INC        VTB_UQ16_16(1.0121)
 #define AGC_GAIN_DEC        VTB_UQ16_16(0.9880)
 
+#define AGC_VAD_THRESHOLD   (1<<7)
 
 /* Structure to hold AGC state, only used internally */
 typedef struct {
