@@ -52,7 +52,7 @@ void agc_init(agc_state_t &agc, agc_config_t config[AGC_INPUT_CHANNELS]){
         agc.ch_state[ch].max_gain.e = UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].max_gain);
 
-        agc.ch_state[ch].desired_level.m = config[ch].desired_level;
+        agc.ch_state[ch].desired_level.m = (uint32_t)config[ch].desired_level;
         agc.ch_state[ch].desired_level.e = 0;
         vtb_normalise_u32(agc.ch_state[ch].desired_level);
 
@@ -86,7 +86,7 @@ void agc_set_channel_gain(agc_state_t &agc, unsigned channel, vtb_uq16_16_t gain
 }
 
 
-vtb_uq16_16_t agc_get_channel_gain(agc_state_t &agc, unsigned channel){
+vtb_uq16_16_t agc_get_channel_gain(agc_state_t agc, unsigned channel){
     return vtb_denormalise_and_saturate_u32(agc.ch_state[channel].gain, UQ16_16_EXP);
 }
 
@@ -96,7 +96,7 @@ void agc_set_channel_adapt(agc_state_t &agc, unsigned channel, uint32_t adapt){
 }
 
 
-int agc_get_channel_adapt(agc_state_t &agc, unsigned channel){
+int agc_get_channel_adapt(agc_state_t agc, unsigned channel){
     return agc.ch_state[channel].adapt;
 }
 
@@ -119,7 +119,7 @@ uint32_t get_max_abs_sample(dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned c
     return max_abs_value;
 }
 
-static void agc_process_channel(agc_channel_state_t &agc_state, dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned ch_index, uint8_t vad){
+static void agc_process_channel(agc_ch_state_t &agc_state, dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned ch_index, uint8_t vad){
     const vtb_u32_float_t agc_limit_point = HALF;
     const int s32_exponent = -31;
 

@@ -36,11 +36,7 @@ typedef struct {
     vtb_uq0_32_t alpha_pf;
     vtb_u32_float_t gain_inc;
     vtb_u32_float_t gain_dec;
-} agc_channel_state_t;
-
-typedef struct {
-    agc_channel_state_t ch_state[AGC_INPUT_CHANNELS];
-} agc_state_t;
+} agc_ch_state_t;
 
 
 #endif // _AGC_STATE_H_
