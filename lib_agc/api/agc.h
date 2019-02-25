@@ -1,6 +1,6 @@
 // Copyright (c) 2017-2019, XMOS Ltd, All rights reserved
-#ifndef _agc_h_
-#define _agc_h_
+#ifndef _AGC_H_
+#define _AGC_H_
 
 #include "dsp.h"
 #include "vtb_q_format.h"
@@ -11,7 +11,7 @@
  * Structure containing AGC state unique to each input channel.
  */
 typedef struct {
-    agc_ch_state_t ch_state[AGC_INPUT_CHANNELS];
+    agc_ch_state_t ch_state[AGC_INPUT_CHANNELS]; ///< Channel states
 } agc_state_t;
 
 
@@ -20,10 +20,10 @@ typedef struct {
  * Used to initialise AGC state.
  */
 typedef struct {
-    int adapt;                  /**< 0 for fixed gain, or 1 for AGC. */
-    vtb_uq16_16_t init_gain;    /**< Initial channel gain. Linear UQ16_16. */
-    vtb_uq16_16_t max_gain;     /**< Maximum channel gain. Linear UQ16_16. */
-    int32_t desired_level;      /**< Desired output voice level [0, INT32_MAX]. */
+    int adapt;                  ///< 0 for fixed gain, or 1 for AGC.
+    vtb_uq16_16_t init_gain;    ///< Initial channel gain. Linear UQ16_16.
+    vtb_uq16_16_t max_gain;     ///< Maximum channel gain. Linear UQ16_16.
+    int32_t desired_level;      ///< Desired output voice level [0, INT32_MAX].
 } agc_config_t;
 
 
@@ -96,4 +96,4 @@ void agc_process_frame(agc_state_t &agc, dsp_complex_t frame_in_out[AGC_CHANNEL_
 
 // void agc_test_task(chanend c_data_input, chanend c_data_output, chanend ?c_control);
 
-#endif // _agc_h_
+#endif // _AGC_H_

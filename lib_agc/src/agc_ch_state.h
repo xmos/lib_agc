@@ -1,6 +1,6 @@
 // Copyright (c) 2017-2019, XMOS Ltd, All rights reserved
-#ifndef _agc_state_h_
-#define _agc_state_h_
+#ifndef _AGC_STATE_H_
+#define _AGC_STATE_H_
 
 #include <stdint.h>
 #include "voice_toolbox.h"
@@ -20,7 +20,9 @@
 
 #define AGC_VAD_THRESHOLD   (1<<7)
 
-/* Structure to hold AGC state, only used internally */
+/**
+ * Structure to hold AGC state, only used internally.
+ */
 typedef struct {
     int adapt;
     vtb_u32_float_t gain;
