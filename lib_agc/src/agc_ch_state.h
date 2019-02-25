@@ -6,8 +6,6 @@
 #include "voice_toolbox.h"
 #include "agc_conf.h"
 
-#define AGC_CHANNEL_PAIRS ((AGC_INPUT_CHANNELS+1)/2)
-
 #define AGC_ALPHA_SLOW_RISE VTB_UQ0_32(0.8869)
 #define AGC_ALPHA_SLOW_FALL VTB_UQ0_32(0.9646)
 #define AGC_ALPHA_FAST_RISE VTB_UQ0_32(0.3814)

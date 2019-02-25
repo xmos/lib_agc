@@ -91,7 +91,7 @@ int agc_get_channel_adapt(agc_state_t agc, unsigned channel);
  *
  * \param[in] vad               VAD level for input sample data [0, 255].
  */
-void agc_process_frame(agc_state_t &agc, dsp_complex_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_FRAME_ADVANCE], uint8_t vad);
+void agc_process_frame(agc_state_t &agc, dsp_complex_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH], uint8_t vad);
 
 
 // void agc_test_task(chanend c_data_input, chanend c_data_output, chanend ?c_control);

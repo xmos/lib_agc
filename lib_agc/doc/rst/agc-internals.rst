@@ -20,7 +20,10 @@ configuration includes the following parameters;
 Users are also required to include a file named ``agc_conf.h`` at compilation,
 which must contain the following pre-processor directives:
 
-* AGC_INPUT_CHANNELS - the number of input channels to the AGC.
+* AGC_INPUT_CHANNELS - the number of input channels given to the AGC.
+
+* AGC_CHANNEL_PAIRS - the number of input channel pairs given to the AGC.
+  Must be equal to or greater than ((AGC_INPUT_CHANNELS+1)/2).
 
 * AGC_PROC_FRAME_LENGTH - the length of the frames to be processed by
   the AGC.

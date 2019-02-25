@@ -39,7 +39,7 @@ const vtb_u32_float_t HALF = {UINT_MAX, -32-1};
 const vtb_s32_float_t QUARTER = {INT_MAX, -31-2};
 
 
-static void agc_process_channel(agc_ch_state_t &agc_state, dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned ch_index, int vad_flag);
+static void agc_process_channel(agc_ch_state_t &agc_state, dsp_complex_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, int vad_flag);
 
 
 void agc_init(agc_state_t &agc, agc_config_t config[AGC_INPUT_CHANNELS]){
@@ -103,9 +103,9 @@ int agc_get_channel_adapt(agc_state_t agc, unsigned channel){
 }
 
 
-uint32_t get_max_abs_sample(dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned ch_index){
+uint32_t get_max_abs_sample(dsp_complex_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index){
     uint32_t max_abs_value = 0;
-    for(unsigned n = 0; n < AGC_FRAME_ADVANCE; n++){
+    for(unsigned n = 0; n < AGC_PROC_FRAME_LENGTH; n++){
         int32_t sample = (samples[n], int32_t[2])[ch_index&1];
         uint32_t abs_sample = 0;
         if(sample < 0){
@@ -122,7 +122,7 @@ uint32_t get_max_abs_sample(dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned c
 }
 
 
-void agc_process_frame(agc_state_t &agc, dsp_complex_t frame[AGC_CHANNEL_PAIRS][AGC_FRAME_ADVANCE], uint8_t vad){
+void agc_process_frame(agc_state_t &agc, dsp_complex_t frame[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH], uint8_t vad){
     #if AGC_DEBUG_PRINT
         printf("\n#%u\n", frame_counter++);
     #endif
@@ -133,7 +133,7 @@ void agc_process_frame(agc_state_t &agc, dsp_complex_t frame[AGC_CHANNEL_PAIRS][
 }
 
 
-static void agc_process_channel(agc_ch_state_t &agc_state, dsp_complex_t samples[AGC_FRAME_ADVANCE], unsigned ch_index, int vad_flag){
+static void agc_process_channel(agc_ch_state_t &agc_state, dsp_complex_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, int vad_flag){
     const vtb_u32_float_t agc_limit_point = HALF;
     const int s32_exponent = -31;
 
@@ -182,7 +182,7 @@ static void agc_process_channel(agc_ch_state_t &agc_state, dsp_complex_t samples
         }
     }
 
-    for(unsigned n = 0; n < AGC_FRAME_ADVANCE; n++){
+    for(unsigned n = 0; n < AGC_PROC_FRAME_LENGTH; n++){
         vtb_s32_float_t input_sample = {(samples[n], int32_t[2])[ch_index&1], s32_exponent};
         vtb_normalise_s32(input_sample);
 
