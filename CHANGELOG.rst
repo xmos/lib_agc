@@ -1,6 +1,15 @@
 AGC library change log
 ======================
 
+2.0.0
+-----
+
+  * CHANGED: AGC adaptive algorithm.
+  * CHANGED: Processing a frame requires VAD.
+  * CHANGED: Renamed AGC_CHANNELS to AGC_INPUT_CHANNELS.
+  * ADDED: Parameter get and set functions.
+  * ADDED: Initial AGC config structure.
+
 1.0.0
 -----
 
@@ -30,4 +39,3 @@ AGC library change log
 -----
 
   * Initial version
-
