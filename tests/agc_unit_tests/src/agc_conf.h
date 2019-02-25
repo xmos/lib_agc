@@ -7,6 +7,8 @@
 #define AGC_PROC_FRAME_LENGTH       (AGC_FRAME_ADVANCE)
 
 #define AGC_INPUT_CHANNELS          (2)
+#define AGC_CHANNEL_PAIRS           ((AGC_INPUT_CHANNELS+1)/2)
+
 
 #define AGC_CH0_ADAPT               (0)
 #define AGC_CH0_GAIN                (2)
