@@ -24,7 +24,7 @@ typedef struct {
     vtb_uq16_16_t init_gain;    ///< Initial channel gain. Linear UQ16_16.
     vtb_uq16_16_t max_gain;     ///< Maximum channel gain. Linear UQ16_16.
     int32_t desired_level;      ///< Desired output voice level [0, INT32_MAX].
-} agc_config_t;
+} agc_init_config_t;
 
 
 /** Initialise AGC state.
@@ -34,7 +34,7 @@ typedef struct {
  * \param[in] config        Array containing AGC configuration for each channel.
  *                          Must be of length AGC_INPUT_CHANNELS.
  */
-void agc_init(agc_state_t &agc, agc_config_t config[AGC_INPUT_CHANNELS]);
+void agc_init(agc_state_t &agc, agc_init_config_t config[AGC_INPUT_CHANNELS]);
 
 
 /** Set AGC channel gain.

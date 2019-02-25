@@ -42,7 +42,7 @@ const vtb_s32_float_t QUARTER = {INT_MAX, -31-2};
 static void agc_process_channel(agc_ch_state_t &agc_state, dsp_complex_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, int vad_flag);
 
 
-void agc_init(agc_state_t &agc, agc_config_t config[AGC_INPUT_CHANNELS]){
+void agc_init(agc_state_t &agc, agc_init_config_t config[AGC_INPUT_CHANNELS]){
     for(unsigned ch = 0; ch < AGC_INPUT_CHANNELS; ch++){
         agc.ch_state[ch].adapt = config[ch].adapt;
 

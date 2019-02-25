@@ -10,7 +10,7 @@ void test_agc_init(){
     uint32_t expected_desired_level[AGC_INPUT_CHANNELS] = {AGC_CH0_DESIRED_LEVEL, AGC_CH1_DESIRED_LEVEL};
 
     agc_state_t agc;
-    agc_config_t config[AGC_INPUT_CHANNELS] = {
+    agc_init_config_t config[AGC_INPUT_CHANNELS] = {
         {
             expected_adapt[0],
             expected_init_gain[0],
@@ -56,7 +56,7 @@ void test_agc_init(){
 void test_agc_set_get_channel_gain(){
     srand((unsigned) 2);
 
-    agc_config_t config[AGC_INPUT_CHANNELS] = {
+    agc_init_config_t config[AGC_INPUT_CHANNELS] = {
         {
             AGC_CH0_ADAPT,
             VTB_UQ16_16(AGC_CH0_GAIN),
@@ -96,7 +96,7 @@ void test_agc_set_get_channel_gain(){
 void test_agc_set_get_channel_gain_zero(){
     vtb_uq16_16_t expected_gain = 0;
 
-    agc_config_t config[AGC_INPUT_CHANNELS] = {
+    agc_init_config_t config[AGC_INPUT_CHANNELS] = {
         {
             AGC_CH0_ADAPT,
             VTB_UQ16_16(AGC_CH0_GAIN),
@@ -128,7 +128,7 @@ void test_agc_process_frame(){
     srand((unsigned) 2);
     const int gain_range = 64;
 
-    agc_config_t config[AGC_INPUT_CHANNELS] = {
+    agc_init_config_t config[AGC_INPUT_CHANNELS] = {
         {
             0,
             VTB_UQ16_16(AGC_CH0_GAIN),

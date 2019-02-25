@@ -6,7 +6,7 @@ At the core of the AGC is the ``agc_state_t`` structure, which holds the state
 of the AGC for each audio channel to be processed.
 
 The AGC is initialised using the ``agc_init`` function. This function requires
-an array of the ``agc_config_t`` structure, which contains the user-defined
+an array of the ``agc_init_config_t`` structure, which contains the user-defined
 configuration of the AGC (for each channel) at initialisation. This per-channel
 configuration includes the following parameters;
 
@@ -42,9 +42,9 @@ Simple usage
 In its simplest form the AGC can be used as follows::
 
   agc_state_t agc_state;
-  agc_config_t agc_config[AGC_INPUT_CHANNELS] = { // AGC_INPUT_CHANNELS = 1
+  agc_init_config_t agc_config[AGC_INPUT_CHANNELS] = { // AGC_INPUT_CHANNELS = 1
       {
-          1,                                // Adapt gain
+          1,                                // Gain will adapt
           VTB_UQ16_16(40),                  // Initial gain (linear)
           VTB_UQ16_16(1000),                // Max gain (linear)
           (0.1 * INT32_MAX)                 // Desired voice output level
@@ -74,7 +74,7 @@ Supporting types
 
 .. doxygenstruct:: agc_state_t
 
-.. doxygenstruct:: agc_config_t
+.. doxygenstruct:: agc_init_config_t
 
 |newpage|
 

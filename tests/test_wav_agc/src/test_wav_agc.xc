@@ -35,7 +35,7 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
     vtb_rx_state_init(state, AGC_CHANNEL_PAIRS*2, INPUT_FRAME_LENGTH, AGC_FRAME_ADVANCE, null, STATE_SIZE);
 
     agc_state_t [[aligned(8)]] agc_state;
-    agc_config_t agc_config[AGC_INPUT_CHANNELS] = {
+    agc_init_config_t agc_config[AGC_INPUT_CHANNELS] = {
         {
             AGC_CH0_ADAPT,
             VTB_UQ16_16(AGC_CH0_GAIN),
