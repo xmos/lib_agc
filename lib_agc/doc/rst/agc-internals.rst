@@ -1,14 +1,11 @@
-The Automatic Gain Controller (AGC) applies a gain to blocks of time-domain data
-across audio channels. The gain value varies such that segments of voice
-content on each channel maintain a specified output level.
-
 At the core of the AGC is the ``agc_state_t`` structure, which holds the state
 of the AGC for each audio channel to be processed.
+
 
 The AGC is initialised using the ``agc_init`` function. This function requires
 an array of the ``agc_init_config_t`` structure, which contains the user-defined
 configuration of the AGC (for each channel) at initialisation. This per-channel
-configuration includes the following parameters;
+configuration includes;
 
 * Whether the channel has a varying gain (normal AGC behaviour) or a fixed gain.
 
@@ -33,11 +30,11 @@ After the structure is initialised, each frame is processed using a call to
 ``agc_process_frame``. This function requires the ``agc_state_t`` structure,
 a frame of samples of the correct length and the output level of a Voice
 Activity Detector (VAD). The VAD level indicates the probability that there
-is voice content in the block of samples to be processed.
+is voice content in the frame of samples to be processed.
 
 
-Simple usage
-............
+Example Usage
+.............
 
 In its simplest form the AGC can be used as follows::
 
@@ -69,7 +66,7 @@ In its simplest form the AGC can be used as follows::
 API
 ...
 
-Supporting types
+Supporting Types
 ................
 
 .. doxygenstruct:: agc_state_t
@@ -78,10 +75,16 @@ Supporting types
 
 |newpage|
 
-Creating an AGC instance
+Creating an AGC Instance
 ''''''''''''''''''''''''
 
 .. doxygenfunction:: agc_init
+
+
+Processing Time Domain Data
+'''''''''''''''''''''''''''
+
+.. doxygenfunction:: agc_process_frame
 
 |newpage|
 
@@ -92,12 +95,5 @@ Controlling an AGC instance
 .. doxygenfunction:: agc_get_channel_gain
 .. doxygenfunction:: agc_set_channel_adapt
 .. doxygenfunction:: agc_get_channel_adapt
-
-|newpage|
-
-Processing time domain data
-'''''''''''''''''''''''''''
-
-.. doxygenfunction:: agc_process_frame
 
 |newpage|
