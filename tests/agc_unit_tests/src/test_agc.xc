@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2019, XMOS Ltd, All rights reserved
 #include "agc_unit_tests.h"
 
-#define TEST_COUNT (1<<14)
+#define TEST_COUNT (1<<10)
 
 void test_agc_init(){
     int expected_adapt[AGC_INPUT_CHANNELS] = {AGC_CH0_ADAPT, AGC_CH1_ADAPT};
@@ -72,11 +72,13 @@ void test_agc_set_get_ch_gain(){
     };
 
     for(unsigned i=0;i<TEST_COUNT;i++){
-        vtb_uq16_16_t expected_gain[AGC_INPUT_CHANNELS] = {(vtb_uq16_16_t)rand(), (vtb_uq16_16_t)rand()};
+        vtb_uq16_16_t expected_gain[AGC_INPUT_CHANNELS];
         for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            expected_gain[i] = ((vtb_uq16_16_t)rand() << 16);
             if(expected_gain[i] == 0){
                 expected_gain[i] = 1;
             }
+            expected_gain[i] += ((uint16_t)rand());
         }
 
         agc_state_t agc;
@@ -112,11 +114,13 @@ void test_agc_set_get_ch_max_gain(){
     };
 
     for(unsigned i=0;i<TEST_COUNT;i++){
-        vtb_uq16_16_t expected_max_gain[AGC_INPUT_CHANNELS] = {(vtb_uq16_16_t)rand(), (vtb_uq16_16_t)rand()};
+        vtb_uq16_16_t expected_max_gain[AGC_INPUT_CHANNELS];
         for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            expected_max_gain[i] = ((vtb_uq16_16_t)rand() << 16);
             if(expected_max_gain[i] == 0){
                 expected_max_gain[i] = 1;
             }
+            expected_max_gain[i] += ((uint16_t)rand());
         }
 
         agc_state_t agc;
@@ -153,11 +157,13 @@ void test_agc_set_get_ch_desired_level(){
     };
 
     for(unsigned i=0;i<TEST_COUNT;i++){
-        int32_t desired_levels[AGC_INPUT_CHANNELS] = {(int32_t)rand(), (int32_t)rand()};
+        int32_t desired_levels[AGC_INPUT_CHANNELS];
         for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            desired_levels[i] = ((int32_t)rand() << 16);
             if(desired_levels[i] == 0){
                 desired_levels[i] = 1;
             }
+            desired_levels[i] += ((uint16_t)rand());
         }
 
         agc_state_t agc;
@@ -169,7 +175,7 @@ void test_agc_set_get_ch_desired_level(){
 
         for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
             int32_t actual = agc_get_ch_desired_level(agc, i);
-            TEST_ASSERT_EQUAL_INT32_MESSAGE(desired_levels[i], actual, "Incorrect desired level");
+            TEST_ASSERT_EQUAL_INT32_MESSAGE(abs(desired_levels[i]), actual, "Incorrect desired level");
         }
     }
 }

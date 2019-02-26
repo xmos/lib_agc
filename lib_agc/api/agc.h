@@ -56,7 +56,7 @@ void agc_set_ch_gain(agc_state_t &agc, unsigned ch_index, vtb_uq16_16_t gain);
  *
  * \returns                 Channel gain in linear UQ16_16 format.
  */
-uint32_t agc_get_ch_gain(agc_state_t agc, unsigned ch_index);
+vtb_uq16_16_t agc_get_ch_gain(agc_state_t agc, unsigned ch_index);
 
 
 /** Set AGC channel max gain.
@@ -79,7 +79,7 @@ void agc_set_ch_max_gain(agc_state_t &agc, unsigned ch_index,
  *
  * \returns                 Channel max gain in linear UQ16_16 format.
  */
-uint32_t agc_get_ch_max_gain(agc_state_t agc, unsigned ch_index);
+vtb_uq16_16_t agc_get_ch_max_gain(agc_state_t agc, unsigned ch_index);
 
 
 /** Set AGC channel adapt flag.

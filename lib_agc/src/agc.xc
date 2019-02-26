@@ -88,7 +88,7 @@ void agc_set_ch_gain(agc_state_t &agc, unsigned ch_index, vtb_uq16_16_t gain){
 }
 
 
-uint32_t agc_get_ch_gain(agc_state_t agc, unsigned ch_index){
+vtb_uq16_16_t agc_get_ch_gain(agc_state_t agc, unsigned ch_index){
     return vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].gain, VTB_UQ16_16_EXP);
 }
 
@@ -100,7 +100,7 @@ void agc_set_ch_max_gain(agc_state_t &agc, unsigned ch_index, vtb_uq16_16_t max_
 }
 
 
-uint32_t agc_get_ch_max_gain(agc_state_t agc, unsigned ch_index){
+vtb_uq16_16_t agc_get_ch_max_gain(agc_state_t agc, unsigned ch_index){
     return vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].max_gain, VTB_UQ16_16_EXP);
 }
 
