@@ -36,8 +36,8 @@ adaptive gain.
 
 The AGC state can be configured to apply a fixed gain to a channel. In these
 cases the gain will remain it's initial value. This fixed gain can be adjusted
-by the ``agc_set_channel_gain`` function. A channel can be switched between
-adaptive and fixed gain behaviour by the ``agc_set_channel_adapt`` function.
+by the ``agc_set_ch_gain`` function. A channel can be switched between
+adaptive and fixed gain behaviour by the ``agc_set_ch_adapt`` function.
 
 
 A limiter is applied to the output of the AGC through the use of a gain
@@ -114,11 +114,13 @@ Processing Time Domain Data
 Controlling an AGC instance
 '''''''''''''''''''''''''''
 
-.. doxygenfunction:: agc_set_channel_gain
-.. doxygenfunction:: agc_get_channel_gain
-.. doxygenfunction:: agc_set_channel_max_gain
-.. doxygenfunction:: agc_get_channel_max_gain
-.. doxygenfunction:: agc_set_channel_adapt
-.. doxygenfunction:: agc_get_channel_adapt
+.. doxygenfunction:: agc_set_ch_gain
+.. doxygenfunction:: agc_get_ch_gain
+.. doxygenfunction:: agc_set_ch_max_gain
+.. doxygenfunction:: agc_get_ch_max_gain
+.. doxygenfunction:: agc_set_ch_adapt
+.. doxygenfunction:: agc_get_ch_adapt
+.. doxygenfunction:: agc_set_ch_desired_level
+.. doxygenfunction:: agc_get_ch_desired_level
 
 |newpage|
