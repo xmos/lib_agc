@@ -27,7 +27,7 @@ typedef struct {
 } agc_init_config_t;
 
 
-/** Initialise AGC state.
+/** Initialise AGC state given an initial configuration.
  *
  * \param[out] agc          AGC state to be initialised.
  *
@@ -45,7 +45,8 @@ void agc_init(agc_state_t &agc, agc_init_config_t config[AGC_INPUT_CHANNELS]);
  *
  * \param[in] gain          Gain value in linear UQ16_16 format.
  */
-void agc_set_channel_gain(agc_state_t &agc, unsigned channel,  vtb_uq16_16_t gain);
+void agc_set_channel_gain(agc_state_t &agc, unsigned channel,
+        vtb_uq16_16_t gain);
 
 
 /** Get AGC channel gain.
@@ -81,7 +82,7 @@ void agc_set_channel_adapt(agc_state_t &agc, unsigned channel,  uint32_t adapt);
 int agc_get_channel_adapt(agc_state_t agc, unsigned channel);
 
 
-/** Function that processes a block of data.
+/** Process a multi-channel frame of time-domain sample data.
  *
  * \param[in,out] agc           AGC state.
  *
@@ -91,7 +92,9 @@ int agc_get_channel_adapt(agc_state_t agc, unsigned channel);
  *
  * \param[in] vad               VAD level for input sample data [0, 255].
  */
-void agc_process_frame(agc_state_t &agc, dsp_complex_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH], uint8_t vad);
+void agc_process_frame(agc_state_t &agc,
+        dsp_complex_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH],
+        uint8_t vad);
 
 
 #endif // _AGC_H_
