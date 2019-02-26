@@ -134,6 +134,48 @@ void test_agc_set_get_channel_max_gain(){
 }
 
 
+void test_agc_set_get_channel_desired_level(){
+    srand((unsigned) 1);
+
+    agc_init_config_t config[AGC_INPUT_CHANNELS] = {
+        {
+            AGC_CH0_ADAPT,
+            VTB_UQ16_16(AGC_CH0_GAIN),
+            VTB_UQ16_16(AGC_CH0_MAX_GAIN),
+            AGC_CH0_DESIRED_LEVEL,
+        },
+        {
+            AGC_CH1_ADAPT,
+            VTB_UQ16_16(AGC_CH1_GAIN),
+            VTB_UQ16_16(AGC_CH1_MAX_GAIN),
+            AGC_CH1_DESIRED_LEVEL,
+        }
+    };
+
+    for(unsigned i=0;i<TEST_COUNT;i++){
+        int32_t desired_levels[AGC_INPUT_CHANNELS] = {(int32_t)rand(), (int32_t)rand()};
+        for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            if(desired_levels[i] == 0){
+                desired_levels[i] = 1;
+            }
+        }
+
+        agc_state_t agc;
+        agc_init(agc, config);
+
+        for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            agc_set_channel_desired_level(agc, i, desired_levels[i]);
+        }
+
+        for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            int32_t actual = agc_get_channel_desired_level(agc, i);
+            TEST_ASSERT_EQUAL_INT32_MESSAGE(desired_levels[i], actual, "Incorrect desired level");
+        }
+    }
+}
+
+
+
 void test_agc_set_get_channel_gain_zero(){
     vtb_uq16_16_t expected_gain = 0;
 

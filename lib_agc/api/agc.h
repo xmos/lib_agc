@@ -57,7 +57,7 @@ void agc_set_channel_gain(agc_state_t &agc, unsigned channel,
  *
  * \returns                 Channel gain in linear UQ16_16 format.
  */
-vtb_uq16_16_t agc_get_channel_gain(agc_state_t agc, unsigned channel);
+uint32_t agc_get_channel_gain(agc_state_t agc, unsigned channel);
 
 
 /** Set AGC channel max gain.
@@ -80,7 +80,7 @@ void agc_set_channel_max_gain(agc_state_t &agc, unsigned channel,
  *
  * \returns                 Channel max gain in linear UQ16_16 format.
  */
-vtb_uq16_16_t agc_get_channel_max_gain(agc_state_t agc, unsigned channel);
+uint32_t agc_get_channel_max_gain(agc_state_t agc, unsigned channel);
 
 
 /** Set AGC channel adapt flag.
@@ -103,6 +103,31 @@ void agc_set_channel_adapt(agc_state_t &agc, unsigned channel,  uint32_t adapt);
  * \returns                 0 for fixed gain, 1 for adapt.
  */
 int agc_get_channel_adapt(agc_state_t agc, unsigned channel);
+
+
+/** Set desired output voice level for AGC channel.
+ *
+ * \param[in,out] agc           AGC state.
+ *
+ * \param[in] channel           Channel index.
+ *
+ * \param[in] desired_level     Desired output voice level for AGC channel
+ *                              [0, INT32_MAX].
+ */
+void agc_set_channel_desired_level(agc_state_t &agc, unsigned channel,
+        int32_t desired_level);
+
+
+/** Get desired output voice level for AGC channel.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] channel       Channel index.
+ *
+ * \returns                 Desired output voice level for AGC channel.
+ */
+int32_t agc_get_channel_desired_level(agc_state_t agc, unsigned channel);
+
 
 
 /** Process a multi-channel frame of time-domain sample data.

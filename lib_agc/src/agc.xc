@@ -88,7 +88,7 @@ void agc_set_channel_gain(agc_state_t &agc, unsigned channel, vtb_uq16_16_t gain
 }
 
 
-vtb_uq16_16_t agc_get_channel_gain(agc_state_t agc, unsigned channel){
+uint32_t agc_get_channel_gain(agc_state_t agc, unsigned channel){
     return vtb_denormalise_and_saturate_u32(agc.ch_state[channel].gain, VTB_UQ16_16_EXP);
 }
 
@@ -100,7 +100,7 @@ void agc_set_channel_max_gain(agc_state_t &agc, unsigned channel, vtb_uq16_16_t 
 }
 
 
-vtb_uq16_16_t agc_get_channel_max_gain(agc_state_t agc, unsigned channel){
+uint32_t agc_get_channel_max_gain(agc_state_t agc, unsigned channel){
     return vtb_denormalise_and_saturate_u32(agc.ch_state[channel].max_gain, VTB_UQ16_16_EXP);
 }
 
@@ -112,6 +112,22 @@ void agc_set_channel_adapt(agc_state_t &agc, unsigned channel, uint32_t adapt){
 
 int agc_get_channel_adapt(agc_state_t agc, unsigned channel){
     return agc.ch_state[channel].adapt;
+}
+
+
+void agc_set_channel_desired_level(agc_state_t &agc, unsigned channel, int32_t desired_level){
+    int32_t abs_input = desired_level;
+    if (abs_input < 0) abs_input = -abs_input;
+
+    agc.ch_state[channel].desired_level.m = (uint32_t)abs_input;
+    agc.ch_state[channel].desired_level.e = 0;
+    vtb_normalise_u32(agc.ch_state[channel].desired_level);
+}
+
+
+int32_t agc_get_channel_desired_level(agc_state_t agc, unsigned channel){
+    uint32_t desired_level = vtb_denormalise_and_saturate_u32(agc.ch_state[channel].desired_level, 0);
+    return (int32_t)desired_level;
 }
 
 
