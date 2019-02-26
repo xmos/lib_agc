@@ -14,6 +14,7 @@ Features
   * Supports multiple audio channels.
   * Configurable adaptive or fixed gain.
   * Configurable initial and maximum gain values.
+  * Soft limiter applied to output.
 
 Software version and dependencies
 .................................
