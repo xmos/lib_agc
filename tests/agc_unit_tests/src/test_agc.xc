@@ -93,6 +93,47 @@ void test_agc_set_get_channel_gain(){
     }
 }
 
+void test_agc_set_get_channel_max_gain(){
+    srand((unsigned) 1);
+
+    agc_init_config_t config[AGC_INPUT_CHANNELS] = {
+        {
+            AGC_CH0_ADAPT,
+            VTB_UQ16_16(AGC_CH0_GAIN),
+            VTB_UQ16_16(AGC_CH0_MAX_GAIN),
+            AGC_CH0_DESIRED_LEVEL,
+        },
+        {
+            AGC_CH1_ADAPT,
+            VTB_UQ16_16(AGC_CH1_GAIN),
+            VTB_UQ16_16(AGC_CH1_MAX_GAIN),
+            AGC_CH1_DESIRED_LEVEL,
+        }
+    };
+
+    for(unsigned i=0;i<TEST_COUNT;i++){
+        vtb_uq16_16_t expected_max_gain[AGC_INPUT_CHANNELS] = {(vtb_uq16_16_t)rand(), (vtb_uq16_16_t)rand()};
+        for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            if(expected_max_gain[i] == 0){
+                expected_max_gain[i] = 1;
+            }
+        }
+
+        agc_state_t agc;
+        agc_init(agc, config);
+
+        for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            agc_set_channel_max_gain(agc, i, expected_max_gain[i]);
+        }
+
+        for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            vtb_uq16_16_t actual_max_gain = agc_get_channel_max_gain(agc, i);
+            TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_max_gain[i], actual_max_gain, "Incorrect channel max gain");
+        }
+    }
+}
+
+
 void test_agc_set_get_channel_gain_zero(){
     vtb_uq16_16_t expected_gain = 0;
 

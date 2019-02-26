@@ -60,6 +60,29 @@ void agc_set_channel_gain(agc_state_t &agc, unsigned channel,
 vtb_uq16_16_t agc_get_channel_gain(agc_state_t agc, unsigned channel);
 
 
+/** Set AGC channel max gain.
+ *
+ * \param[in,out] agc       AGC state.
+ *
+ * \param[in] channel       Channel index.
+ *
+ * \param[in] max_gain      Max gain value in linear UQ16_16 format.
+ */
+void agc_set_channel_max_gain(agc_state_t &agc, unsigned channel,
+        vtb_uq16_16_t max_gain);
+
+
+/** Get AGC channel max gain.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] channel       Channel index.
+ *
+ * \returns                 Channel max gain in linear UQ16_16 format.
+ */
+vtb_uq16_16_t agc_get_channel_max_gain(agc_state_t agc, unsigned channel);
+
+
 /** Set AGC channel adapt flag.
  *
  * \param[in,out] agc       AGC state.

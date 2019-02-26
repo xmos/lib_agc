@@ -116,6 +116,8 @@ Controlling an AGC instance
 
 .. doxygenfunction:: agc_set_channel_gain
 .. doxygenfunction:: agc_get_channel_gain
+.. doxygenfunction:: agc_set_channel_max_gain
+.. doxygenfunction:: agc_get_channel_max_gain
 .. doxygenfunction:: agc_set_channel_adapt
 .. doxygenfunction:: agc_get_channel_adapt
 
