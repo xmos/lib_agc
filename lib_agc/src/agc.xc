@@ -81,7 +81,7 @@ void agc_init(agc_state_t &agc, agc_init_config_t config[AGC_INPUT_CHANNELS]){
 }
 
 
-void agc_set_channel_gain(agc_state_t &agc, unsigned channel, vtb_uq16_16_t gain) {
+void agc_set_channel_gain(agc_state_t &agc, unsigned channel, vtb_uq16_16_t gain){
     agc.ch_state[channel].gain.m = gain;
     agc.ch_state[channel].gain.e = VTB_UQ16_16_EXP;
     vtb_normalise_u32(agc.ch_state[channel].gain);
@@ -90,6 +90,18 @@ void agc_set_channel_gain(agc_state_t &agc, unsigned channel, vtb_uq16_16_t gain
 
 vtb_uq16_16_t agc_get_channel_gain(agc_state_t agc, unsigned channel){
     return vtb_denormalise_and_saturate_u32(agc.ch_state[channel].gain, VTB_UQ16_16_EXP);
+}
+
+
+void agc_set_channel_max_gain(agc_state_t &agc, unsigned channel, vtb_uq16_16_t max_gain){
+    agc.ch_state[channel].max_gain.m = max_gain;
+    agc.ch_state[channel].max_gain.e = VTB_UQ16_16_EXP;
+    vtb_normalise_u32(agc.ch_state[channel].max_gain);
+}
+
+
+vtb_uq16_16_t agc_get_channel_max_gain(agc_state_t agc, unsigned channel){
+    return vtb_denormalise_and_saturate_u32(agc.ch_state[channel].max_gain, VTB_UQ16_16_EXP);
 }
 
 
