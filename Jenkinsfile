@@ -34,6 +34,16 @@ pipeline {
         }
       }
     }
+    stage('Build') {
+      steps {
+        dir("${REPO}") {
+          // xcoreAllAppsBuild('examples')
+          dir("${REPO}") {
+            runXdoc('doc')
+          }
+        }
+      }
+    }
   }
   post {
     success {
