@@ -41,7 +41,7 @@ void agc_init(agc_state_t &agc, agc_init_config_t config[AGC_INPUT_CHANNELS]);
  *
  * \param[in,out] agc       AGC state.
  *
- * \param[in] ch_index      Channel index.
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
  *
  * \param[in] gain          Gain value in linear UQ16_16 format.
  */
@@ -52,7 +52,7 @@ void agc_set_ch_gain(agc_state_t &agc, unsigned ch_index, vtb_uq16_16_t gain);
  *
  * \param[in] agc           AGC state.
  *
- * \param[in] ch_index      Channel index.
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
  *
  * \returns                 Channel gain in linear UQ16_16 format.
  */
@@ -63,7 +63,7 @@ vtb_uq16_16_t agc_get_ch_gain(agc_state_t agc, unsigned ch_index);
  *
  * \param[in,out] agc       AGC state.
  *
- * \param[in] ch_index      Channel index.
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
  *
  * \param[in] max_gain      Max gain value in linear UQ16_16 format.
  */
@@ -75,7 +75,7 @@ void agc_set_ch_max_gain(agc_state_t &agc, unsigned ch_index,
  *
  * \param[in] agc           AGC state.
  *
- * \param[in] ch_index      Channel index.
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
  *
  * \returns                 Channel max gain in linear UQ16_16 format.
  */
@@ -86,7 +86,7 @@ vtb_uq16_16_t agc_get_ch_max_gain(agc_state_t agc, unsigned ch_index);
  *
  * \param[in,out] agc       AGC state.
  *
- * \param[in] ch_index      Channel index.
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
  *
  * \param[in] adapt         AGC adapt flag: 0 for fixed gain, 1 for adapt.
  */
@@ -97,7 +97,7 @@ void agc_set_ch_adapt(agc_state_t &agc, unsigned ch_index,  uint32_t adapt);
  *
  * \param[in] agc           AGC state.
  *
- * \param[in] ch_index      Channel index.
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
  *
  * \returns                 0 for fixed gain, 1 for adapt.
  */
@@ -108,7 +108,8 @@ int agc_get_ch_adapt(agc_state_t agc, unsigned ch_index);
  *
  * \param[in,out] agc           AGC state.
  *
- * \param[in] ch_index          Channel index.
+ * \param[in] ch_index          Channel index. Must be less than
+ *                              AGC_INPUT_CHANNELS.
  *
  * \param[in] desired_level     Desired output voice level for AGC channel
  *                              [0, INT32_MAX].
@@ -121,7 +122,7 @@ void agc_set_ch_desired_level(agc_state_t &agc, unsigned ch_index,
  *
  * \param[in] agc           AGC state.
  *
- * \param[in] ch_index      Channel index.
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
  *
  * \returns                 Desired output voice level for AGC channel.
  */

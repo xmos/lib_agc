@@ -1,6 +1,12 @@
 AGC library change log
 ======================
 
+2.1.0
+-----
+
+  * CHANGE: Fixed channel index bug.
+  * CHANGE: Extended unit tests.
+
 2.0.0
 -----
 
