@@ -283,17 +283,27 @@ void test_set_get_wrong_ch_index(){
         agc_set_ch_desired_level(agc, i, ((int32_t)rand() << 16));
 
 
+        int inv_adapt = agc_get_ch_adapt(agc, i);
+        vtb_uq16_16_t inv_gain = agc_get_ch_gain(agc, i);
+        vtb_uq16_16_t inv_max_gain = agc_get_ch_max_gain(agc, i);
+        int32_t invalid_dlvl = agc_get_ch_desired_level(agc, i);
+
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(0, inv_adapt, "inv_adapt not 0.");
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(0, invalid_dlvl, "invalid_dlvl not 0.");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, inv_gain, "inv_gain not 0.");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, inv_max_gain, "inv_max_gain not 0.");
+
         TEST_ASSERT_EQUAL_INT32_MESSAGE(0, agc_get_ch_adapt(agc, 0), "Incorrect ch0 adapt");
         TEST_ASSERT_EQUAL_INT32_MESSAGE(0, agc_get_ch_adapt(agc, 1), "Incorrect ch1 adapt");
 
         TEST_ASSERT_EQUAL_INT32_MESSAGE(AGC_CH0_DESIRED_LEVEL, agc_get_ch_desired_level(agc, 0), "Incorrect ch0 desired level");
         TEST_ASSERT_EQUAL_INT32_MESSAGE(AGC_CH1_DESIRED_LEVEL, agc_get_ch_desired_level(agc, 1), "Incorrect ch1 desired level");
 
-        TEST_ASSERT_EQUAL_INT32_MESSAGE(VTB_UQ16_16(AGC_CH0_GAIN), agc_get_ch_gain(agc, 0), "Incorrect ch0 gain");
-        TEST_ASSERT_EQUAL_INT32_MESSAGE(VTB_UQ16_16(AGC_CH1_GAIN), agc_get_ch_gain(agc, 1), "Incorrect ch1 gain");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(VTB_UQ16_16(AGC_CH0_GAIN), agc_get_ch_gain(agc, 0), "Incorrect ch0 gain");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(VTB_UQ16_16(AGC_CH1_GAIN), agc_get_ch_gain(agc, 1), "Incorrect ch1 gain");
 
-        TEST_ASSERT_EQUAL_INT32_MESSAGE(VTB_UQ16_16(AGC_CH0_MAX_GAIN), agc_get_ch_max_gain(agc, 0), "Incorrect ch0 max gain");
-        TEST_ASSERT_EQUAL_INT32_MESSAGE(VTB_UQ16_16(AGC_CH1_MAX_GAIN), agc_get_ch_max_gain(agc, 1), "Incorrect ch1 max gain");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(VTB_UQ16_16(AGC_CH0_MAX_GAIN), agc_get_ch_max_gain(agc, 0), "Incorrect ch0 max gain");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(VTB_UQ16_16(AGC_CH1_MAX_GAIN), agc_get_ch_max_gain(agc, 1), "Incorrect ch1 max gain");
     }
 }
 
