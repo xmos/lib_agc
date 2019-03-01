@@ -53,6 +53,48 @@ void test_agc_init(){
     }
 }
 
+void test_agc_set_get_ch_adapt(){
+    srand((unsigned) 2);
+
+    agc_init_config_t config[AGC_INPUT_CHANNELS] = {
+        {
+            0,
+            VTB_UQ16_16(AGC_CH0_GAIN),
+            VTB_UQ16_16(AGC_CH0_MAX_GAIN),
+            AGC_CH0_DESIRED_LEVEL,
+        },
+        {
+            0,
+            VTB_UQ16_16(AGC_CH1_GAIN),
+            VTB_UQ16_16(AGC_CH1_MAX_GAIN),
+            AGC_CH1_DESIRED_LEVEL,
+        }
+    };
+
+    agc_state_t agc;
+    agc_init(agc, config);
+
+
+    uint32_t expected_adapt = 0;
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        agc_set_ch_adapt(agc, i, expected_adapt);
+    }
+
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_adapt, agc_get_ch_adapt(agc, i), "Incorrect AGC adapt");
+    }
+
+    expected_adapt = 1;
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        agc_set_ch_adapt(agc, i, expected_adapt);
+    }
+
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_adapt, agc_get_ch_adapt(agc, i), "Incorrect AGC adapt");
+    }
+}
+
+
 void test_agc_set_get_ch_gain(){
     srand((unsigned) 2);
 
