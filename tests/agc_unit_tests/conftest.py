@@ -41,15 +41,17 @@ class UnityTestExecutable(pytest.Item):
 
     def runtest(self):
         # Run the binary in the simulator
+        simulator_fail = False
         test_output = None
         try:
             test_output = subprocess.check_output(['axe', self.name])
         except subprocess.CalledProcessError as e:
             # Unity exits non-zero if an assertion fails
+            simulator_fail = True
             test_output = e.output
 
         # Parse the Unity output
-        pass_ = False
+        unity_pass = False
         test_output = test_output.split('\n')
         for line in test_output:
             if line.startswith(self.parent.name):
@@ -63,6 +65,9 @@ class UnityTestExecutable(pytest.Item):
                 result = test_report[3]
                 failure_reason = None
                 print('\n {}()'.format(test_case)),
+                if result == 'PASS':
+                    unity_pass = True
+                    continue
                 if result == 'FAIL':
                     failure_reason = test_report[4]
                     print('')  # Insert line break after test_case print
@@ -71,10 +76,11 @@ class UnityTestExecutable(pytest.Item):
                                                     'test_case': test_case,
                                                     'failure_reason':
                                                         failure_reason})
-                if result == 'PASS':
-                    pass_ = True
-        if not pass_:
+
+        if simulator_fail:
             raise Exception(self, "Simulation failed.")
+        if not unity_pass:
+            raise Exception(self, "Unity test output not found.")
         print('')  # Insert line break after final test_case which passed
 
     def repr_failure(self, excinfo):
