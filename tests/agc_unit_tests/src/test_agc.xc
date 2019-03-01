@@ -212,6 +212,49 @@ void test_agc_set_get_ch_gain_zero(){
     }
 }
 
+void test_set_get_wrong_ch_index(){
+    srand((unsigned) 1);
+
+    agc_init_config_t config[AGC_INPUT_CHANNELS] = {
+        {
+            0,
+            VTB_UQ16_16(AGC_CH0_GAIN),
+            VTB_UQ16_16(AGC_CH0_MAX_GAIN),
+            AGC_CH0_DESIRED_LEVEL,
+        },
+        {
+            0,
+            VTB_UQ16_16(AGC_CH1_GAIN),
+            VTB_UQ16_16(AGC_CH1_MAX_GAIN),
+            AGC_CH1_DESIRED_LEVEL,
+        }
+    };
+
+    agc_state_t agc;
+    agc_init(agc, config);
+
+
+    for(unsigned i = AGC_INPUT_CHANNELS; i < (100 * AGC_INPUT_CHANNELS); ++i){
+        agc_set_ch_adapt(agc, i, 1);
+        agc_set_ch_gain(agc, i, ((vtb_uq16_16_t)rand() << 16));
+        agc_set_ch_max_gain(agc, i, ((vtb_uq16_16_t)rand() << 16));
+        agc_set_ch_desired_level(agc, i, ((int32_t)rand() << 16));
+
+
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(0, agc_get_ch_adapt(agc, 0), "Incorrect ch0 adapt");
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(0, agc_get_ch_adapt(agc, 1), "Incorrect ch1 adapt");
+
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(AGC_CH0_DESIRED_LEVEL, agc_get_ch_desired_level(agc, 0), "Incorrect ch0 desired level");
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(AGC_CH1_DESIRED_LEVEL, agc_get_ch_desired_level(agc, 1), "Incorrect ch1 desired level");
+
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(VTB_UQ16_16(AGC_CH0_GAIN), agc_get_ch_gain(agc, 0), "Incorrect ch0 gain");
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(VTB_UQ16_16(AGC_CH1_GAIN), agc_get_ch_gain(agc, 1), "Incorrect ch1 gain");
+
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(VTB_UQ16_16(AGC_CH0_MAX_GAIN), agc_get_ch_max_gain(agc, 0), "Incorrect ch0 max gain");
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(VTB_UQ16_16(AGC_CH1_MAX_GAIN), agc_get_ch_max_gain(agc, 1), "Incorrect ch1 max gain");
+    }
+}
+
 
 void test_agc_process_frame(){
     srand((unsigned) 2);

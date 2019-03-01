@@ -82,9 +82,11 @@ void agc_init(agc_state_t &agc, agc_init_config_t config[AGC_INPUT_CHANNELS]){
 
 
 void agc_set_ch_gain(agc_state_t &agc, unsigned ch_index, vtb_uq16_16_t gain){
-    agc.ch_state[ch_index].gain.m = gain;
-    agc.ch_state[ch_index].gain.e = VTB_UQ16_16_EXP;
-    vtb_normalise_u32(agc.ch_state[ch_index].gain);
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].gain.m = gain;
+        agc.ch_state[ch_index].gain.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch_index].gain);
+    }
 }
 
 
@@ -94,9 +96,11 @@ vtb_uq16_16_t agc_get_ch_gain(agc_state_t agc, unsigned ch_index){
 
 
 void agc_set_ch_max_gain(agc_state_t &agc, unsigned ch_index, vtb_uq16_16_t max_gain){
-    agc.ch_state[ch_index].max_gain.m = max_gain;
-    agc.ch_state[ch_index].max_gain.e = VTB_UQ16_16_EXP;
-    vtb_normalise_u32(agc.ch_state[ch_index].max_gain);
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].max_gain.m = max_gain;
+        agc.ch_state[ch_index].max_gain.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch_index].max_gain);
+    }
 }
 
 
@@ -106,7 +110,9 @@ vtb_uq16_16_t agc_get_ch_max_gain(agc_state_t agc, unsigned ch_index){
 
 
 void agc_set_ch_adapt(agc_state_t &agc, unsigned ch_index, uint32_t adapt){
-    agc.ch_state[ch_index].adapt = (int)(adapt > 0);
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].adapt = (int)(adapt > 0);
+    }
 }
 
 
@@ -116,12 +122,14 @@ int agc_get_ch_adapt(agc_state_t agc, unsigned ch_index){
 
 
 void agc_set_ch_desired_level(agc_state_t &agc, unsigned ch_index, int32_t desired_level){
-    int32_t abs_input = desired_level;
-    if (abs_input < 0) abs_input = -abs_input;
+    if(ch_index < AGC_INPUT_CHANNELS){
+        int32_t abs_input = desired_level;
+        if (abs_input < 0) abs_input = -abs_input;
 
-    agc.ch_state[ch_index].desired_level.m = (uint32_t)abs_input;
-    agc.ch_state[ch_index].desired_level.e = 0;
-    vtb_normalise_u32(agc.ch_state[ch_index].desired_level);
+        agc.ch_state[ch_index].desired_level.m = (uint32_t)abs_input;
+        agc.ch_state[ch_index].desired_level.e = 0;
+        vtb_normalise_u32(agc.ch_state[ch_index].desired_level);
+    }
 }
 
 
