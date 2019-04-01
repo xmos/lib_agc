@@ -328,13 +328,13 @@ void test_agc_process_frame(){
     };
 
     for(unsigned i=0;i<TEST_COUNT;i++){
-        dsp_complex_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH];
+        vtb_ch_pair_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH];
         int32_t init_value = ((int32_t)rand()) >> 7;
 
         for(int ch_pair=0; ch_pair<AGC_CHANNEL_PAIRS; ++ch_pair){
             for(int i=0; i<AGC_PROC_FRAME_LENGTH; ++i){
-                frame_in_out[ch_pair][i].re = init_value;
-                frame_in_out[ch_pair][i].im = init_value;
+                frame_in_out[ch_pair][i].ch_a = init_value;
+                frame_in_out[ch_pair][i].ch_b = init_value;
             }
         }
 
@@ -350,8 +350,8 @@ void test_agc_process_frame(){
 
         for(int ch_pair=0; ch_pair<AGC_CHANNEL_PAIRS; ++ch_pair){
             for(int i=0; i<AGC_PROC_FRAME_LENGTH; ++i){
-                TEST_ASSERT_INT32_WITHIN_MESSAGE(1<<16, gain * init_value, frame_in_out[ch_pair][i].re, "Incorrect output sample");
-                TEST_ASSERT_INT32_WITHIN_MESSAGE(1<<16, gain * init_value, frame_in_out[ch_pair][i].im, "Incorrect output sample");
+                TEST_ASSERT_INT32_WITHIN_MESSAGE(1<<16, gain * init_value, frame_in_out[ch_pair][i].ch_a, "Incorrect output sample");
+                TEST_ASSERT_INT32_WITHIN_MESSAGE(1<<16, gain * init_value, frame_in_out[ch_pair][i].ch_b, "Incorrect output sample");
             }
         }
     }
