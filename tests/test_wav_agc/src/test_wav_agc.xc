@@ -31,6 +31,8 @@ void app_control(chanend c_control_to_wav, chanend c_control_to_dsp){
 void agc_test_task(chanend c_data_input, chanend c_data_output,
                 chanend ?c_control){
     uint64_t state[STATE_SIZE];
+    vtb_md_t md;
+    vtb_md_init(md);
 
     vtb_rx_state_init(state, AGC_CHANNEL_PAIRS*2, INPUT_FRAME_LENGTH, AGC_FRAME_ADVANCE, null, STATE_SIZE);
 
@@ -59,11 +61,11 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
     agc_init(agc_state, agc_config);
 
     while(1){
-        dsp_complex_t [[aligned(8)]] frame1[AGC_CHANNEL_PAIRS][480];
+        vtb_ch_pair_t [[aligned(8)]] frame1[AGC_CHANNEL_PAIRS][480];
 
-        vtb_rx_pairs(c_data_input, state, (dsp_complex_t *)frame1);
+        vtb_rx_notification_and_data(c_data_input, state, (vtb_ch_pair_t *)frame1, md);
 
-        dsp_complex_t [[aligned(8)]] frame2[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH];
+        vtb_ch_pair_t [[aligned(8)]] frame2[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH];
 
         for(unsigned ch_pair = 0; ch_pair < AGC_CHANNEL_PAIRS; ch_pair++){
             memcpy(frame2[ch_pair], &frame1[ch_pair][INPUT_FRAME_LENGTH - AGC_PROC_FRAME_LENGTH], sizeof(frame2[ch_pair]));
@@ -80,9 +82,9 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
 
         agc_process_frame(agc_state, frame2, vad_percentage);
 
-        vtb_tx_pairs(c_data_output, (dsp_complex_t*)frame2,
+        vtb_tx_notify_and_data(c_data_output, (vtb_ch_pair_t*)frame2,
                          2*AGC_CHANNEL_PAIRS,
-                         AGC_FRAME_ADVANCE);
+                         AGC_FRAME_ADVANCE, md);
     }
 }
 
