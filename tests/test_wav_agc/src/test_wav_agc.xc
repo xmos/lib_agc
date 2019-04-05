@@ -82,7 +82,7 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
 
         agc_process_frame(agc_state, frame2, vad_percentage);
 
-        vtb_tx_notify_and_data(c_data_output, (vtb_ch_pair_t*)frame2,
+        vtb_tx_notification_and_data(c_data_output, (vtb_ch_pair_t*)frame2,
                          2*AGC_CHANNEL_PAIRS,
                          AGC_FRAME_ADVANCE, md);
     }
