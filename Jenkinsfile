@@ -3,7 +3,7 @@ pipeline {
     label 'x86&&macOS&&Apps'
   }
   environment {
-    VIEW = 'agc'
+    VIEW = 'lib_agc_vtb_v500'
     REPO = 'lib_agc'
   }
   options {

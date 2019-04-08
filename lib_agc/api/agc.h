@@ -141,7 +141,7 @@ int32_t agc_get_ch_desired_level(agc_state_t agc, unsigned ch_index);
  * \param[in] vad               VAD level for input sample data [0, 255].
  */
 void agc_process_frame(agc_state_t &agc,
-        dsp_complex_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH],
+        vtb_ch_pair_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH],
         uint8_t vad);
 
 

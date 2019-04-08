@@ -1,6 +1,11 @@
 AGC library change log
 ======================
 
+2.2.0
+-----
+
+  * CHANGED: Updated lib_voice_toolbox dependency to v5.0.0
+
 2.1.0
 -----
 
