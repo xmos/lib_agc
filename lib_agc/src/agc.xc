@@ -39,7 +39,7 @@ const vtb_u32_float_t HALF = {UINT_MAX, -32-1};
 const vtb_s32_float_t QUARTER = {INT_MAX, -31-2};
 
 
-static void agc_process_channel(agc_ch_state_t &agc_state, dsp_complex_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, int vad_flag);
+static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, int vad_flag);
 
 
 void agc_init(agc_state_t &agc, agc_init_config_t config[AGC_INPUT_CHANNELS]){
@@ -143,7 +143,7 @@ int32_t agc_get_ch_desired_level(agc_state_t agc, unsigned ch_index){
 }
 
 
-uint32_t get_max_abs_sample(dsp_complex_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index){
+uint32_t get_max_abs_sample(vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index){
     uint32_t max_abs_value = 0;
     for(unsigned n = 0; n < AGC_PROC_FRAME_LENGTH; n++){
         int32_t sample = (samples[n], int32_t[2])[ch_index&1];
@@ -162,7 +162,7 @@ uint32_t get_max_abs_sample(dsp_complex_t samples[AGC_PROC_FRAME_LENGTH], unsign
 }
 
 
-void agc_process_frame(agc_state_t &agc, dsp_complex_t frame[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH], uint8_t vad){
+void agc_process_frame(agc_state_t &agc, vtb_ch_pair_t frame[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH], uint8_t vad){
     #if AGC_DEBUG_PRINT
         printf("\n#%u\n", frame_counter++);
     #endif
@@ -173,7 +173,7 @@ void agc_process_frame(agc_state_t &agc, dsp_complex_t frame[AGC_CHANNEL_PAIRS][
 }
 
 
-static void agc_process_channel(agc_ch_state_t &agc_state, dsp_complex_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, int vad_flag){
+static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, int vad_flag){
     const vtb_u32_float_t agc_limit_point = HALF;
     const int s32_exponent = -31;
 
