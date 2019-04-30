@@ -1,5 +1,5 @@
-from __future__ import division
 # Copyright (c) 2018-2019, XMOS Ltd, All rights reserved
+from __future__ import division
 from builtins import object
 from past.utils import old_div
 import numpy as np
