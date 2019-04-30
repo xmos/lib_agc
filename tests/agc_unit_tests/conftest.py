@@ -1,4 +1,5 @@
 # Copyright (c) 2018-2019, XMOS Ltd, All rights reserved
+from builtins import str
 import os.path
 import pytest
 import subprocess
