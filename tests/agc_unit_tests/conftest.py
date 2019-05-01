@@ -1,5 +1,5 @@
-from __future__ import print_function
 # Copyright (c) 2018-2019, XMOS Ltd, All rights reserved
+from __future__ import print_function
 from builtins import str
 import os.path
 import pytest
