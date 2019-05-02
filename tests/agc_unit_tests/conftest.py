@@ -1,4 +1,6 @@
 # Copyright (c) 2018-2019, XMOS Ltd, All rights reserved
+from __future__ import print_function
+from builtins import str
 import os.path
 import pytest
 import subprocess
@@ -64,7 +66,7 @@ class UnityTestExecutable(pytest.Item):
                 test_case = test_report[2]
                 result = test_report[3]
                 failure_reason = None
-                print('\n {}()'.format(test_case)),
+                print(('\n {}()'.format(test_case)), end=' ')
                 if result == 'PASS':
                     unity_pass = True
                     continue
