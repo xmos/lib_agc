@@ -18,3 +18,5 @@ test_results.csv
 .DS_Store
 xscope.xmt
 **/*.egg-info/
+.venv/
+Pipfile.lock
