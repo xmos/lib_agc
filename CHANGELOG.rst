@@ -5,6 +5,7 @@ AGC library change log
 -----
 
   * ADDED: Pipfile + setup.py for pipenv support
+  * ADDED: Python 3 support
 
 2.2.0
 -----
