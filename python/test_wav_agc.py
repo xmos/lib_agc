@@ -1,14 +1,6 @@
 # Copyright (c) 2018-2019, XMOS Ltd, All rights reserved
 from builtins import range
-import os
-import sys
 from math import sqrt
-
-package_dir = os.path.dirname(os.path.abspath(__file__))
-path1 = os.path.join(package_dir,'../../audio_test_tools/python/')
-path2 = os.path.join(package_dir,'../../lib_vad/python/')
-sys.path.append(path1)
-sys.path.append(path2)
 
 import numpy as np
 import scipy.io.wavfile
