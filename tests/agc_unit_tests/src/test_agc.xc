@@ -8,6 +8,10 @@ void test_agc_init(){
     vtb_uq16_16_t expected_init_gain[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_GAIN), VTB_UQ16_16(AGC_CH1_GAIN)};
     vtb_uq16_16_t expected_max_gain[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_MAX_GAIN), VTB_UQ16_16(AGC_CH1_MAX_GAIN)};
     uint32_t expected_desired_level[AGC_INPUT_CHANNELS] = {AGC_CH0_DESIRED_LEVEL, AGC_CH1_DESIRED_LEVEL};
+    uint32_t expected_threshold_upper[AGC_INPUT_CHANNELS] = {AGC_CH0_THRESHOLD_UPPER, AGC_CH1_THRESHOLD_UPPER};
+    uint32_t expected_threshold_lower[AGC_INPUT_CHANNELS] = {AGC_CH0_THRESHOLD_LOWER, AGC_CH1_THRESHOLD_LOWER};
+    vtb_uq16_16_t expected_gain_inc[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_GAIN_INC), VTB_UQ16_16(AGC_CH1_GAIN_INC)};
+    vtb_uq16_16_t expected_gain_dec[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_GAIN_DEC), VTB_UQ16_16(AGC_CH1_GAIN_DEC)};
 
     agc_state_t agc;
     agc_init_config_t config[AGC_INPUT_CHANNELS] = {
@@ -16,12 +20,20 @@ void test_agc_init(){
             expected_init_gain[0],
             expected_max_gain[0],
             expected_desired_level[0],
+            expected_threshold_upper[0],
+            expected_threshold_lower[0],
+            expected_gain_inc[0],
+            expected_gain_dec[0]
         },
         {
             expected_adapt[1],
             expected_init_gain[1],
             expected_max_gain[1],
             expected_desired_level[1],
+            expected_threshold_upper[1],
+            expected_threshold_lower[1],
+            expected_gain_inc[1],
+            expected_gain_dec[1]
         }
     };
 
@@ -32,6 +44,8 @@ void test_agc_init(){
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_init_gain[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].gain, -16), "Incorrect init gain");
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_max_gain[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].max_gain, -16), "Incorrect max gain");
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_desired_level[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].desired_level, 0), "Incorrect desired level");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_threshold_upper[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].threshold_upper, 0), "Incorrect threshold upper");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_threshold_lower[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].threshold_lower, 0), "Incorrect threshold lower");
 
         vtb_u32_float_t vtb_float_u32_zero = VTB_FLOAT_U32_ZERO;
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(vtb_float_u32_zero.m, agc.ch_state[ch].x_slow.m, "Incorrect x_slow m");
@@ -48,8 +62,8 @@ void test_agc_init(){
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(AGC_ALPHA_PEAK_RISE, agc.ch_state[ch].alpha_pr, "Incorrect alpha_pr");
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(AGC_ALPHA_PEAK_FALL, agc.ch_state[ch].alpha_pf, "Incorrect alpha_pf");
 
-        TEST_ASSERT_EQUAL_UINT32_MESSAGE(AGC_GAIN_INC, vtb_denormalise_and_saturate_u32(agc.ch_state[ch].gain_inc, -16), "Incorrect gain inc");
-        TEST_ASSERT_EQUAL_UINT32_MESSAGE(AGC_GAIN_DEC, vtb_denormalise_and_saturate_u32(agc.ch_state[ch].gain_dec, -16), "Incorrect gain inc");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_gain_inc[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].gain_inc, -16), "Incorrect gain inc");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_gain_dec[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].gain_dec, -16), "Incorrect gain inc");
     }
 }
 
@@ -318,12 +332,20 @@ void test_agc_process_frame(){
             VTB_UQ16_16(AGC_CH0_GAIN),
             VTB_UQ16_16(AGC_CH0_MAX_GAIN),
             AGC_CH0_DESIRED_LEVEL,
+            AGC_CH0_THRESHOLD_UPPER,
+            AGC_CH0_THRESHOLD_LOWER,
+            AGC_CH0_GAIN_INC,
+            AGC_CH0_GAIN_DEC
         },
         {
             0,
             VTB_UQ16_16(AGC_CH1_GAIN),
             VTB_UQ16_16(AGC_CH1_MAX_GAIN),
             AGC_CH1_DESIRED_LEVEL,
+            AGC_CH1_THRESHOLD_UPPER,
+            AGC_CH1_THRESHOLD_LOWER,
+            AGC_CH1_GAIN_INC,
+            AGC_CH1_GAIN_DEC
         }
     };
 

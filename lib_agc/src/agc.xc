@@ -58,6 +58,14 @@ void agc_init(agc_state_t &agc, agc_init_config_t config[AGC_INPUT_CHANNELS]){
         agc.ch_state[ch].desired_level.e = 0;
         vtb_normalise_u32(agc.ch_state[ch].desired_level);
 
+        agc.ch_state[ch].threshold_upper.m = (uint32_t)config[ch].threshold_upper;
+        agc.ch_state[ch].threshold_upper.e = 0;
+        vtb_normalise_u32(agc.ch_state[ch].threshold_upper);
+
+        agc.ch_state[ch].threshold_lower.m = (uint32_t)config[ch].threshold_lower;
+        agc.ch_state[ch].threshold_lower.e = 0;
+        vtb_normalise_u32(agc.ch_state[ch].threshold_lower);
+
         vtb_u32_float_t vtb_float_u32_zero = VTB_FLOAT_U32_ZERO;
         agc.ch_state[ch].x_slow = vtb_float_u32_zero;
         agc.ch_state[ch].x_fast = vtb_float_u32_zero;
@@ -70,11 +78,11 @@ void agc_init(agc_state_t &agc, agc_init_config_t config[AGC_INPUT_CHANNELS]){
         agc.ch_state[ch].alpha_pr = AGC_ALPHA_PEAK_RISE;
         agc.ch_state[ch].alpha_pf = AGC_ALPHA_PEAK_FALL;
 
-        agc.ch_state[ch].gain_inc.m = AGC_GAIN_INC;
+        agc.ch_state[ch].gain_inc.m = config[ch].gain_inc;
         agc.ch_state[ch].gain_inc.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].gain_inc);
 
-        agc.ch_state[ch].gain_dec.m = AGC_GAIN_DEC;
+        agc.ch_state[ch].gain_dec.m = config[ch].gain_dec;
         agc.ch_state[ch].gain_dec.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].gain_dec);
     }
@@ -204,19 +212,14 @@ static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples
             }
 
             vtb_u32_float_t gained_pk = vtb_mul_u32_u32(agc_state.x_peak, agc_state.gain);
-            int pk_exceed_desired_level = vtb_gte_u32_u32(gained_pk, agc_state.desired_level);
 
-            vtb_u32_float_t gain_factor;
-            if(pk_exceed_desired_level){
-                gain_factor = agc_state.gain_dec;
-            } else{
-                gain_factor = agc_state.gain_inc;
+            if(vtb_gte_u32_u32(gained_pk, agc_state.threshold_upper)){
+                agc_state.gain = vtb_mul_u32_u32(agc_state.gain_dec, agc_state.gain);
+            } else if(vtb_gte_u32_u32(agc_state.threshold_lower, gained_pk)){
+                agc_state.gain = vtb_mul_u32_u32(agc_state.gain_inc, agc_state.gain);
             }
 
-            agc_state.gain = vtb_mul_u32_u32(gain_factor, agc_state.gain);
-
-            int exceed_max_gain = vtb_gte_u32_u32(agc_state.gain, agc_state.max_gain);
-            if(exceed_max_gain){
+            if(vtb_gte_u32_u32(agc_state.gain, agc_state.max_gain)){
                 agc_state.gain = agc_state.max_gain;
             }
         }
