@@ -1,0 +1,21 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[dev-packages]
+flake8 = "*"
+pylint = "*"
+
+[packages]
+numpy = "*"
+scipy = "*"
+matplotlib = "*"
+pytest = "*"
+pytest-xdist = "*"
+audio-test-tools = {path = "./../audio_test_tools/python",editable = true}
+lib-vad = {path = "./../lib_vad/python",editable = true}
+lib-voice-toolbox = {path = "./../lib_voice_toolbox/python",editable = true}
+
+[requires]
+python_version = "3"

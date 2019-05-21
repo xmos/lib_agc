@@ -1,9 +1,11 @@
 # Copyright (c) 2018-2019, XMOS Ltd, All rights reserved
+from __future__ import division
+from builtins import object
 import numpy as np
 from math import sqrt
 
 
-class agc:
+class agc(object):
     # Adaption coefficients, do not change
     ALPHA_SLOW_RISE = 0.8869
     ALPHA_SLOW_FALL = 0.9646
@@ -55,7 +57,7 @@ class agc:
 
         def limit_gain(x):
             NONLINEAR_POINT = 0.5
-            return x if abs(x) < NONLINEAR_POINT else (np.sign(x) * 2 * NONLINEAR_POINT - NONLINEAR_POINT ** 2 / x)
+            return x if abs(x) < NONLINEAR_POINT else (np.sign(x) * 2 * NONLINEAR_POINT - (NONLINEAR_POINT ** 2 / x))
 
         gained_input = self.gain * input_frame
         output_frame = [limit_gain(sample) for sample in gained_input]
