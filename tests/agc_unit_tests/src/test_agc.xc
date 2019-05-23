@@ -292,6 +292,13 @@ void test_set_get_wrong_ch_index(){
         agc_set_ch_max_gain(agc, i, ((vtb_uq16_16_t)rand() << 16));
         agc_set_ch_upper_threshold(agc, i, ((int32_t)rand() << 16));
         agc_set_ch_lower_threshold(agc, i, ((int32_t)rand() << 16));
+        
+
+        agc_set_ch_adapt(agc, -i, 1);
+        agc_set_ch_gain(agc, -i, ((vtb_uq16_16_t)rand() << 16));
+        agc_set_ch_max_gain(agc, -i, ((vtb_uq16_16_t)rand() << 16));
+        agc_set_ch_upper_threshold(agc, -i, ((int32_t)rand() << 16));
+        agc_set_ch_lower_threshold(agc, -i, ((int32_t)rand() << 16));
 
 
         int inv_adapt = agc_get_ch_adapt(agc, i);
