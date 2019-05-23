@@ -54,17 +54,13 @@ void agc_init(agc_state_t &agc, agc_init_config_t config[AGC_INPUT_CHANNELS]){
         agc.ch_state[ch].max_gain.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].max_gain);
 
-        agc.ch_state[ch].desired_level.m = (uint32_t)config[ch].desired_level;
-        agc.ch_state[ch].desired_level.e = 0;
-        vtb_normalise_u32(agc.ch_state[ch].desired_level);
+        agc.ch_state[ch].upper_threshold.m = (uint32_t)config[ch].upper_threshold;
+        agc.ch_state[ch].upper_threshold.e = 0;
+        vtb_normalise_u32(agc.ch_state[ch].upper_threshold);
 
-        agc.ch_state[ch].threshold_upper.m = (uint32_t)config[ch].threshold_upper;
-        agc.ch_state[ch].threshold_upper.e = 0;
-        vtb_normalise_u32(agc.ch_state[ch].threshold_upper);
-
-        agc.ch_state[ch].threshold_lower.m = (uint32_t)config[ch].threshold_lower;
-        agc.ch_state[ch].threshold_lower.e = 0;
-        vtb_normalise_u32(agc.ch_state[ch].threshold_lower);
+        agc.ch_state[ch].lower_threshold.m = (uint32_t)config[ch].lower_threshold;
+        agc.ch_state[ch].lower_threshold.e = 0;
+        vtb_normalise_u32(agc.ch_state[ch].lower_threshold);
 
         vtb_u32_float_t vtb_float_u32_zero = VTB_FLOAT_U32_ZERO;
         agc.ch_state[ch].x_slow = vtb_float_u32_zero;
@@ -132,22 +128,49 @@ int agc_get_ch_adapt(agc_state_t agc, unsigned ch_index){
 }
 
 
-void agc_set_ch_desired_level(agc_state_t &agc, unsigned ch_index, int32_t desired_level){
+void agc_set_ch_upper_threshold(agc_state_t &agc, unsigned ch_index, int32_t upper_threshold){
     if(ch_index < AGC_INPUT_CHANNELS){
-        int32_t abs_input = desired_level;
+        int32_t abs_input = upper_threshold;
         if (abs_input < 0) abs_input = -abs_input;
 
-        agc.ch_state[ch_index].desired_level.m = (uint32_t)abs_input;
-        agc.ch_state[ch_index].desired_level.e = 0;
-        vtb_normalise_u32(agc.ch_state[ch_index].desired_level);
+        agc.ch_state[ch_index].upper_threshold.m = (uint32_t)abs_input;
+        agc.ch_state[ch_index].upper_threshold.e = 0;
+        vtb_normalise_u32(agc.ch_state[ch_index].upper_threshold);
+        
+        if (vtb_gte_u32_u32(agc.ch_state[ch_index].lower_threshold, agc.ch_state[ch_index].upper_threshold)){
+            agc.ch_state[ch_index].upper_threshold = agc.ch_state[ch_index].lower_threshold;
+        }
     }
 }
 
 
-int32_t agc_get_ch_desired_level(agc_state_t agc, unsigned ch_index){
+void agc_set_ch_lower_threshold(agc_state_t &agc, unsigned ch_index, int32_t lower_threshold){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        int32_t abs_input = lower_threshold;
+        if (abs_input < 0) abs_input = -abs_input;
+
+        agc.ch_state[ch_index].lower_threshold.m = (uint32_t)abs_input;
+        agc.ch_state[ch_index].lower_threshold.e = 0;
+        vtb_normalise_u32(agc.ch_state[ch_index].lower_threshold);
+        
+        if (vtb_gte_u32_u32(agc.ch_state[ch_index].lower_threshold, agc.ch_state[ch_index].upper_threshold)){
+            agc.ch_state[ch_index].lower_threshold = agc.ch_state[ch_index].upper_threshold;
+        }
+    }
+}
+
+
+int32_t agc_get_ch_upper_threshold(agc_state_t agc, unsigned ch_index){
     if(ch_index >= AGC_INPUT_CHANNELS) return 0;
-    uint32_t desired_level = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].desired_level, 0);
-    return (int32_t)desired_level;
+    uint32_t upper_threshold = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].upper_threshold, 0);
+    return (int32_t)upper_threshold;
+}
+
+
+int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    uint32_t lower_threshold = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].lower_threshold, 0);
+    return (int32_t)lower_threshold;
 }
 
 
@@ -201,9 +224,9 @@ static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples
         }
 
         vtb_u32_float_t gained_max_abs_value = vtb_mul_u32_u32(max_abs_value, agc_state.gain);
-        int exceed_desired_level = vtb_gte_u32_u32(gained_max_abs_value, agc_state.desired_level);
+        int exceed_threshold = vtb_gte_u32_u32(gained_max_abs_value, agc_state.upper_threshold);
 
-        if(exceed_desired_level || vad_flag){
+        if(exceed_threshold || vad_flag){
             int peak_rising = vtb_gte_u32_u32(agc_state.x_fast, agc_state.x_peak);
             if(peak_rising){
                 vtb_exponential_average_u32(agc_state.x_peak, agc_state.x_fast, agc_state.alpha_pr);
@@ -213,9 +236,9 @@ static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples
 
             vtb_u32_float_t gained_pk = vtb_mul_u32_u32(agc_state.x_peak, agc_state.gain);
 
-            if(vtb_gte_u32_u32(gained_pk, agc_state.threshold_upper)){
+            if(vtb_gte_u32_u32(gained_pk, agc_state.upper_threshold)){
                 agc_state.gain = vtb_mul_u32_u32(agc_state.gain_dec, agc_state.gain);
-            } else if(vtb_gte_u32_u32(agc_state.threshold_lower, gained_pk)){
+            } else if(vtb_gte_u32_u32(agc_state.lower_threshold, gained_pk)){
                 agc_state.gain = vtb_mul_u32_u32(agc_state.gain_inc, agc_state.gain);
             }
 

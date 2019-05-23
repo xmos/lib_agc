@@ -25,9 +25,8 @@ typedef struct {
     int adapt;
     vtb_u32_float_t gain;
     vtb_u32_float_t max_gain;
-    vtb_u32_float_t desired_level;
-    vtb_u32_float_t threshold_upper;
-    vtb_u32_float_t threshold_lower;
+    vtb_u32_float_t upper_threshold;
+    vtb_u32_float_t lower_threshold;
     vtb_u32_float_t x_slow;
     vtb_u32_float_t x_fast;
     vtb_u32_float_t x_peak;

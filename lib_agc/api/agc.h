@@ -23,9 +23,8 @@ typedef struct {
     int adapt;                  ///< 0 for fixed gain, or 1 for AGC.
     vtb_uq16_16_t init_gain;    ///< Initial channel gain. Linear UQ16_16.
     vtb_uq16_16_t max_gain;     ///< Maximum channel gain. Linear UQ16_16.
-    int32_t desired_level;      ///< Desired output voice level [0, INT32_MAX].
-    int32_t threshold_upper;      ///< Upper threshold for desired output voice level [0, INT32_MAX].
-    int32_t threshold_lower;      ///< Lower threshold for desired output voice level [0, INT32_MAX].
+    int32_t upper_threshold;      ///< Upper threshold for desired output voice level [0, INT32_MAX].
+    int32_t lower_threshold;      ///< Lower threshold for desired output voice level [0, INT32_MAX].
     vtb_uq16_16_t gain_inc;
     vtb_uq16_16_t gain_dec;
 } agc_init_config_t;
@@ -108,21 +107,35 @@ void agc_set_ch_adapt(agc_state_t &agc, unsigned ch_index,  uint32_t adapt);
 int agc_get_ch_adapt(agc_state_t agc, unsigned ch_index);
 
 
-/** Set desired output voice level for AGC channel.
+/** Set upper threshold of desired output voice level for AGC channel.
  *
  * \param[in,out] agc           AGC state.
  *
  * \param[in] ch_index          Channel index. Must be less than
  *                              AGC_INPUT_CHANNELS.
  *
- * \param[in] desired_level     Desired output voice level for AGC channel
+ * \param[in] upper_threshold     Desired output voice level for AGC channel
  *                              [0, INT32_MAX].
  */
-void agc_set_ch_desired_level(agc_state_t &agc, unsigned ch_index,
-        int32_t desired_level);
+void agc_set_ch_upper_threshold(agc_state_t &agc, unsigned ch_index,
+        int32_t upper_threshold);
 
 
-/** Get desired output voice level for AGC channel.
+/** Set lower threshold of desired output voice level for AGC channel.
+ *
+ * \param[in,out] agc           AGC state.
+ *
+ * \param[in] ch_index          Channel index. Must be less than
+ *                              AGC_INPUT_CHANNELS.
+ *
+ * \param[in] upper_threshold     Desired output voice level for AGC channel
+ *                              [0, INT32_MAX].
+ */
+void agc_set_ch_lower_threshold(agc_state_t &agc, unsigned ch_index,
+        int32_t lower_threshold);
+
+
+/** Get upper threshold of desired output voice level for AGC channel.
  *
  * \param[in] agc           AGC state.
  *
@@ -130,7 +143,18 @@ void agc_set_ch_desired_level(agc_state_t &agc, unsigned ch_index,
  *
  * \returns                 Desired output voice level for AGC channel.
  */
-int32_t agc_get_ch_desired_level(agc_state_t agc, unsigned ch_index);
+int32_t agc_get_ch_upper_threshold(agc_state_t agc, unsigned ch_index);
+
+
+/** Get lower threshold of desired output voice level for AGC channel.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \returns                 Desired output voice level for AGC channel.
+ */
+int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index);
 
 
 

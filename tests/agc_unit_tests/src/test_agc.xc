@@ -7,9 +7,8 @@ void test_agc_init(){
     int expected_adapt[AGC_INPUT_CHANNELS] = {AGC_CH0_ADAPT, AGC_CH1_ADAPT};
     vtb_uq16_16_t expected_init_gain[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_GAIN), VTB_UQ16_16(AGC_CH1_GAIN)};
     vtb_uq16_16_t expected_max_gain[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_MAX_GAIN), VTB_UQ16_16(AGC_CH1_MAX_GAIN)};
-    uint32_t expected_desired_level[AGC_INPUT_CHANNELS] = {AGC_CH0_DESIRED_LEVEL, AGC_CH1_DESIRED_LEVEL};
-    uint32_t expected_threshold_upper[AGC_INPUT_CHANNELS] = {AGC_CH0_THRESHOLD_UPPER, AGC_CH1_THRESHOLD_UPPER};
-    uint32_t expected_threshold_lower[AGC_INPUT_CHANNELS] = {AGC_CH0_THRESHOLD_LOWER, AGC_CH1_THRESHOLD_LOWER};
+    uint32_t expected_upper_threshold[AGC_INPUT_CHANNELS] = {AGC_CH0_UPPER_THRESHOLD, AGC_CH1_UPPER_THRESHOLD};
+    uint32_t expected_lower_threshold[AGC_INPUT_CHANNELS] = {AGC_CH0_LOWER_THRESHOLD, AGC_CH1_LOWER_THRESHOLD};
     vtb_uq16_16_t expected_gain_inc[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_GAIN_INC), VTB_UQ16_16(AGC_CH1_GAIN_INC)};
     vtb_uq16_16_t expected_gain_dec[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_GAIN_DEC), VTB_UQ16_16(AGC_CH1_GAIN_DEC)};
 
@@ -19,9 +18,8 @@ void test_agc_init(){
             expected_adapt[0],
             expected_init_gain[0],
             expected_max_gain[0],
-            expected_desired_level[0],
-            expected_threshold_upper[0],
-            expected_threshold_lower[0],
+            expected_upper_threshold[0],
+            expected_lower_threshold[0],
             expected_gain_inc[0],
             expected_gain_dec[0]
         },
@@ -29,9 +27,8 @@ void test_agc_init(){
             expected_adapt[1],
             expected_init_gain[1],
             expected_max_gain[1],
-            expected_desired_level[1],
-            expected_threshold_upper[1],
-            expected_threshold_lower[1],
+            expected_upper_threshold[1],
+            expected_lower_threshold[1],
             expected_gain_inc[1],
             expected_gain_dec[1]
         }
@@ -43,9 +40,8 @@ void test_agc_init(){
         TEST_ASSERT_EQUAL_INT_MESSAGE(expected_adapt[ch], agc.ch_state[ch].adapt, "Incorrect adapt flag");
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_init_gain[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].gain, -16), "Incorrect init gain");
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_max_gain[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].max_gain, -16), "Incorrect max gain");
-        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_desired_level[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].desired_level, 0), "Incorrect desired level");
-        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_threshold_upper[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].threshold_upper, 0), "Incorrect threshold upper");
-        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_threshold_lower[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].threshold_lower, 0), "Incorrect threshold lower");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_upper_threshold[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].upper_threshold, 0), "Incorrect threshold upper");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lower_threshold[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].lower_threshold, 0), "Incorrect threshold lower");
 
         vtb_u32_float_t vtb_float_u32_zero = VTB_FLOAT_U32_ZERO;
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(vtb_float_u32_zero.m, agc.ch_state[ch].x_slow.m, "Incorrect x_slow m");
@@ -75,13 +71,11 @@ void test_agc_set_get_ch_adapt(){
             0,
             VTB_UQ16_16(AGC_CH0_GAIN),
             VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-            AGC_CH0_DESIRED_LEVEL,
         },
         {
             0,
             VTB_UQ16_16(AGC_CH1_GAIN),
             VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-            AGC_CH1_DESIRED_LEVEL,
         }
     };
 
@@ -117,13 +111,11 @@ void test_agc_set_get_ch_gain(){
             AGC_CH0_ADAPT,
             VTB_UQ16_16(AGC_CH0_GAIN),
             VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-            AGC_CH0_DESIRED_LEVEL,
         },
         {
             AGC_CH1_ADAPT,
             VTB_UQ16_16(AGC_CH1_GAIN),
             VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-            AGC_CH1_DESIRED_LEVEL,
         }
     };
 
@@ -159,13 +151,11 @@ void test_agc_set_get_ch_max_gain(){
             AGC_CH0_ADAPT,
             VTB_UQ16_16(AGC_CH0_GAIN),
             VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-            AGC_CH0_DESIRED_LEVEL,
         },
         {
             AGC_CH1_ADAPT,
             VTB_UQ16_16(AGC_CH1_GAIN),
             VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-            AGC_CH1_DESIRED_LEVEL,
         }
     };
 
@@ -194,7 +184,7 @@ void test_agc_set_get_ch_max_gain(){
 }
 
 
-void test_agc_set_get_ch_desired_level(){
+void test_agc_set_get_ch_upper_threshold(){
     srand((unsigned) 1);
 
     agc_init_config_t config[AGC_INPUT_CHANNELS] = {
@@ -202,36 +192,42 @@ void test_agc_set_get_ch_desired_level(){
             AGC_CH0_ADAPT,
             VTB_UQ16_16(AGC_CH0_GAIN),
             VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-            AGC_CH0_DESIRED_LEVEL,
+            AGC_CH0_UPPER_THRESHOLD,
+            0,
+            VTB_UQ16_16(AGC_CH0_GAIN_INC),
+            VTB_UQ16_16(AGC_CH0_GAIN_DEC)
         },
         {
             AGC_CH1_ADAPT,
             VTB_UQ16_16(AGC_CH1_GAIN),
             VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-            AGC_CH1_DESIRED_LEVEL,
+            AGC_CH1_UPPER_THRESHOLD,
+            0,
+            VTB_UQ16_16(AGC_CH1_GAIN_INC),
+            VTB_UQ16_16(AGC_CH1_GAIN_DEC)
         }
     };
 
     for(unsigned i=0;i<TEST_COUNT;i++){
-        int32_t desired_levels[AGC_INPUT_CHANNELS];
+        int32_t upper_thresholds[AGC_INPUT_CHANNELS];
         for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
-            desired_levels[i] = ((int32_t)rand() << 16);
-            if(desired_levels[i] == 0){
-                desired_levels[i] = 1;
+            upper_thresholds[i] = ((int32_t)rand() << 16);
+            if(upper_thresholds[i] == 0){
+                upper_thresholds[i] = 1;
             }
-            desired_levels[i] += ((uint16_t)rand());
+            upper_thresholds[i] += ((uint16_t)rand());
         }
 
         agc_state_t agc;
         agc_init(agc, config);
 
         for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
-            agc_set_ch_desired_level(agc, i, desired_levels[i]);
+            agc_set_ch_upper_threshold(agc, i, upper_thresholds[i]);
         }
 
         for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
-            int32_t actual = agc_get_ch_desired_level(agc, i);
-            TEST_ASSERT_EQUAL_INT32_MESSAGE(abs(desired_levels[i]), actual, "Incorrect desired level");
+            int32_t actual = agc_get_ch_upper_threshold(agc, i);
+            TEST_ASSERT_EQUAL_INT32_MESSAGE(abs(upper_thresholds[i]), actual, "Incorrect upper threshold");
         }
     }
 }
@@ -246,13 +242,11 @@ void test_agc_set_get_ch_gain_zero(){
             AGC_CH0_ADAPT,
             VTB_UQ16_16(AGC_CH0_GAIN),
             VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-            AGC_CH0_DESIRED_LEVEL,
         },
         {
             AGC_CH1_ADAPT,
             VTB_UQ16_16(AGC_CH1_GAIN),
             VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-            AGC_CH1_DESIRED_LEVEL,
         }
     };
 
@@ -276,13 +270,15 @@ void test_set_get_wrong_ch_index(){
             0,
             VTB_UQ16_16(AGC_CH0_GAIN),
             VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-            AGC_CH0_DESIRED_LEVEL,
+            AGC_CH0_UPPER_THRESHOLD,
+            AGC_CH0_LOWER_THRESHOLD
         },
         {
             0,
             VTB_UQ16_16(AGC_CH1_GAIN),
             VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-            AGC_CH1_DESIRED_LEVEL,
+            AGC_CH1_UPPER_THRESHOLD,
+            AGC_CH0_LOWER_THRESHOLD
         }
     };
 
@@ -294,13 +290,14 @@ void test_set_get_wrong_ch_index(){
         agc_set_ch_adapt(agc, i, 1);
         agc_set_ch_gain(agc, i, ((vtb_uq16_16_t)rand() << 16));
         agc_set_ch_max_gain(agc, i, ((vtb_uq16_16_t)rand() << 16));
-        agc_set_ch_desired_level(agc, i, ((int32_t)rand() << 16));
+        agc_set_ch_upper_threshold(agc, i, ((int32_t)rand() << 16));
+        agc_set_ch_lower_threshold(agc, i, ((int32_t)rand() << 16));
 
 
         int inv_adapt = agc_get_ch_adapt(agc, i);
         vtb_uq16_16_t inv_gain = agc_get_ch_gain(agc, i);
         vtb_uq16_16_t inv_max_gain = agc_get_ch_max_gain(agc, i);
-        int32_t invalid_dlvl = agc_get_ch_desired_level(agc, i);
+        int32_t invalid_dlvl = agc_get_ch_upper_threshold(agc, i);
 
         TEST_ASSERT_EQUAL_INT32_MESSAGE(0, inv_adapt, "inv_adapt not 0.");
         TEST_ASSERT_EQUAL_INT32_MESSAGE(0, invalid_dlvl, "invalid_dlvl not 0.");
@@ -310,8 +307,11 @@ void test_set_get_wrong_ch_index(){
         TEST_ASSERT_EQUAL_INT32_MESSAGE(0, agc_get_ch_adapt(agc, 0), "Incorrect ch0 adapt");
         TEST_ASSERT_EQUAL_INT32_MESSAGE(0, agc_get_ch_adapt(agc, 1), "Incorrect ch1 adapt");
 
-        TEST_ASSERT_EQUAL_INT32_MESSAGE(AGC_CH0_DESIRED_LEVEL, agc_get_ch_desired_level(agc, 0), "Incorrect ch0 desired level");
-        TEST_ASSERT_EQUAL_INT32_MESSAGE(AGC_CH1_DESIRED_LEVEL, agc_get_ch_desired_level(agc, 1), "Incorrect ch1 desired level");
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(AGC_CH0_UPPER_THRESHOLD, agc_get_ch_upper_threshold(agc, 0), "Incorrect ch0 desired level");
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(AGC_CH1_UPPER_THRESHOLD, agc_get_ch_upper_threshold(agc, 1), "Incorrect ch1 desired level");
+
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(AGC_CH0_LOWER_THRESHOLD, agc_get_ch_lower_threshold(agc, 0), "Incorrect ch0 desired level");
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(AGC_CH1_LOWER_THRESHOLD, agc_get_ch_lower_threshold(agc, 1), "Incorrect ch1 desired level");
 
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(VTB_UQ16_16(AGC_CH0_GAIN), agc_get_ch_gain(agc, 0), "Incorrect ch0 gain");
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(VTB_UQ16_16(AGC_CH1_GAIN), agc_get_ch_gain(agc, 1), "Incorrect ch1 gain");
@@ -331,9 +331,8 @@ void test_agc_process_frame(){
             0,
             VTB_UQ16_16(AGC_CH0_GAIN),
             VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-            AGC_CH0_DESIRED_LEVEL,
-            AGC_CH0_THRESHOLD_UPPER,
-            AGC_CH0_THRESHOLD_LOWER,
+            AGC_CH0_UPPER_THRESHOLD,
+            AGC_CH0_LOWER_THRESHOLD,
             AGC_CH0_GAIN_INC,
             AGC_CH0_GAIN_DEC
         },
@@ -341,9 +340,8 @@ void test_agc_process_frame(){
             0,
             VTB_UQ16_16(AGC_CH1_GAIN),
             VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-            AGC_CH1_DESIRED_LEVEL,
-            AGC_CH1_THRESHOLD_UPPER,
-            AGC_CH1_THRESHOLD_LOWER,
+            AGC_CH1_UPPER_THRESHOLD,
+            AGC_CH1_LOWER_THRESHOLD,
             AGC_CH1_GAIN_INC,
             AGC_CH1_GAIN_DEC
         }
