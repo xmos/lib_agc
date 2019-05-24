@@ -193,7 +193,7 @@ void test_agc_set_get_ch_upper_threshold(){
             VTB_UQ16_16(AGC_CH0_GAIN),
             VTB_UQ16_16(AGC_CH0_MAX_GAIN),
             AGC_CH0_UPPER_THRESHOLD,
-            0,
+            AGC_CH0_LOWER_THRESHOLD,
             VTB_UQ16_16(AGC_CH0_GAIN_INC),
             VTB_UQ16_16(AGC_CH0_GAIN_DEC)
         },
@@ -202,7 +202,7 @@ void test_agc_set_get_ch_upper_threshold(){
             VTB_UQ16_16(AGC_CH1_GAIN),
             VTB_UQ16_16(AGC_CH1_MAX_GAIN),
             AGC_CH1_UPPER_THRESHOLD,
-            0,
+            AGC_CH0_LOWER_THRESHOLD,
             VTB_UQ16_16(AGC_CH1_GAIN_INC),
             VTB_UQ16_16(AGC_CH1_GAIN_DEC)
         }
@@ -227,7 +227,68 @@ void test_agc_set_get_ch_upper_threshold(){
 
         for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
             int32_t actual = agc_get_ch_upper_threshold(agc, i);
-            TEST_ASSERT_EQUAL_INT32_MESSAGE(abs(upper_thresholds[i]), actual, "Incorrect upper threshold");
+            
+            int32_t expected = abs(upper_thresholds[i]);
+            if (expected < config[i].lower_threshold){
+                expected = config[i].lower_threshold;
+            }
+            
+            TEST_ASSERT_EQUAL_INT32_MESSAGE(expected, actual, "Incorrect upper threshold");
+        }
+    }
+}
+
+
+void test_agc_set_get_ch_lower_threshold(){
+    srand((unsigned) 1);
+
+    agc_init_config_t config[AGC_INPUT_CHANNELS] = {
+        {
+            AGC_CH0_ADAPT,
+            VTB_UQ16_16(AGC_CH0_GAIN),
+            VTB_UQ16_16(AGC_CH0_MAX_GAIN),
+            AGC_CH0_UPPER_THRESHOLD,
+            AGC_CH0_LOWER_THRESHOLD,
+            VTB_UQ16_16(AGC_CH0_GAIN_INC),
+            VTB_UQ16_16(AGC_CH0_GAIN_DEC)
+        },
+        {
+            AGC_CH1_ADAPT,
+            VTB_UQ16_16(AGC_CH1_GAIN),
+            VTB_UQ16_16(AGC_CH1_MAX_GAIN),
+            AGC_CH1_UPPER_THRESHOLD,
+            AGC_CH0_LOWER_THRESHOLD,
+            VTB_UQ16_16(AGC_CH1_GAIN_INC),
+            VTB_UQ16_16(AGC_CH1_GAIN_DEC)
+        }
+    };
+
+    for(unsigned i=0;i<TEST_COUNT;i++){
+        int32_t lower_threshold[AGC_INPUT_CHANNELS];
+        for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            lower_threshold[i] = ((int32_t)rand() << 16);
+            if(lower_threshold[i] == 0){
+                lower_threshold[i] = 1;
+            }
+            lower_threshold[i] += ((uint16_t)rand());
+        }
+
+        agc_state_t agc;
+        agc_init(agc, config);
+
+        for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            agc_set_ch_lower_threshold(agc, i, lower_threshold[i]);
+        }
+
+        for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            int32_t actual = agc_get_ch_lower_threshold(agc, i);
+            
+            int32_t expected = abs(lower_threshold[i]);
+            if (expected > config[i].upper_threshold){
+                expected = config[i].upper_threshold;
+            }
+            
+            TEST_ASSERT_EQUAL_INT32_MESSAGE(expected, actual, "Incorrect upper threshold");
         }
     }
 }
