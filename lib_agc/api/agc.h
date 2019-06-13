@@ -62,6 +62,52 @@ void agc_set_ch_gain(agc_state_t &agc, unsigned ch_index, vtb_uq16_16_t gain);
 vtb_uq16_16_t agc_get_ch_gain(agc_state_t agc, unsigned ch_index);
 
 
+/** Set AGC channel gain increase value.
+ *
+ * \param[in,out] agc       AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \param[in] gain_inc      Gain increase value in linear UQ16_16 format.
+ *                          Must be greater than 1.
+ */
+void agc_set_ch_gain_inc(agc_state_t &agc, unsigned ch_index, vtb_uq16_16_t gain_inc);
+
+
+/** Get AGC channel gain increase value.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \returns                 Channel gain_inc in linear UQ16_16 format.
+ */
+vtb_uq16_16_t agc_get_ch_gain_inc(agc_state_t agc, unsigned ch_index);
+
+
+/** Set AGC channel gain decrease value.
+ *
+ * \param[in,out] agc       AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \param[in] gain_dec      Gain decrease value in linear UQ16_16 format.
+ *                          Must be between 0 and 1.
+ */
+void agc_set_ch_gain_dec(agc_state_t &agc, unsigned ch_index, vtb_uq16_16_t gain_dec);
+
+
+/** Get AGC channel gain decrease value.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \returns                 Channel gain_dec in linear UQ16_16 format.
+ */
+vtb_uq16_16_t agc_get_ch_gain_dec(agc_state_t agc, unsigned ch_index);
+
+
 /** Set AGC channel max gain.
  *
  * \param[in,out] agc       AGC state.
