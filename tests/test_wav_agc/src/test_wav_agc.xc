@@ -42,13 +42,19 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
             AGC_CH0_ADAPT,
             VTB_UQ16_16(AGC_CH0_GAIN),
             VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-            AGC_CH0_DESIRED_LEVEL
+            AGC_CH0_UPPER_THRESHOLD,
+            AGC_CH0_LOWER_THRESHOLD,
+            VTB_UQ16_16(AGC_CH0_GAIN_INC),
+            VTB_UQ16_16(AGC_CH0_GAIN_DEC)
         },
         {
             AGC_CH1_ADAPT,
             VTB_UQ16_16(AGC_CH1_GAIN),
             VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-            AGC_CH1_DESIRED_LEVEL
+            AGC_CH1_UPPER_THRESHOLD,
+            AGC_CH1_LOWER_THRESHOLD,
+            VTB_UQ16_16(AGC_CH1_GAIN_INC),
+            VTB_UQ16_16(AGC_CH1_GAIN_DEC)
         },
     };
 
