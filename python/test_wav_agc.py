@@ -13,17 +13,21 @@ FRAME_ADVANCE = 240
 
 ADAPT_DEFAULT = False
 DESIRED_DB_DEFAULT = -20
-MAX_GAIN_DEFAULT = 1000.0
-INIT_GAIN_DEFAULT = 2.0
+MAX_GAIN_DEFAULT = 100000.0
+INIT_GAIN_DEFAULT = 10.0
 
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("input", help="input wav file")
     parser.add_argument("--adapt", type=bool, default = True, help="Adapt flag for Ch0")
-    parser.add_argument("--desired_dBFS", type=int, default = DESIRED_DB_DEFAULT, help="Desired level (dBFS) for Ch0. Must be negative.")
+    parser.add_argument("--upper_threshold", type=float, default = DESIRED_DB_DEFAULT, help="Upper threshold for desired level (dBFS) for Ch0. Must be negative.")
+    parser.add_argument("--lower_threshold", type=float, default = DESIRED_DB_DEFAULT, help="Lower threshold for desired level (dBFS) for Ch0. Must be negative.")
     parser.add_argument("--max_gain", type=float, default = MAX_GAIN_DEFAULT, help="Max gain for Ch0")
-    parser.add_argument("--init_gain", type=float, default = 40.0, help="Initial gain for Ch0")
+    parser.add_argument("--init_gain", type=float, default = INIT_GAIN_DEFAULT, help="Initial gain for Ch0")
+    parser.add_argument("--gain_inc", type=float, default = 1.0121, help="Gain increment for Ch0")
+    parser.add_argument("--gain_dec", type=float, default = 0.98804, help="Gain decrement for Ch0")
+
 
     parser.add_argument("output", help="output wav file")
     parser.add_argument('--plot', action='store_true')
@@ -47,9 +51,9 @@ if __name__ == "__main__":
     output = np.zeros((channel_count, file_length))
 
     agcs = []
-    agcs.append(agc.agc(args.adapt, args.init_gain, args.max_gain, args.desired_dBFS))
+    agcs.append(agc.agc(args.adapt, args.init_gain, args.max_gain, args.upper_threshold, args.lower_threshold, args.gain_inc, args.gain_dec))
     for ch in range(channel_count-1):
-        agcs.append(agc.agc(ADAPT_DEFAULT, INIT_GAIN_DEFAULT, MAX_GAIN_DEFAULT, DESIRED_DB_DEFAULT))
+        agcs.append(agc.agc(ADAPT_DEFAULT, INIT_GAIN_DEFAULT, MAX_GAIN_DEFAULT, DESIRED_DB_DEFAULT, DESIRED_DB_DEFAULT))
 
 
     for frame_start in range(0, file_length-FRAME_ADVANCE, FRAME_ADVANCE):

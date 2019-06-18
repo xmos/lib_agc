@@ -13,9 +13,6 @@
 #define AGC_ALPHA_PEAK_RISE VTB_UQ0_32(0.5480)
 #define AGC_ALPHA_PEAK_FALL VTB_UQ0_32(0.9646)
 
-#define AGC_GAIN_INC        VTB_UQ16_16(1.0121)
-#define AGC_GAIN_DEC        VTB_UQ16_16(0.9880)
-
 #define AGC_VAD_THRESHOLD   (1<<7)
 
 /**
@@ -25,7 +22,8 @@ typedef struct {
     int adapt;
     vtb_u32_float_t gain;
     vtb_u32_float_t max_gain;
-    vtb_u32_float_t desired_level;
+    vtb_u32_float_t upper_threshold;
+    vtb_u32_float_t lower_threshold;
     vtb_u32_float_t x_slow;
     vtb_u32_float_t x_fast;
     vtb_u32_float_t x_peak;
