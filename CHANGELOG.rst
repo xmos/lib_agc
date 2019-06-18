@@ -4,7 +4,7 @@ AGC library change log
 3.0.0
 -----
 
-  * ADDED: Added range constrainer like functionality within AGC.
+  * ADDED: Range constrainer like functionality within AGC.
   * ADDED: Parameters for upper and lower desired voice level thresholds.
 
 2.2.0
