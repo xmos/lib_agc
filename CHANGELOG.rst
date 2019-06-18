@@ -7,6 +7,12 @@ AGC library change log
   * ADDED: Range constrainer like functionality within AGC.
   * ADDED: Parameters for upper and lower desired voice level thresholds.
 
+2.3.0
+-----
+
+  * ADDED: Pipfile + setup.py for pipenv support
+  * ADDED: Python 3 support
+
 2.2.0
 -----
 
