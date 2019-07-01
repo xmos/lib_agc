@@ -515,7 +515,7 @@ void test_agc_process_frame(){
             VTB_UQ16_16(AGC_CH1_GAIN),
             VTB_UQ16_16(AGC_CH1_MAX_GAIN),
             VTB_UQ1_31(AGC_CH1_UPPER_THRESHOLD),
-            VTB_UQ1_31((AGC_CH1_LOWER_THRESHOLD),
+            VTB_UQ1_31(AGC_CH1_LOWER_THRESHOLD),
             AGC_CH1_GAIN_INC,
             AGC_CH1_GAIN_DEC
         }
