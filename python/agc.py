@@ -35,8 +35,8 @@ class agc(object):
         self.gain_inc = gain_inc
         self.gain_dec = gain_dec
 
-        self.threshold_upper = (10 ** (float(upper_threshold)/20))
-        self.threshold_lower = (10 ** (float(lower_threshold)/20))
+        self.threshold_upper = float(upper_threshold)
+        self.threshold_lower = float(lower_threshold)
 
 
     def process_frame(self, input_frame, vad):
