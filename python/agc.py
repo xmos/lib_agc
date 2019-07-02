@@ -21,9 +21,9 @@ class agc(object):
         if max_gain < 0:
             raise Exception("max_gain must be greater than 0.")
         if upper_threshold > 1.0:
-            raise Exception("upper_threshold must be less than or equal to 0.")
+            raise Exception("upper_threshold must be less than or equal to 1.")
         if lower_threshold > 1.0:
-            raise Exception("lower_threshold must be less than or equal to 0.")
+            raise Exception("lower_threshold must be less than or equal to 1.")
 
         self.adapt = adapt
         self.gain = init_gain
