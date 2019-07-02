@@ -1,6 +1,11 @@
 AGC library change log
 ======================
 
+3.1.0
+-----
+
+  * CHANGED: upper and lower threshold parameters in python from dB to non-dB.
+
 3.0.0
 -----
 

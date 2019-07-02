@@ -20,10 +20,10 @@ class agc(object):
             raise Exception("init_gain must be greater than 0.")
         if max_gain < 0:
             raise Exception("max_gain must be greater than 0.")
-        if upper_threshold > 0:
-            raise Exception("upper_threshold must be less than or equal to 0.")
-        if lower_threshold > 0:
-            raise Exception("lower_threshold must be less than or equal to 0.")
+        if upper_threshold > 1.0:
+            raise Exception("upper_threshold must be less than or equal to 1.")
+        if lower_threshold > 1.0:
+            raise Exception("lower_threshold must be less than or equal to 1.")
 
         self.adapt = adapt
         self.gain = init_gain
@@ -35,8 +35,8 @@ class agc(object):
         self.gain_inc = gain_inc
         self.gain_dec = gain_dec
 
-        self.threshold_upper = (10 ** (float(upper_threshold)/20))
-        self.threshold_lower = (10 ** (float(lower_threshold)/20))
+        self.threshold_upper = float(upper_threshold)
+        self.threshold_lower = float(lower_threshold)
 
 
     def process_frame(self, input_frame, vad):
