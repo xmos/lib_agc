@@ -12,7 +12,7 @@ import argparse
 FRAME_ADVANCE = 240
 
 ADAPT_DEFAULT = False
-DESIRED_DB_DEFAULT = -20
+DESIRED_LEVEL_DEFAULT = 0.1 #-20 dB
 MAX_GAIN_DEFAULT = 100000.0
 INIT_GAIN_DEFAULT = 10.0
 
@@ -21,8 +21,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("input", help="input wav file")
     parser.add_argument("--adapt", type=bool, default = True, help="Adapt flag for Ch0")
-    parser.add_argument("--upper_threshold", type=float, default = DESIRED_DB_DEFAULT, help="Upper threshold for desired level (dBFS) for Ch0. Must be negative.")
-    parser.add_argument("--lower_threshold", type=float, default = DESIRED_DB_DEFAULT, help="Lower threshold for desired level (dBFS) for Ch0. Must be negative.")
+    parser.add_argument("--upper_threshold", type=float, default = DESIRED_LEVEL_DEFAULT, help="Upper threshold for desired level for Ch0. Must be less than 1.")
+    parser.add_argument("--lower_threshold", type=float, default = DESIRED_LEVEL_DEFAULT, help="Lower threshold for desired level for Ch0. Must be less than 1.")
     parser.add_argument("--max_gain", type=float, default = MAX_GAIN_DEFAULT, help="Max gain for Ch0")
     parser.add_argument("--init_gain", type=float, default = INIT_GAIN_DEFAULT, help="Initial gain for Ch0")
     parser.add_argument("--gain_inc", type=float, default = 1.0121, help="Gain increment for Ch0")
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     agcs = []
     agcs.append(agc.agc(args.adapt, args.init_gain, args.max_gain, args.upper_threshold, args.lower_threshold, args.gain_inc, args.gain_dec))
     for ch in range(channel_count-1):
-        agcs.append(agc.agc(ADAPT_DEFAULT, INIT_GAIN_DEFAULT, MAX_GAIN_DEFAULT, DESIRED_DB_DEFAULT, DESIRED_DB_DEFAULT))
+        agcs.append(agc.agc(ADAPT_DEFAULT, INIT_GAIN_DEFAULT, MAX_GAIN_DEFAULT, DESIRED_LEVEL_DEFAULT, DESIRED_LEVEL_DEFAULT))
 
 
     for frame_start in range(0, file_length-FRAME_ADVANCE, FRAME_ADVANCE):
