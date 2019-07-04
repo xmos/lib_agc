@@ -43,23 +43,23 @@ const vtb_s32_float_t S_QUARTER = {INT_MAX, -31-2};
 static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, int vad_flag);
 
 
-void agc_init(agc_state_t &agc, agc_init_config_t config[AGC_INPUT_CHANNELS]){
+void agc_init(agc_state_t &agc, agc_init_config_t config){
     for(unsigned ch = 0; ch < AGC_INPUT_CHANNELS; ch++){
-        agc.ch_state[ch].adapt = config[ch].adapt;
+        agc.ch_state[ch].adapt = config.ch_init_config[ch].adapt;
 
-        agc.ch_state[ch].gain.m = config[ch].init_gain;
+        agc.ch_state[ch].gain.m = config.ch_init_config[ch].init_gain;
         agc.ch_state[ch].gain.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].gain);
 
-        agc.ch_state[ch].max_gain.m = config[ch].max_gain;
+        agc.ch_state[ch].max_gain.m = config.ch_init_config[ch].max_gain;
         agc.ch_state[ch].max_gain.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].max_gain);
 
-        agc.ch_state[ch].upper_threshold.m = (uint32_t)config[ch].upper_threshold;
+        agc.ch_state[ch].upper_threshold.m = (uint32_t)config.ch_init_config[ch].upper_threshold;
         agc.ch_state[ch].upper_threshold.e = 0;
         vtb_normalise_u32(agc.ch_state[ch].upper_threshold);
 
-        agc.ch_state[ch].lower_threshold.m = (uint32_t)config[ch].lower_threshold;
+        agc.ch_state[ch].lower_threshold.m = (uint32_t)config.ch_init_config[ch].lower_threshold;
         agc.ch_state[ch].lower_threshold.e = 0;
         vtb_normalise_u32(agc.ch_state[ch].lower_threshold);
 
@@ -75,11 +75,11 @@ void agc_init(agc_state_t &agc, agc_init_config_t config[AGC_INPUT_CHANNELS]){
         agc.ch_state[ch].alpha_pr = AGC_ALPHA_PEAK_RISE;
         agc.ch_state[ch].alpha_pf = AGC_ALPHA_PEAK_FALL;
 
-        agc.ch_state[ch].gain_inc.m = config[ch].gain_inc;
+        agc.ch_state[ch].gain_inc.m = config.ch_init_config[ch].gain_inc;
         agc.ch_state[ch].gain_inc.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].gain_inc);
 
-        agc.ch_state[ch].gain_dec.m = config[ch].gain_dec;
+        agc.ch_state[ch].gain_dec.m = config.ch_init_config[ch].gain_dec;
         agc.ch_state[ch].gain_dec.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].gain_dec);
     }
