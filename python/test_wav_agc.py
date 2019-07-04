@@ -20,9 +20,9 @@ INIT_GAIN_DEFAULT = 10.0
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("config_file", help="json config file")
     parser.add_argument("input", help="input wav file")
     parser.add_argument("output", help="output wav file")
+    parser.add_argument("--config-file", help="json config file", default="../lib_agc/config/agc_2ch.json")
     parser.add_argument('--plot', action='store_true')
     args = parser.parse_args()
     return args
