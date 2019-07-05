@@ -41,10 +41,6 @@ class agc(object):
             self.ch_state[ch_idx].x_slow = 0
             self.ch_state[ch_idx].x_fast = 0
             self.ch_state[ch_idx].x_peak = 0
-
-    @classmethod
-    def make_agc(self, agc_parameters):
-        return self(**agc_parameters)
     
     def process_frame(self, ch, input_frame, vad):
         if(self.ch_state[ch].adapt):

@@ -43,7 +43,8 @@ if __name__ == "__main__":
 
     output = np.zeros((channel_count, file_length))
 
-    agc = agc.make_agc(agc_parameters)
+    # treat the key-value pairs of the dictionary as additional named arguments to the constructor.
+    agc = agc(**agc_parameters)
     for frame_start in range(0, file_length-FRAME_ADVANCE, FRAME_ADVANCE):
         x = au.get_frame(wav_data, frame_start, FRAME_ADVANCE)
         vad_result = vad.run(x[0])
