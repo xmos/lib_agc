@@ -24,9 +24,9 @@ typedef struct {
     vtb_uq16_16_t init_gain;        ///< Initial channel gain. Linear UQ16_16.
     vtb_uq16_16_t max_gain;         ///< Maximum channel gain. Linear UQ16_16.
     vtb_uq1_31_t upper_threshold;   ///< Upper threshold for desired output voice level [0, INT32_MAX].
-    vtb_uq16_16_t lower_threshold;  ///< Lower threshold for desired output voice level [0, INT32_MAX].
-    vtb_uq16_16_t gain_inc;         ///< Step value to increment the gain.
-    vtb_uq16_16_t gain_dec;         ///< Step value to decrement the gain.
+    vtb_uq1_31_t lower_threshold;   ///< Lower threshold for desired output voice level [0, INT32_MAX].
+    vtb_uq16_16_t gain_inc;         ///< Step value to increment the channel gain.
+    vtb_uq16_16_t gain_dec;         ///< Step value to decrement the channel gain.
 } agc_ch_init_config_t;
 
 /**
