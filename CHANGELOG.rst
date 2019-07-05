@@ -1,6 +1,11 @@
 AGC library change log
 ======================
 
+4.0.0
+-----
+
+  * ADDED: support for JSON config file
+
 3.1.0
 -----
 
