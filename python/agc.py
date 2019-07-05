@@ -24,10 +24,6 @@ class agc_ch(object):
         self.threshold_upper = float(upper_threshold)
         self.threshold_lower = float(lower_threshold)
 
-    @classmethod
-    def make_agc_ch(self, agc_ch_parameters):#adapt, init_gain, max_gain, upper_threshold, lower_threshold, gain_inc, gain_dec):
-        return self(**agc_ch_parameters)  
-
 class agc(object):
     # Adaption coefficients, do not change
     ALPHA_SLOW_RISE = 0.8869
@@ -41,7 +37,7 @@ class agc(object):
         self.ch_state = []
         for ch_idx in range(len(ch_init_config)):
 
-            self.ch_state.append(agc_ch.make_agc_ch(ch_init_config[ch_idx]))
+            self.ch_state.append(agc_ch(**ch_init_config[ch_idx]))
             self.ch_state[ch_idx].x_slow = 0
             self.ch_state[ch_idx].x_fast = 0
             self.ch_state[ch_idx].x_peak = 0
