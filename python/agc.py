@@ -13,6 +13,8 @@ class agc(object):
     ALPHA_FAST_FALL = 0.8869
     ALPHA_PEAK_RISE = 0.5480
     ALPHA_PEAK_FALL = 0.9646
+    
+    AGC_VAD_THRESHOLD = 205
 
 
     def __init__(self, adapt, init_gain, max_gain, upper_threshold, lower_threshold, gain_inc=1.0121, gain_dec=0.98804):
@@ -52,7 +54,7 @@ class agc(object):
 
             exceed_desired_level = (peak_sample * self.gain) > self.threshold_upper
 
-            if vad or exceed_desired_level:
+            if vad > AGC_VAD_THRESHOLD or exceed_desired_level:
                 alpha_peak = agc.ALPHA_PEAK_RISE if self.x_fast > self.x_peak else agc.ALPHA_PEAK_FALL
                 self.x_peak = (1 - alpha_peak) * self.x_fast + alpha_peak * self.x_peak
 

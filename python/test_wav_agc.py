@@ -61,7 +61,7 @@ if __name__ == "__main__":
         vad_result = vad.run(x[0])
 
         for i in range(channel_count):
-            output[i, frame_start: frame_start + FRAME_ADVANCE] = agcs[i].process_frame(x[i], True)
+            output[i, frame_start: frame_start + FRAME_ADVANCE] = agcs[i].process_frame(x[i], vad_result)
 
         x_slow.append(20.0 * np.log10(agcs[0].x_slow))
         x_fast.append(20.0 * np.log10(agcs[0].x_fast))
