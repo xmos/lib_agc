@@ -1,6 +1,12 @@
 AGC library change log
 ======================
 
+
+3.1.1
+-----
+
+  * CHANGED: VAD threshold increased to 80%.
+
 3.1.0
 -----
 
