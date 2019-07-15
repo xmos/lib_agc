@@ -5,7 +5,8 @@ from math import sqrt
 import numpy as np
 import scipy.io.wavfile
 import audio_utils as au
-import agc
+from json_utils import json_to_dict
+from agc import agc
 import vad
 import argparse
 
@@ -20,23 +21,15 @@ INIT_GAIN_DEFAULT = 10.0
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("input", help="input wav file")
-    parser.add_argument("--adapt", type=bool, default = True, help="Adapt flag for Ch0")
-    parser.add_argument("--upper_threshold", type=float, default = DESIRED_LEVEL_DEFAULT, help="Upper threshold for desired level for Ch0. Must be less than 1.")
-    parser.add_argument("--lower_threshold", type=float, default = DESIRED_LEVEL_DEFAULT, help="Lower threshold for desired level for Ch0. Must be less than 1.")
-    parser.add_argument("--max_gain", type=float, default = MAX_GAIN_DEFAULT, help="Max gain for Ch0")
-    parser.add_argument("--init_gain", type=float, default = INIT_GAIN_DEFAULT, help="Initial gain for Ch0")
-    parser.add_argument("--gain_inc", type=float, default = 1.0121, help="Gain increment for Ch0")
-    parser.add_argument("--gain_dec", type=float, default = 0.98804, help="Gain decrement for Ch0")
-
-
     parser.add_argument("output", help="output wav file")
+    parser.add_argument("--config-file", help="json config file", default="../lib_agc/config/agc_2ch.json")
     parser.add_argument('--plot', action='store_true')
     args = parser.parse_args()
     return args
 
 if __name__ == "__main__":
     args = parse_arguments()
-
+    agc_parameters = json_to_dict(args.config_file)
     rate, mix_wav_file = scipy.io.wavfile.read(args.input, 'r')
     wav_data, channel_count, file_length = au.parse_audio(mix_wav_file)
 
@@ -50,23 +43,19 @@ if __name__ == "__main__":
 
     output = np.zeros((channel_count, file_length))
 
-    agcs = []
-    agcs.append(agc.agc(args.adapt, args.init_gain, args.max_gain, args.upper_threshold, args.lower_threshold, args.gain_inc, args.gain_dec))
-    for ch in range(channel_count-1):
-        agcs.append(agc.agc(ADAPT_DEFAULT, INIT_GAIN_DEFAULT, MAX_GAIN_DEFAULT, DESIRED_LEVEL_DEFAULT, DESIRED_LEVEL_DEFAULT))
-
-
+    # treat the key-value pairs of the dictionary as additional named arguments to the constructor.
+    agc = agc(**agc_parameters)
     for frame_start in range(0, file_length-FRAME_ADVANCE, FRAME_ADVANCE):
         x = au.get_frame(wav_data, frame_start, FRAME_ADVANCE)
         vad_result = vad.run(x[0])
 
-        for i in range(channel_count):
-            output[i, frame_start: frame_start + FRAME_ADVANCE] = agcs[i].process_frame(x[i], True)
+        for ch_idx in range(channel_count):
+            output[ch_idx, frame_start: frame_start + FRAME_ADVANCE] = agc.process_frame(ch_idx, x[ch_idx], True)
 
-        x_slow.append(20.0 * np.log10(agcs[0].x_slow))
-        x_fast.append(20.0 * np.log10(agcs[0].x_fast))
-        x_peak.append(20.0 * np.log10(agcs[0].x_peak) if agcs[0].x_peak > 0 else np.NaN)
-        frame_gain_dB.append(20.0 * np.log10(agcs[0].gain))
+        x_slow.append(20.0 * np.log10(agc.ch_state[0].x_slow))
+        x_fast.append(20.0 * np.log10(agc.ch_state[0].x_fast))
+        x_peak.append(20.0 * np.log10(agc.ch_state[0].x_peak) if agc.ch_state[0].x_peak > 0 else np.NaN)
+        frame_gain_dB.append(20.0 * np.log10(agc.ch_state[0].gain))
         vad_results.append(vad_result)
 
 

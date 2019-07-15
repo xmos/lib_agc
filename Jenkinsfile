@@ -3,7 +3,7 @@ pipeline {
     label 'x86&&macOS&&Apps'
   }
   environment {
-    VIEW = 'lib_agc_master'
+    VIEW = 'lib_agc_develop'
     REPO = 'lib_agc'
   }
   options {
@@ -30,6 +30,15 @@ pipeline {
                 runPytest()
               }
             }
+          }
+        }
+      }
+    }
+    stage('Build test_wav_agc') {
+      steps {
+        dir("${REPO}") {
+          dir('tests/test_wav_agc') {
+            runXwaf('.')
           }
         }
       }
