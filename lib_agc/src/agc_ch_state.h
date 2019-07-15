@@ -13,7 +13,12 @@
 #define AGC_ALPHA_PEAK_RISE VTB_UQ0_32(0.5480)
 #define AGC_ALPHA_PEAK_FALL VTB_UQ0_32(0.9646)
 
-#define AGC_VAD_THRESHOLD   (1<<7)
+
+/**
+ * Threshold for VAD value, which is in range [0, 255].
+ */
+#define AGC_VAD_THRESHOLD   (205)
+
 
 /**
  * Structure to hold AGC state, only used internally.
