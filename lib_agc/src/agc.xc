@@ -42,7 +42,7 @@ const vtb_s32_float_t S_QUARTER = {INT_MAX, -31-2};
 
 static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, int vad_flag);
 
-
+#include "print.h"
 void agc_init(agc_state_t &agc, agc_init_config_t config){
     for(unsigned ch = 0; ch < AGC_INPUT_CHANNELS; ch++){
         agc.ch_state[ch].adapt = config.ch_init_config[ch].adapt;
@@ -83,6 +83,10 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         agc.ch_state[ch].gain_dec.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].gain_dec);
     }
+    uint32_t* p = (uint32_t*)&agc;
+
+    for (int i = 0; i < sizeof(agc_state_t)/sizeof(uint32_t); i++)
+        printhexln((uint32_t)*(p+i));
 }
 
 
