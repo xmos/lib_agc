@@ -33,6 +33,7 @@ class agc(object):
     ALPHA_PEAK_RISE = 0.5480
     ALPHA_PEAK_FALL = 0.9646
 
+
     def __init__(self, ch_init_config):
         self.ch_state = []
         for ch_idx in range(len(ch_init_config)):
