@@ -233,11 +233,10 @@ uint32_t get_max_abs_sample(vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsign
 }
 
 
-void agc_process_frame(agc_state_t &agc, vtb_ch_pair_t frame[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH], uint8_t vad){
+void agc_process_frame(agc_state_t &agc, vtb_ch_pair_t frame[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH], int vad_flag){
     #if AGC_DEBUG_PRINT
         printf("\n#%u\n", frame_counter++);
     #endif
-    int vad_flag = (vad > AGC_VAD_THRESHOLD);
     for(unsigned ch=0;ch<AGC_INPUT_CHANNELS;ch++){
         agc_process_channel(agc.ch_state[ch], frame[ch/2], ch, vad_flag);
     }

@@ -219,11 +219,12 @@ int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index);
  *                              On output this array contains the data with AGC
  *                              applied.
  *
- * \param[in] vad               VAD level for input sample data [0, 255].
+ * \param[in] vad_flag          VAD flag for input sample data. Non-zero indicates
+ *                              that the sample data contains voice activity.
  */
 void agc_process_frame(agc_state_t &agc,
         vtb_ch_pair_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH],
-        uint8_t vad);
+        int vad_flag);
 
 
 #endif // _AGC_H_

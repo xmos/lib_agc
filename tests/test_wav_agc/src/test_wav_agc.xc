@@ -27,6 +27,7 @@ void app_control(chanend c_control_to_wav, chanend c_control_to_dsp){
 
 #define STATE_SIZE VTB_RX_STATE_UINT64_SIZE(AGC_CHANNEL_PAIRS*2, INPUT_FRAME_LENGTH, AGC_FRAME_ADVANCE, 0)
 
+#define AGC_VAD_THRESHOLD (205)
 
 void agc_test_task(chanend c_data_input, chanend c_data_output,
                 chanend ?c_control){
@@ -65,7 +66,7 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
         }
         int32_t vad_percentage = vad_percentage_voice(vad_data_window, vad_state);
 
-        agc_process_frame(agc_state, frame2, vad_percentage);
+        agc_process_frame(agc_state, frame2, vad_percentage > AGC_VAD_THRESHOLD);
 
         vtb_tx_notification_and_data(c_data_output, (vtb_ch_pair_t*)frame2,
                          2*AGC_CHANNEL_PAIRS,
