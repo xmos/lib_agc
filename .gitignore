@@ -7,6 +7,7 @@
 *.i
 *.a
 **/_build/
+**/build/
 **/run_*.log
 **/pdf/*
 **/html/*
@@ -17,6 +18,10 @@ test_results.csv
 *.log
 .DS_Store
 xscope.xmt
+*.xc.pca.xml
+*.xc.pca.xml.decouple
+*.xc.d
+**/.lock-waf_darwin_build
 **/*.egg-info/
 .venv/
 Pipfile.lock
