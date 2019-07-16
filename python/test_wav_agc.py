@@ -12,11 +12,13 @@ import argparse
 
 FRAME_ADVANCE = 240
 
+
 ADAPT_DEFAULT = False
 DESIRED_LEVEL_DEFAULT = 0.1 #-20 dB
 MAX_GAIN_DEFAULT = 100000.0
 INIT_GAIN_DEFAULT = 10.0
 
+VAD_THRESHOLD = 0.8
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -50,7 +52,7 @@ if __name__ == "__main__":
         vad_result = vad.run(x[0])
 
         for ch_idx in range(channel_count):
-            output[ch_idx, frame_start: frame_start + FRAME_ADVANCE] = agc.process_frame(ch_idx, x[ch_idx], vad_result)
+            output[ch_idx, frame_start: frame_start + FRAME_ADVANCE] = agc.process_frame(ch_idx, x[ch_idx], vad_result > VAD_THRESHOLD)
 
         x_slow.append(20.0 * np.log10(agc.ch_state[0].x_slow))
         x_fast.append(20.0 * np.log10(agc.ch_state[0].x_fast))
