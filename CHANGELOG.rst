@@ -5,6 +5,7 @@ AGC library change log
 -----
 
   * ADDED: support for JSON config file
+  * UPDATED: Removed VAD threshold. API updated to accept VAD flag instead.
 
 3.1.1
 -----
