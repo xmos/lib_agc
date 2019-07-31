@@ -6,7 +6,7 @@
 #include "audio_test_tools.h"
 #include "vad.h"
 #include <string.h>
-
+#include "agc_init_config.h"
 
 
 void app_control(chanend c_control_to_wav, chanend c_control_to_dsp){
@@ -27,6 +27,7 @@ void app_control(chanend c_control_to_wav, chanend c_control_to_dsp){
 
 #define STATE_SIZE VTB_RX_STATE_UINT64_SIZE(AGC_CHANNEL_PAIRS*2, INPUT_FRAME_LENGTH, AGC_FRAME_ADVANCE, 0)
 
+#define AGC_VAD_THRESHOLD (205)
 
 void agc_test_task(chanend c_data_input, chanend c_data_output,
                 chanend ?c_control){
@@ -37,34 +38,13 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
     vtb_rx_state_init(state, AGC_CHANNEL_PAIRS*2, INPUT_FRAME_LENGTH, AGC_FRAME_ADVANCE, null, STATE_SIZE);
 
     agc_state_t [[aligned(8)]] agc_state;
-    agc_init_config_t agc_config[AGC_INPUT_CHANNELS] = {
-        {
-            AGC_CH0_ADAPT,
-            VTB_UQ16_16(AGC_CH0_GAIN),
-            VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-            VTB_UQ1_31(AGC_CH0_UPPER_THRESHOLD),
-            VTB_UQ1_31(AGC_CH0_LOWER_THRESHOLD),
-            VTB_UQ16_16(AGC_CH0_GAIN_INC),
-            VTB_UQ16_16(AGC_CH0_GAIN_DEC)
-        },
-        {
-            AGC_CH1_ADAPT,
-            VTB_UQ16_16(AGC_CH1_GAIN),
-            VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-            VTB_UQ1_31(AGC_CH1_UPPER_THRESHOLD),
-            VTB_UQ1_31(AGC_CH1_LOWER_THRESHOLD),
-            VTB_UQ16_16(AGC_CH1_GAIN_INC),
-            VTB_UQ16_16(AGC_CH1_GAIN_DEC)
-        },
-    };
-
     int32_t vad_data_window[VAD_PROC_FRAME_LENGTH];
     for(int i = 0; i<VAD_PROC_FRAME_LENGTH; ++i){
         vad_data_window[i] = 0;
     }
     vad_state_t vad_state;
     vad_init_state(vad_state);
-    agc_init(agc_state, agc_config);
+    agc_init(agc_state, agc_init_config);
 
     while(1){
         vtb_ch_pair_t [[aligned(8)]] frame1[AGC_CHANNEL_PAIRS][480];
@@ -86,7 +66,7 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
         }
         int32_t vad_percentage = vad_percentage_voice(vad_data_window, vad_state);
 
-        agc_process_frame(agc_state, frame2, vad_percentage);
+        agc_process_frame(agc_state, frame2, vad_percentage > AGC_VAD_THRESHOLD);
 
         vtb_tx_notification_and_data(c_data_output, (vtb_ch_pair_t*)frame2,
                          2*AGC_CHANNEL_PAIRS,

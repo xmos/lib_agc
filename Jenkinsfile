@@ -34,6 +34,15 @@ pipeline {
         }
       }
     }
+    stage('Build test_wav_agc') {
+      steps {
+        dir("${REPO}") {
+          dir('tests/test_wav_agc') {
+            runXwaf('.')
+          }
+        }
+      }
+    }
     stage('Build') {
       steps {
         dir("${REPO}") {
