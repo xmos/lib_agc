@@ -15,12 +15,6 @@
 
 
 /**
- * Threshold for VAD value, which is in range [0, 255].
- */
-#define AGC_VAD_THRESHOLD   (205)
-
-
-/**
  * Structure to hold AGC state, only used internally.
  */
 typedef struct {

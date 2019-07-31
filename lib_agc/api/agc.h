@@ -17,18 +17,25 @@ typedef struct {
 
 /**
  * Structure containing AGC configuration unique to each input channel.
+ * Used to initialise AGC channel state.
+ */
+typedef struct {
+    int adapt;                      ///< 0 for fixed gain, or 1 for AGC.
+    vtb_uq16_16_t init_gain;        ///< Initial channel gain. Linear UQ16_16.
+    vtb_uq16_16_t max_gain;         ///< Maximum channel gain. Linear UQ16_16.
+    vtb_uq1_31_t upper_threshold;   ///< Upper threshold for desired output voice level [0, INT32_MAX].
+    vtb_uq1_31_t lower_threshold;   ///< Lower threshold for desired output voice level [0, INT32_MAX].
+    vtb_uq16_16_t gain_inc;         ///< Step value to increment the channel gain.
+    vtb_uq16_16_t gain_dec;         ///< Step value to decrement the channel gain.
+} agc_ch_init_config_t;
+
+/**
+ * Structure containing AGC configuration
  * Used to initialise AGC state.
  */
 typedef struct {
-    int adapt;                  ///< 0 for fixed gain, or 1 for AGC.
-    vtb_uq16_16_t init_gain;    ///< Initial channel gain. Linear UQ16_16.
-    vtb_uq16_16_t max_gain;     ///< Maximum channel gain. Linear UQ16_16.
-    int32_t upper_threshold;      ///< Upper threshold for desired output voice level [0, INT32_MAX].
-    int32_t lower_threshold;      ///< Lower threshold for desired output voice level [0, INT32_MAX].
-    vtb_uq16_16_t gain_inc;
-    vtb_uq16_16_t gain_dec;
+    agc_ch_init_config_t ch_init_config[AGC_INPUT_CHANNELS];
 } agc_init_config_t;
-
 
 /** Initialise AGC state given an initial configuration.
  *
@@ -37,7 +44,7 @@ typedef struct {
  * \param[in] config        Array containing AGC configuration for each channel.
  *                          Must be of length AGC_INPUT_CHANNELS.
  */
-void agc_init(agc_state_t &agc, agc_init_config_t config[AGC_INPUT_CHANNELS]);
+void agc_init(agc_state_t &agc, agc_init_config_t config);
 
 
 /** Set AGC channel gain.
@@ -212,11 +219,12 @@ int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index);
  *                              On output this array contains the data with AGC
  *                              applied.
  *
- * \param[in] vad               VAD level for input sample data [0, 255].
+ * \param[in] vad_flag          VAD flag for input sample data. Non-zero indicates
+ *                              that the sample data contains voice activity.
  */
 void agc_process_frame(agc_state_t &agc,
         vtb_ch_pair_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH],
-        uint8_t vad);
+        int vad_flag);
 
 
 #endif // _AGC_H_
