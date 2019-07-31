@@ -3,7 +3,7 @@ pipeline {
     label 'x86&&macOS&&Apps'
   }
   environment {
-    VIEW = 'lib_agc_test_json'
+    VIEW = 'lib_agc_master'
     REPO = 'lib_agc'
   }
   options {
