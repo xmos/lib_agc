@@ -1,6 +1,11 @@
 AGC library change log
 ======================
 
+4.1.0
+-----
+
+  * CHANGED: Use pipenv to set up python environment.
+
 4.0.0
 -----
 
