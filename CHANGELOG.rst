@@ -6,6 +6,12 @@ AGC library change log
 
   * CHANGED: Use pipenv to set up python environment.
 
+  * Changes to dependencies:
+
+    - lib_ai: Added dependency 0.0.1
+
+    - lib_vad: Added dependency 0.4.2
+
 4.0.0
 -----
 
