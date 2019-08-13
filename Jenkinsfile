@@ -1,12 +1,11 @@
 @Library('xmos_jenkins_shared_library@develop') _
 pipeline {
   agent {
-    // Don't run on an old agent, brew install fftw fails!
-    label 'x86 && macOS && !macOS_10_11 && brew'
+    label 'x86_64 && macOS && brew'
         
   }
   environment {
-    VIEW = 'lib_agc_develop'
+    VIEW = "${env.JOB_NAME.contains('PR-') ? 'lib_agc_'+env.CHANGE_TARGET : 'lib_agc_'+env.BRANCH_NAME}"
     REPO = 'lib_agc'
   }
   options {
