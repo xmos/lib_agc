@@ -6,7 +6,7 @@ pipeline {
         
   }
   environment {
-    VIEW = 'lib_agc_develop_tracking'
+    VIEW = 'lib_agc_develop'
     REPO = 'lib_agc'
   }
   options {
