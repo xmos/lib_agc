@@ -6,6 +6,12 @@ AGC library change log
 
   * CHANGED: Build files updated to support new "xcommon" behaviour in xwaf.
 
+  * Changes to dependencies:
+
+    - lib_ai: Added dependency 0.0.1
+
+    - lib_vad: Added dependency 0.5.0
+
 4.0.0
 -----
 
