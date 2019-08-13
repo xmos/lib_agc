@@ -2,8 +2,8 @@ VERSION = 5.0.0
 
 DEPENDENT_MODULES = lib_dsp(>=5.0.0) \
                     lib_voice_toolbox(>=7.0.0) \
-                    audio_test_tools(>=3.0.0) \
-                    lib_vad(>=0.5.0))
+                    lib_vad(>=0.5.0)) \
+                    audio_test_tools(>=3.0.0)
 
 MODULE_XCC_FLAGS = $(XCC_FLAGS) \
                    -O2
