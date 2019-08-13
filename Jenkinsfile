@@ -1,9 +1,12 @@
+@Library('xmos_jenkins_shared_library@develop') _
 pipeline {
   agent {
-    label 'x86&&macOS&&Apps'
+    // Don't run on an old agent, brew install fftw fails!
+    label 'x86 && macOS && !macOS_10_11 && brew'
+        
   }
   environment {
-    VIEW = 'lib_agc_test_json'
+    VIEW = 'lib_agc_develop'
     REPO = 'lib_agc'
   }
   options {
@@ -12,7 +15,7 @@ pipeline {
   stages {
     stage('Get View') {
       steps {
-        prepareAppsSandbox("${VIEW}", "${REPO}")
+        xcorePrepareSandbox("${VIEW}", "${REPO}")
       }
     }
     stage('Library Checks') {
