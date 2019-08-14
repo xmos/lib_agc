@@ -1,7 +1,7 @@
 @Library('xmos_jenkins_shared_library@develop') _
 pipeline {
   agent {
-    label 'x86_64 && linux && brew'
+    label 'x86_64 && brew'
         
   }
   environment {
