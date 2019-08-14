@@ -23,5 +23,5 @@ xscope.xmt
 *.xc.d
 **/.lock-waf_darwin_build
 **/*.egg-info/
-.venv/
+*/.venv/*
 Pipfile.lock
