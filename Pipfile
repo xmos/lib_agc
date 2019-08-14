@@ -16,6 +16,7 @@ pytest-xdist = "*"
 audio-test-tools = {path = "./../audio_test_tools/python",editable = true}
 lib-vad = {path = "./../lib_vad/python",editable = true}
 lib-voice-toolbox = {path = "./../lib_voice_toolbox/python",editable = true}
+webrtcvad = "*"
 
 [requires]
 python_version = "3"

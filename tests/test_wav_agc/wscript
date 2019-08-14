@@ -1,6 +1,6 @@
 import sys
+import subprocess
 sys.path.append('../../../lib_voice_toolbox/python')
-from json_utils import JsonHandler
 
 def options(ctx):
     ctx.add_option('--target', action='store', default='test_wav_agc.xe')
@@ -11,8 +11,7 @@ def configure(conf):
     conf.env.PROJECT_ROOT = '../../..'
 
 def build(bld):
-    file_conv = JsonHandler(bld.options.config_file, False)
-    file_conv.create_header_file('../../lib_agc/api/agc.h', ['./src/agc_conf.h'])
+    subprocess.call(['pipenv', 'run', '../../lib_agc/generate_config.py'])    
     target_path = 'bin/' + bld.options.target
     bld.env.TARGET_ARCH = 'XCORE-200-EXPLORER'
     bld.env.XSCOPE = bld.path.find_resource('config.xscope')
