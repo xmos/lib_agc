@@ -1,4 +1,7 @@
 @Library('xmos_jenkins_shared_library@develop') _
+
+getApproval()
+
 pipeline {
   agent {
     label 'x86_64 && brew'
