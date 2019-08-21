@@ -10,6 +10,8 @@ AGC library change log
 -----
 
   * CHANGED: Use pipenv to set up python environment.
+  * CHANGED: Get wavfile processing related functions from audio_wav_utils in
+    audio_test_tools
 
   * Changes to dependencies:
 
