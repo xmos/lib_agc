@@ -4,7 +4,7 @@ from math import sqrt
 
 import numpy as np
 import scipy.io.wavfile
-import audio_utils as au
+import audio_wav_utils as awu
 from json_utils import json_to_dict
 from agc import agc
 import vad
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     args = parse_arguments()
     agc_parameters = json_to_dict(args.config_file)
     rate, mix_wav_file = scipy.io.wavfile.read(args.input, 'r')
-    wav_data, channel_count, file_length = au.parse_audio(mix_wav_file)
+    wav_data, channel_count, file_length = awu.parse_audio(mix_wav_file)
 
     vad = vad.vad()
 
