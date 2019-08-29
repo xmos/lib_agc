@@ -8,7 +8,8 @@ pipeline {
   }
   environment {
     REPO = 'lib_agc'
-    VIEW = "${env.JOB_NAME.contains('PR-') ? REPO+'_'+env.CHANGE_TARGET : REPO+'_'+env.BRANCH_NAME}"
+    //VIEW = "${env.JOB_NAME.contains('PR-') ? REPO+'_'+env.CHANGE_TARGET : REPO+'_'+env.BRANCH_NAME}"
+    VIEW = 'lib_agc_xwaf_xcommon'
   }
   options {
     skipDefaultCheckout()
@@ -47,6 +48,15 @@ pipeline {
     stage('Get View') {
       steps {
         xcorePrepareSandbox("${VIEW}", "${REPO}")
+      }
+    }
+    stage('Patch tools') {
+      steps {
+        dir('tools_released/xwaf_patch') {
+          viewEnv() {
+            sh './xpatch'
+          }
+        }
       }
     }
     stage('Library Checks') {
