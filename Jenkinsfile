@@ -8,8 +8,7 @@ pipeline {
   }
   environment {
     REPO = 'lib_agc'
-    //VIEW = "${env.JOB_NAME.contains('PR-') ? REPO+'_'+env.CHANGE_TARGET : REPO+'_'+env.BRANCH_NAME}"
-    VIEW = 'lib_agc_xwaf_xcommon'
+    VIEW = "${env.JOB_NAME.contains('PR-') ? REPO+'_'+env.CHANGE_TARGET : REPO+'_'+env.BRANCH_NAME}"
   }
   options {
     skipDefaultCheckout()
