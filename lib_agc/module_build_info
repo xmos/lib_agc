@@ -1,11 +1,18 @@
-VERSION = 4.1.0
+VERSION = 5.0.0
 
-DEPENDENT_MODULES = lib_dsp(>=4.0.0) lib_voice_toolbox(>=5.6.0) audio_test_tools(>=3.0.0) lib_vad(>=0.1.0))
+DEPENDENT_MODULES = lib_dsp(>=5.0.0) \
+                    lib_voice_toolbox(>=7.0.0) \
+                    lib_vad(>=0.5.0)) \
+                    audio_test_tools(>=3.0.0)
 
-MODULE_XCC_XC_FLAGS = $(XCC_XC_FLAGS) -O2
-
-INCLUDE_DIRS = api src
-
-SOURCE_DIRS = src/*
+MODULE_XCC_FLAGS = $(XCC_FLAGS) \
+                   -O2
 
 OPTIONAL_HEADERS += agc_conf.h
+
+EXPORT_INCLUDE_DIRS = api \
+                      src
+
+INCLUDE_DIRS = $(EXPORT_INCLUDE_DIRS)
+
+SOURCE_DIRS = src
