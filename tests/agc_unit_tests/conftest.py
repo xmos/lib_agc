@@ -26,12 +26,7 @@ class UnityTestSource(pytest.File):
         # |-- runners/      <- Auto-generated buildable source of test binaries
         # |-- src/          <- Unity test functions
         # `-- wscript       <- Build system file used to generate/build runners
-        test_root_dir_name = os.path.basename(os.path.dirname(__file__))
-        test_src_path = os.path.basename(str(self.fspath))
-        test_src_name = os.path.splitext(test_src_path)[0]
-        test_bin_name = os.path.join(
-            test_root_dir_name + '_' + test_src_name + '.xe')
-        test_bin_path = os.path.join('bin', test_src_name, test_bin_name)
+        test_bin_path = os.path.join('bin', 'test_agc.xe')
 
         yield UnityTestExecutable(test_bin_path, self)
 

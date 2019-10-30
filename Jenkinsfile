@@ -4,7 +4,7 @@ getApproval()
 
 pipeline {
   agent {
-    label 'x86_64 && brew'
+    label 'x86_64 && brew && macOS'
   }
   environment {
     REPO = 'lib_agc'
@@ -59,7 +59,7 @@ pipeline {
         dir("${REPO}") {
           dir('tests') {
             dir('agc_unit_tests') {
-              runXwaf('.')
+              runWaf('.')
               viewEnv() {
                 runPytest()
               }
@@ -72,7 +72,7 @@ pipeline {
       steps {
         dir("${REPO}") {
           dir('tests/test_wav_agc') {
-            runXwaf('.')
+            runWaf('.')
           }
         }
       }

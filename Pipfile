@@ -19,4 +19,4 @@ lib-voice-toolbox = {path = "./../lib_voice_toolbox/python",editable = true}
 webrtcvad = "*"
 
 [requires]
-python_version = "3"
+python_version = "3.7"

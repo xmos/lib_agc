@@ -1,6 +1,11 @@
 AGC library change log
 ======================
 
+5.0.0
+-----
+
+  * CHANGED: Build files updated to support new "xcommon" behaviour in xwaf.
+
 4.1.0
 -----
 
