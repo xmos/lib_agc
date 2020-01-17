@@ -1,23 +1,24 @@
 {
-    "ch_init_config": [
-        {
-            "gain_dec": 0.87, 
-            "max_gain": 100000, 
-            "gain_inc": 1.197, 
-            "adapt": 1, 
-            "init_gain": 10,
-            "upper_threshold": 0.7079,
-            "lower_threshold": 0.1905
-        }, 
-        {
-            "gain_dec": 0.98804, 
-            "max_gain": 100000, 
-            "gain_inc": 1.0121, 
-            "adapt": 1, 
-            "init_gain": 2,
-            "upper_threshold": 0.316,
-            "lower_threshold": 0.316
-
-        }
-    ]
+    "agc_init_config": {
+        "ch_init_config": [
+            {
+                "gain_dec": 0.87, 
+                "max_gain": 100000, 
+                "gain_inc": 1.197, 
+                "adapt": 1, 
+                "init_gain": 10,
+                "upper_threshold": 0.7079,
+                "lower_threshold": 0.1905
+            }, 
+            {
+                "gain_dec": 0.98804, 
+                "max_gain": 100000, 
+                "gain_inc": 1.0121, 
+                "adapt": 1, 
+                "init_gain": 2,
+                "upper_threshold": 0.316,
+                "lower_threshold": 0.316
+            }
+        ]
+    }
 }
