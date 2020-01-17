@@ -1,6 +1,11 @@
 AGC library change log
 ======================
 
+5.1.0
+-----
+
+  * CHANGED: Update .json config for test_wav_agc due to lib_vtb v7.1.0
+
 5.0.0
 -----
 
