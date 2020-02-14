@@ -30,6 +30,7 @@ class agc_ch(object):
         
         self.bg_power_est = 0.0001**2
         self.near_power_est = 0
+        self.far_bg_power_est = 10**float(-40/20)
         
         self.t_act_far = 0
         self.t_act_near = 0
@@ -52,12 +53,12 @@ class agc(object):
     ALPHA_PEAK_RISE = 0.5480
     ALPHA_PEAK_FALL = 0.9646
     
-    N_SAMPLE_NEAR = 8000 # 0.5 seconds
+    N_SAMPLE_NEAR = 17 # 0.25 second, frame count
     N_FRAME_FAR = 17 # 0.25 seconds, frame count
     ALPHA_INC = 1.005
     ALPHA_DEC = 0.995
     
-    FAR_ACT_THRESHOLD = 10**float(-40/20)
+    DELTA = 8.0 # ratio of near end power to bg estimate to mark near end activity
 
     def __init__(self, ch_init_config):
         self.ch_state = []
@@ -67,10 +68,11 @@ class agc(object):
             self.ch_state[ch_idx].x_fast = 0
             self.ch_state[ch_idx].x_peak = 0
 
-        self.bg_power_gamma = 0.999999
+        self.bg_power_gamma_per_sample = 1.00002 #bg power estimate small increase prevent local minima
+        self.bg_power_gamma_per_frame = 1.005
         
-        self.est_gamme_inc = 0.9985
-        self.est_gamme_dec = 0.9975
+        self.est_gamme_inc = 0.54
+        self.est_gamme_dec = 0.7
         
         self.loss_control_gain_max = 1
         self.loss_control_gain_min = 0.0056
@@ -109,52 +111,48 @@ class agc(object):
         
         # BG and near-end-speech power estimations
         if(self.ch_state[ch].loss_control_enabled):
+
+            self.ch_state[ch].far_bg_power_est = min(self.bg_power_gamma_per_frame * self.ch_state[ch].far_bg_power_est, ref_power_est)
             # Update far-end-activity timer
-            if(ref_power_est > agc.FAR_ACT_THRESHOLD):
+            if(ref_power_est > agc.DELTA * self.ch_state[ch].far_bg_power_est):
                 self.ch_state[ch].t_act_far = agc.N_FRAME_FAR
             else:
                 self.ch_state[ch].t_act_far = max(0, self.ch_state[ch].t_act_far - 1)
             
+            frame_power = np.mean(input_frame**2.0)
+            gamma = self.est_gamme_inc
+            if frame_power < self.ch_state[ch].near_power_est:
+                gamma = self.est_gamme_dec
             
+            self.ch_state[ch].near_power_est = (gamma) * self.ch_state[ch].near_power_est + (1 - gamma) * frame_power
+            self.ch_state[ch].bg_power_est = min(self.bg_power_gamma_per_frame * self.ch_state[ch].bg_power_est, self.ch_state[ch].near_power_est)
+            
+            # Update near-end-activity timer
+            if(self.ch_state[ch].near_power_est > (agc.DELTA * self.ch_state[ch].bg_power_est)):
+                self.ch_state[ch].t_act_near = agc.N_SAMPLE_NEAR
+            else:
+                self.ch_state[ch].t_act_near = max(0, self.ch_state[ch].t_act_near - 1)
+                
+                
+            # Adapt loss control gain
+            if(self.ch_state[ch].t_act_far <= 0 and self.ch_state[ch].t_act_near > 0):
+                # Near speech only
+                target_gain = self.loss_control_gain_max
+            elif(self.ch_state[ch].t_act_far <= 0 and self.ch_state[ch].t_act_near <= 0):
+                # Silence
+                target_gain = self.loss_control_gain_silence
+            elif(self.ch_state[ch].t_act_far > 0 and self.ch_state[ch].t_act_near <= 0):
+                # Far end only
+                target_gain = self.loss_control_gain_min
+            elif(self.ch_state[ch].t_act_far > 0 and self.ch_state[ch].t_act_near > 0):
+                # Both near and far speech
+                target_gain = self.loss_control_gain_dt
+
             for i, sample in enumerate(input_frame):
-                sample_power = sample*sample
-                self.ch_state[ch].bg_power_est = (self.bg_power_gamma) * self.ch_state[ch].bg_power_est + (1 - self.bg_power_gamma) * sample_power
-                
-                gamma = self.est_gamme_inc
-                if sample < self.ch_state[ch].near_power_est:
-                    gamma = self.est_gamme_dec
-                
-                self.ch_state[ch].near_power_est = (gamma) * self.ch_state[ch].near_power_est + (1 - gamma) * sample_power
-                
-                # Update near-end-activity timer
-                if(self.ch_state[ch].near_power_est > (4*self.ch_state[ch].bg_power_est)): # + ref_power_est
-                    self.ch_state[ch].t_act_near = agc.N_SAMPLE_NEAR
+                if(self.ch_state[ch].loss_control_gain > target_gain):
+                    self.ch_state[ch].loss_control_gain = max(target_gain, self.ch_state[ch].loss_control_gain*agc.ALPHA_DEC)
                 else:
-                    self.ch_state[ch].t_act_near = max(0, self.ch_state[ch].t_act_near - 1)
-                
-                
-                # Adapt loss control gain
-                if(self.ch_state[ch].t_act_far <= 0 and self.ch_state[ch].t_act_near > 0):
-                    # Near speech only
-                    self.ch_state[ch].loss_control_gain = min(self.loss_control_gain_max, self.ch_state[ch].loss_control_gain * agc.ALPHA_INC)
-                
-                elif(self.ch_state[ch].t_act_far <= 0 and self.ch_state[ch].t_act_near <= 0):
-                    # Silence
-                    if(self.ch_state[ch].loss_control_gain > self.loss_control_gain_silence):
-                        self.ch_state[ch].loss_control_gain = min(self.loss_control_gain_silence ,self.ch_state[ch].loss_control_gain * agc.ALPHA_DEC)
-                    else:
-                        self.ch_state[ch].loss_control_gain = max(self.loss_control_gain_silence ,self.ch_state[ch].loss_control_gain * agc.ALPHA_INC)
-                
-                elif(self.ch_state[ch].t_act_far > 0 and self.ch_state[ch].t_act_near <= 0):
-                    # Far end only
-                    self.ch_state[ch].loss_control_gain = min(self.loss_control_gain_min, self.ch_state[ch].loss_control_gain*agc.ALPHA_DEC)
-                
-                elif(self.ch_state[ch].t_act_far > 0 and self.ch_state[ch].t_act_near > 0):
-                    # Both near and far speech
-                    if(self.ch_state[ch].loss_control_gain > self.loss_control_gain_dt):
-                        self.ch_state[ch].loss_control_gain = min(self.loss_control_gain_dt, self.ch_state[ch].loss_control_gain*agc.ALPHA_DEC)
-                    else:
-                        self.ch_state[ch].loss_control_gain = max(self.loss_control_gain_dt, self.ch_state[ch].loss_control_gain*agc.ALPHA_INC)
+                    self.ch_state[ch].loss_control_gain = min(target_gain, self.ch_state[ch].loss_control_gain*agc.ALPHA_INC)
                 
                 
                 # Apply the loss control
