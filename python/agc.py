@@ -5,7 +5,7 @@ import numpy as np
 from math import sqrt
 
 class agc_ch(object):
-    def __init__(self, adapt, init_gain, max_gain, upper_threshold, lower_threshold, gain_inc, gain_dec):
+    def __init__(self, adapt, init_gain, max_gain, upper_threshold, lower_threshold, gain_inc, gain_dec, loss_control_enabled = False):
         if init_gain < 0:
             raise Exception("init_gain must be greater than 0.")
         if max_gain < 0:
@@ -23,6 +23,25 @@ class agc_ch(object):
 
         self.threshold_upper = float(upper_threshold)
         self.threshold_lower = float(lower_threshold)
+        
+        
+        self.loss_control_enabled = loss_control_enabled
+        self.loss_control_gain = 1
+        
+        self.bg_power_est = 0.0001**2
+        self.near_power_est = 0
+        
+        self.t_act_far = 0
+        self.t_act_near = 0
+        
+        self.lc_gain = []
+        self.lc_t_far_end = []
+        self.lc_t_n_end = []
+        self.f_power = []
+        self.n_power = []
+        self.bg_power = []
+        
+
 
 class agc(object):
     # Adaption coefficients, do not change
@@ -32,18 +51,35 @@ class agc(object):
     ALPHA_FAST_FALL = 0.8869
     ALPHA_PEAK_RISE = 0.5480
     ALPHA_PEAK_FALL = 0.9646
-
+    
+    N_SAMPLE_NEAR = 8000 # 0.5 seconds
+    N_FRAME_FAR = 17 # 0.25 seconds, frame count
+    ALPHA_INC = 1.005
+    ALPHA_DEC = 0.995
+    
+    FAR_ACT_THRESHOLD = 10**float(-40/20)
 
     def __init__(self, ch_init_config):
         self.ch_state = []
         for ch_idx in range(len(ch_init_config)):
-
             self.ch_state.append(agc_ch(**ch_init_config[ch_idx]))
             self.ch_state[ch_idx].x_slow = 0
             self.ch_state[ch_idx].x_fast = 0
             self.ch_state[ch_idx].x_peak = 0
-    
-    def process_frame(self, ch, input_frame, vad):
+
+        self.bg_power_gamma = 0.999999
+        
+        self.est_gamme_inc = 0.9985
+        self.est_gamme_dec = 0.9975
+        
+        self.loss_control_gain_max = 1
+        self.loss_control_gain_min = 0.0056
+        self.loss_control_gain_dt = 0.1778 #sqrt(0.0316)
+        self.loss_control_gain_silence = 0.0748 #sqrt(0.0056)
+
+
+
+    def process_frame(self, ch, input_frame, ref_power_est, vad):
         if(self.ch_state[ch].adapt):
             peak_sample = np.absolute(input_frame).max() #Sample input from Ch0
             rising = peak_sample > abs(self.ch_state[ch].x_slow)
@@ -68,11 +104,77 @@ class agc(object):
 
                 self.ch_state[ch].gain = min(g_mod * self.ch_state[ch].gain, self.ch_state[ch].max_gain)
 
+        
+        gained_input = input_frame
+        
+        # BG and near-end-speech power estimations
+        if(self.ch_state[ch].loss_control_enabled):
+            # Update far-end-activity timer
+            if(ref_power_est > agc.FAR_ACT_THRESHOLD):
+                self.ch_state[ch].t_act_far = agc.N_FRAME_FAR
+            else:
+                self.ch_state[ch].t_act_far = max(0, self.ch_state[ch].t_act_far - 1)
+            
+            
+            for i, sample in enumerate(input_frame):
+                sample_power = sample*sample
+                self.ch_state[ch].bg_power_est = (self.bg_power_gamma) * self.ch_state[ch].bg_power_est + (1 - self.bg_power_gamma) * sample_power
+                
+                gamma = self.est_gamme_inc
+                if sample < self.ch_state[ch].near_power_est:
+                    gamma = self.est_gamme_dec
+                
+                self.ch_state[ch].near_power_est = (gamma) * self.ch_state[ch].near_power_est + (1 - gamma) * sample_power
+                
+                # Update near-end-activity timer
+                if(self.ch_state[ch].near_power_est > (4*self.ch_state[ch].bg_power_est)): # + ref_power_est
+                    self.ch_state[ch].t_act_near = agc.N_SAMPLE_NEAR
+                else:
+                    self.ch_state[ch].t_act_near = max(0, self.ch_state[ch].t_act_near - 1)
+                
+                
+                # Adapt loss control gain
+                if(self.ch_state[ch].t_act_far <= 0 and self.ch_state[ch].t_act_near > 0):
+                    # Near speech only
+                    self.ch_state[ch].loss_control_gain = min(self.loss_control_gain_max, self.ch_state[ch].loss_control_gain * agc.ALPHA_INC)
+                
+                elif(self.ch_state[ch].t_act_far <= 0 and self.ch_state[ch].t_act_near <= 0):
+                    # Silence
+                    if(self.ch_state[ch].loss_control_gain > self.loss_control_gain_silence):
+                        self.ch_state[ch].loss_control_gain = min(self.loss_control_gain_silence ,self.ch_state[ch].loss_control_gain * agc.ALPHA_DEC)
+                    else:
+                        self.ch_state[ch].loss_control_gain = max(self.loss_control_gain_silence ,self.ch_state[ch].loss_control_gain * agc.ALPHA_INC)
+                
+                elif(self.ch_state[ch].t_act_far > 0 and self.ch_state[ch].t_act_near <= 0):
+                    # Far end only
+                    self.ch_state[ch].loss_control_gain = min(self.loss_control_gain_min, self.ch_state[ch].loss_control_gain*agc.ALPHA_DEC)
+                
+                elif(self.ch_state[ch].t_act_far > 0 and self.ch_state[ch].t_act_near > 0):
+                    # Both near and far speech
+                    if(self.ch_state[ch].loss_control_gain > self.loss_control_gain_dt):
+                        self.ch_state[ch].loss_control_gain = min(self.loss_control_gain_dt, self.ch_state[ch].loss_control_gain*agc.ALPHA_DEC)
+                    else:
+                        self.ch_state[ch].loss_control_gain = max(self.loss_control_gain_dt, self.ch_state[ch].loss_control_gain*agc.ALPHA_INC)
+                
+                
+                # Apply the loss control
+                gained_input[i] = (self.ch_state[ch].loss_control_gain * self.ch_state[ch].gain) * sample
+            
+                # self.ch_state[ch].lc_gain.append(self.ch_state[ch].loss_control_gain)
+                # self.ch_state[ch].lc_t_far_end.append(self.ch_state[ch].t_act_far)
+                # self.ch_state[ch].lc_t_n_end.append(self.ch_state[ch].t_act_near)
+                # self.ch_state[ch].f_power.append(ref_power_est)
+                # self.ch_state[ch].n_power.append(self.ch_state[ch].near_power_est)
+                # self.ch_state[ch].bg_power.append(self.ch_state[ch].bg_power_est)
 
+            
+        
+        else:
+            gained_input = self.ch_state[ch].gain * input_frame
+            
         def limit_gain(x):
             NONLINEAR_POINT = 0.5
             return x if abs(x) < NONLINEAR_POINT else (np.sign(x) * 2 * NONLINEAR_POINT - NONLINEAR_POINT ** 2 / x)
 
-        gained_input = self.ch_state[ch].gain * input_frame
         output_frame = [limit_gain(sample) for sample in gained_input]
         return output_frame
