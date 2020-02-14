@@ -224,6 +224,7 @@ int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index);
  */
 void agc_process_frame(agc_state_t &agc,
         vtb_ch_pair_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH],
+        vtb_u32_float_t ref_power_est,
         int vad_flag);
 
 

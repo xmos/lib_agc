@@ -233,7 +233,7 @@ uint32_t get_max_abs_sample(vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsign
 }
 
 
-void agc_process_frame(agc_state_t &agc, vtb_ch_pair_t frame[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH], int vad_flag){
+void agc_process_frame(agc_state_t &agc, vtb_ch_pair_t frame[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH], vtb_u32_float_t ref_power_est, int vad_flag){
     #if AGC_DEBUG_PRINT
         printf("\n#%u\n", frame_counter++);
     #endif
