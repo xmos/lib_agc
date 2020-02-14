@@ -28,7 +28,7 @@ class agc_ch(object):
         self.loss_control_enabled = loss_control_enabled
         self.loss_control_gain = 1
         
-        self.bg_power_est = 0.0001**2
+        self.near_bg_power_est = 0.0001**2
         self.near_power_est = 0
         self.far_bg_power_est = 10**float(-40/20)
         
@@ -68,8 +68,7 @@ class agc(object):
             self.ch_state[ch_idx].x_fast = 0
             self.ch_state[ch_idx].x_peak = 0
 
-        self.bg_power_gamma_per_sample = 1.00002 #bg power estimate small increase prevent local minima
-        self.bg_power_gamma_per_frame = 1.005
+        self.bg_power_gamma_per_frame = 1.002 #bg power estimate small increase prevent local minima
         
         self.est_gamme_inc = 0.54
         self.est_gamme_dec = 0.7
@@ -125,10 +124,10 @@ class agc(object):
                 gamma = self.est_gamme_dec
             
             self.ch_state[ch].near_power_est = (gamma) * self.ch_state[ch].near_power_est + (1 - gamma) * frame_power
-            self.ch_state[ch].bg_power_est = min(self.bg_power_gamma_per_frame * self.ch_state[ch].bg_power_est, self.ch_state[ch].near_power_est)
+            self.ch_state[ch].near_bg_power_est = min(self.bg_power_gamma_per_frame * self.ch_state[ch].near_bg_power_est, self.ch_state[ch].near_power_est)
             
             # Update near-end-activity timer
-            if(self.ch_state[ch].near_power_est > (agc.DELTA * self.ch_state[ch].bg_power_est)):
+            if(self.ch_state[ch].near_power_est > (agc.DELTA * self.ch_state[ch].near_bg_power_est)):
                 self.ch_state[ch].t_act_near = agc.N_SAMPLE_NEAR
             else:
                 self.ch_state[ch].t_act_near = max(0, self.ch_state[ch].t_act_near - 1)
