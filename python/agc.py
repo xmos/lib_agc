@@ -35,13 +35,105 @@ class agc_ch(object):
         self.t_act_far = 0
         self.t_act_near = 0
         
-        self.lc_gain = []
-        self.lc_t_far_end = []
-        self.lc_t_n_end = []
-        self.f_power = []
-        self.n_power = []
-        self.bg_power = []
+        # self.lc_gain = []
+        # self.lc_t_far_end = []
+        # self.lc_t_n_end = []
+        # self.f_power = []
+        # self.n_power = []
+        # self.bg_power = []
+    
+    
+    def process_channel(self, input_frame, ref_power_est, vad):
+        if(self.adapt):
+            peak_sample = np.absolute(input_frame).max() #Sample input from Ch0
+            rising = peak_sample > abs(self.x_slow)
+
+            alpha_slow = agc.ALPHA_SLOW_RISE if rising else agc.ALPHA_SLOW_FALL
+            self.x_slow = (1 - alpha_slow) * peak_sample + alpha_slow * self.x_slow
+
+            alpha_fast = agc.ALPHA_FAST_RISE if rising else agc.ALPHA_FAST_FALL
+            self.x_fast = (1 - alpha_fast) * peak_sample + alpha_fast * self.x_fast
+
+            exceed_desired_level = (peak_sample * self.gain) > self.threshold_upper
+
+            if vad or exceed_desired_level:
+                alpha_peak = agc.ALPHA_PEAK_RISE if self.x_fast > self.x_peak else agc.ALPHA_PEAK_FALL
+                self.x_peak = (1 - alpha_peak) * self.x_fast + alpha_peak * self.x_peak
+
+                g_mod = 1
+                if self.x_peak * self.gain < self.threshold_lower:
+                    g_mod = self.gain_inc 
+                elif self.x_peak * self.gain > self.threshold_upper:
+                    g_mod = self.gain_dec
+
+                self.gain = min(g_mod * self.gain, self.max_gain)
         
+        
+        gained_input = [input_frame]
+        if(self.loss_control_enabled):
+            self.far_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.far_bg_power_est, ref_power_est)
+            # Update far-end-activity timer
+            if(ref_power_est > agc.LC_DELTA * self.far_bg_power_est):
+                self.t_act_far = agc.LC_N_FRAME_FAR
+            else:
+                self.t_act_far = max(0, self.t_act_far - 1)
+            
+            frame_power = np.mean(input_frame**2.0)
+            gamma = agc.LC_EST_GAMMA_INC
+            if frame_power < self.near_power_est:
+                gamma = agc.LC_EST_GAMMA_DEC
+            
+            self.near_power_est = (gamma) * self.near_power_est + (1 - gamma) * frame_power
+            self.near_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.near_bg_power_est, self.near_power_est)
+            
+            # Update near-end-activity timer
+            if(self.near_power_est > (agc.LC_DELTA * self.near_bg_power_est)):
+                self.t_act_near = agc.LC_N_SAMPLE_NEAR
+            else:
+                self.t_act_near = max(0, self.t_act_near - 1)
+            
+            
+            # Adapt loss control gain
+            if(self.t_act_far <= 0 and self.t_act_near > 0):
+                # Near speech only
+                target_gain = agc.LC_GAIN_MAX
+            elif(self.t_act_far <= 0 and self.t_act_near <= 0):
+                # Silence
+                target_gain = agc.LC_GAIN_SILENCE
+            elif(self.t_act_far > 0 and self.t_act_near <= 0):
+                # Far end only
+                target_gain = agc.LC_GAIN_MIN
+            elif(self.t_act_far > 0 and self.t_act_near > 0):
+                # Both near and far speech
+                target_gain = agc.LC_GAIN_DT
+            
+            if(self.loss_control_gain > target_gain):
+                for i, sample in enumerate(input_frame):
+                    self.loss_control_gain = max(target_gain, self.loss_control_gain*agc.LC_ALPHA_DEC)
+                    gained_input[i] = (self.loss_control_gain * self.gain) * sample
+            else:
+                for i, sample in enumerate(input_frame):
+                    self.loss_control_gain = min(target_gain, self.loss_control_gain*agc.LC_ALPHA_INC)
+                    gained_input[i] = (self.loss_control_gain * self.gain) * sample
+            
+            # self.lc_gain.append(self.loss_control_gain)
+            # self.lc_t_far_end.append(self.t_act_far)
+            # self.lc_t_n_end.append(self.t_act_near)
+            # self.f_power.append(ref_power_est)
+            # self.n_power.append(self.near_power_est)
+            # self.bg_power.append(self.bg_power_est)
+            
+            
+        else:
+            gained_input = self.gain * input_frame
+            
+        def limit_gain(x):
+            NONLINEAR_POINT = 0.5
+            return x if abs(x) < NONLINEAR_POINT else (np.sign(x) * 2 * NONLINEAR_POINT - NONLINEAR_POINT ** 2 / x)
+
+        output_frame = [limit_gain(sample) for sample in gained_input]
+        return output_frame
+
 
 
 class agc(object):
@@ -72,7 +164,8 @@ class agc(object):
 
     def __init__(self, ch_init_config):
         self.ch_state = []
-        for ch_idx in range(len(ch_init_config)):
+        self.input_ch_count = len(ch_init_config)
+        for ch_idx in range(self.input_ch_count):
             self.ch_state.append(agc_ch(**ch_init_config[ch_idx]))
             self.ch_state[ch_idx].x_slow = 0
             self.ch_state[ch_idx].x_fast = 0
@@ -80,96 +173,11 @@ class agc(object):
 
 
 
-    def process_frame(self, ch, input_frame, ref_power_est, vad):
-        if(self.ch_state[ch].adapt):
-            peak_sample = np.absolute(input_frame).max() #Sample input from Ch0
-            rising = peak_sample > abs(self.ch_state[ch].x_slow)
-
-            alpha_slow = agc.ALPHA_SLOW_RISE if rising else agc.ALPHA_SLOW_FALL
-            self.ch_state[ch].x_slow = (1 - alpha_slow) * peak_sample + alpha_slow * self.ch_state[ch].x_slow
-
-            alpha_fast = agc.ALPHA_FAST_RISE if rising else agc.ALPHA_FAST_FALL
-            self.ch_state[ch].x_fast = (1 - alpha_fast) * peak_sample + alpha_fast * self.ch_state[ch].x_fast
-
-            exceed_desired_level = (peak_sample * self.ch_state[ch].gain) > self.ch_state[ch].threshold_upper
-
-            if vad or exceed_desired_level:
-                alpha_peak = agc.ALPHA_PEAK_RISE if self.ch_state[ch].x_fast > self.ch_state[ch].x_peak else agc.ALPHA_PEAK_FALL
-                self.ch_state[ch].x_peak = (1 - alpha_peak) * self.ch_state[ch].x_fast + alpha_peak * self.ch_state[ch].x_peak
-
-                g_mod = 1
-                if self.ch_state[ch].x_peak * self.ch_state[ch].gain < self.ch_state[ch].threshold_lower:
-                    g_mod = self.ch_state[ch].gain_inc 
-                elif self.ch_state[ch].x_peak * self.ch_state[ch].gain > self.ch_state[ch].threshold_upper:
-                    g_mod = self.ch_state[ch].gain_dec
-
-                self.ch_state[ch].gain = min(g_mod * self.ch_state[ch].gain, self.ch_state[ch].max_gain)
-
+    def process_frame(self, input_frame, ref_power_est, vad):
+        output = np.zeros((self.input_ch_count, len(input_frame[0])))
+        for i in range(self.input_ch_count):
+            output[i] = self.ch_state[i].process_channel(input_frame[i], ref_power_est, vad)
         
-        gained_input = input_frame
-        
-        # BG and near-end-speech power estimations
-        if(self.ch_state[ch].loss_control_enabled):
+        return output
 
-            self.ch_state[ch].far_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.ch_state[ch].far_bg_power_est, ref_power_est)
-            # Update far-end-activity timer
-            if(ref_power_est > agc.LC_DELTA * self.ch_state[ch].far_bg_power_est):
-                self.ch_state[ch].t_act_far = agc.LC_N_FRAME_FAR
-            else:
-                self.ch_state[ch].t_act_far = max(0, self.ch_state[ch].t_act_far - 1)
-            
-            frame_power = np.mean(input_frame**2.0)
-            gamma = agc.LC_EST_GAMMA_INC
-            if frame_power < self.ch_state[ch].near_power_est:
-                gamma = agc.LC_EST_GAMMA_DEC
-            
-            self.ch_state[ch].near_power_est = (gamma) * self.ch_state[ch].near_power_est + (1 - gamma) * frame_power
-            self.ch_state[ch].near_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.ch_state[ch].near_bg_power_est, self.ch_state[ch].near_power_est)
-            
-            # Update near-end-activity timer
-            if(self.ch_state[ch].near_power_est > (agc.LC_DELTA * self.ch_state[ch].near_bg_power_est)):
-                self.ch_state[ch].t_act_near = agc.LC_N_SAMPLE_NEAR
-            else:
-                self.ch_state[ch].t_act_near = max(0, self.ch_state[ch].t_act_near - 1)
-            
-            
-            # Adapt loss control gain
-            if(self.ch_state[ch].t_act_far <= 0 and self.ch_state[ch].t_act_near > 0):
-                # Near speech only
-                target_gain = agc.LC_GAIN_MAX
-            elif(self.ch_state[ch].t_act_far <= 0 and self.ch_state[ch].t_act_near <= 0):
-                # Silence
-                target_gain = agc.LC_GAIN_SILENCE
-            elif(self.ch_state[ch].t_act_far > 0 and self.ch_state[ch].t_act_near <= 0):
-                # Far end only
-                target_gain = agc.LC_GAIN_MIN
-            elif(self.ch_state[ch].t_act_far > 0 and self.ch_state[ch].t_act_near > 0):
-                # Both near and far speech
-                target_gain = agc.LC_GAIN_DT
-            
-            if(self.ch_state[ch].loss_control_gain > target_gain):
-                for i, sample in enumerate(input_frame):
-                    self.ch_state[ch].loss_control_gain = max(target_gain, self.ch_state[ch].loss_control_gain*agc.LC_ALPHA_DEC)
-                    gained_input[i] = (self.ch_state[ch].loss_control_gain * self.ch_state[ch].gain) * sample
-            else:
-                for i, sample in enumerate(input_frame):
-                    self.ch_state[ch].loss_control_gain = min(target_gain, self.ch_state[ch].loss_control_gain*agc.LC_ALPHA_INC)
-                    gained_input[i] = (self.ch_state[ch].loss_control_gain * self.ch_state[ch].gain) * sample
-            
-            # self.ch_state[ch].lc_gain.append(self.ch_state[ch].loss_control_gain)
-            # self.ch_state[ch].lc_t_far_end.append(self.ch_state[ch].t_act_far)
-            # self.ch_state[ch].lc_t_n_end.append(self.ch_state[ch].t_act_near)
-            # self.ch_state[ch].f_power.append(ref_power_est)
-            # self.ch_state[ch].n_power.append(self.ch_state[ch].near_power_est)
-            # self.ch_state[ch].bg_power.append(self.ch_state[ch].bg_power_est)
-            
-            
-        else:
-            gained_input = self.ch_state[ch].gain * input_frame
-            
-        def limit_gain(x):
-            NONLINEAR_POINT = 0.5
-            return x if abs(x) < NONLINEAR_POINT else (np.sign(x) * 2 * NONLINEAR_POINT - NONLINEAR_POINT ** 2 / x)
 
-        output_frame = [limit_gain(sample) for sample in gained_input]
-        return output_frame
