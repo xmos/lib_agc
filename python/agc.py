@@ -53,7 +53,7 @@ class agc(object):
     ALPHA_PEAK_RISE = 0.5480
     ALPHA_PEAK_FALL = 0.9646
     
-    LC_N_SAMPLE_NEAR = 17 # 0.25 second, frame count
+    LC_N_SAMPLE_NEAR = 17 # 0.25 second, reduced from the 0.5s recommended in "acoustic echo and noise control"
     LC_N_FRAME_FAR = 17 # 0.25 seconds, frame count
     LC_ALPHA_INC = 1.005
     LC_ALPHA_DEC = 0.995
@@ -61,13 +61,13 @@ class agc(object):
     LC_EST_GAMMA_INC = 0.5480
     LC_EST_GAMMA_DEC = 0.6973
     
-    LC_BG_POWER_GAMMA = 1.002 #bg power estimate small increase prevent local minima
+    LC_BG_POWER_GAMMA = 1.002 # bg power estimate small increase prevent local minima
     LC_DELTA = 8.0 # ratio of near end power to bg estimate to mark near end activity
     
     LC_GAIN_MAX = 1
     LC_GAIN_MIN = 0.0056
-    LC_GAIN_DT = 0.1778 #sqrt(0.0316)
-    LC_GAIN_SILENCE = 0.0748 #sqrt(0.0056)
+    LC_GAIN_DT = 0.1778 # sqrt(0.0316)
+    LC_GAIN_SILENCE = 0.0748 # sqrt(0.0056)
 
 
     def __init__(self, ch_init_config):
@@ -131,8 +131,8 @@ class agc(object):
                 self.ch_state[ch].t_act_near = agc.LC_N_SAMPLE_NEAR
             else:
                 self.ch_state[ch].t_act_near = max(0, self.ch_state[ch].t_act_near - 1)
-                
-                
+            
+            
             # Adapt loss control gain
             if(self.ch_state[ch].t_act_far <= 0 and self.ch_state[ch].t_act_near > 0):
                 # Near speech only
@@ -146,24 +146,24 @@ class agc(object):
             elif(self.ch_state[ch].t_act_far > 0 and self.ch_state[ch].t_act_near > 0):
                 # Both near and far speech
                 target_gain = agc.LC_GAIN_DT
-
-            for i, sample in enumerate(input_frame):
-                if(self.ch_state[ch].loss_control_gain > target_gain):
+            
+            if(self.ch_state[ch].loss_control_gain > target_gain):
+                for i, sample in enumerate(input_frame):
                     self.ch_state[ch].loss_control_gain = max(target_gain, self.ch_state[ch].loss_control_gain*agc.LC_ALPHA_DEC)
-                else:
+                    gained_input[i] = (self.ch_state[ch].loss_control_gain * self.ch_state[ch].gain) * sample
+            else:
+                for i, sample in enumerate(input_frame):
                     self.ch_state[ch].loss_control_gain = min(target_gain, self.ch_state[ch].loss_control_gain*agc.LC_ALPHA_INC)
-                # Apply the loss control
-                gained_input[i] = (self.ch_state[ch].loss_control_gain * self.ch_state[ch].gain) * sample
+                    gained_input[i] = (self.ch_state[ch].loss_control_gain * self.ch_state[ch].gain) * sample
             
-                # self.ch_state[ch].lc_gain.append(self.ch_state[ch].loss_control_gain)
-                # self.ch_state[ch].lc_t_far_end.append(self.ch_state[ch].t_act_far)
-                # self.ch_state[ch].lc_t_n_end.append(self.ch_state[ch].t_act_near)
-                # self.ch_state[ch].f_power.append(ref_power_est)
-                # self.ch_state[ch].n_power.append(self.ch_state[ch].near_power_est)
-                # self.ch_state[ch].bg_power.append(self.ch_state[ch].bg_power_est)
-
+            # self.ch_state[ch].lc_gain.append(self.ch_state[ch].loss_control_gain)
+            # self.ch_state[ch].lc_t_far_end.append(self.ch_state[ch].t_act_far)
+            # self.ch_state[ch].lc_t_n_end.append(self.ch_state[ch].t_act_near)
+            # self.ch_state[ch].f_power.append(ref_power_est)
+            # self.ch_state[ch].n_power.append(self.ch_state[ch].near_power_est)
+            # self.ch_state[ch].bg_power.append(self.ch_state[ch].bg_power_est)
             
-        
+            
         else:
             gained_input = self.ch_state[ch].gain * input_frame
             
