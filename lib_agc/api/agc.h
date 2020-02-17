@@ -27,6 +27,7 @@ typedef struct {
     vtb_uq1_31_t lower_threshold;   ///< Lower threshold for desired output voice level [0, INT32_MAX].
     vtb_uq16_16_t gain_inc;         ///< Step value to increment the channel gain.
     vtb_uq16_16_t gain_dec;         ///< Step value to decrement the channel gain.
+    // TODO add JSON config vals here
 } agc_ch_init_config_t;
 
 /**
@@ -218,6 +219,8 @@ int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index);
  * \param[in,out] frame_in_out  On input this array contains the sample data.
  *                              On output this array contains the data with AGC
  *                              applied.
+ *
+ * \param[in] ref_power_est     Reference power estimate.
  *
  * \param[in] vad_flag          VAD flag for input sample data. Non-zero indicates
  *                              that the sample data contains voice activity.

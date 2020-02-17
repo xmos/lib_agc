@@ -69,7 +69,7 @@ class agc_ch(object):
                 self.gain = min(g_mod * self.gain, self.max_gain)
         
         
-        gained_input = [input_frame]
+        gained_input = input_frame
         if(self.loss_control_enabled):
             self.far_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.far_bg_power_est, ref_power_est)
             # Update far-end-activity timer
@@ -123,7 +123,6 @@ class agc_ch(object):
             # self.n_power.append(self.near_power_est)
             # self.bg_power.append(self.bg_power_est)
             
-            
         else:
             gained_input = self.gain * input_frame
             
@@ -133,7 +132,6 @@ class agc_ch(object):
 
         output_frame = [limit_gain(sample) for sample in gained_input]
         return output_frame
-
 
 
 class agc(object):
@@ -172,12 +170,9 @@ class agc(object):
             self.ch_state[ch_idx].x_peak = 0
 
 
-
     def process_frame(self, input_frame, ref_power_est, vad):
         output = np.zeros((self.input_ch_count, len(input_frame[0])))
         for i in range(self.input_ch_count):
             output[i] = self.ch_state[i].process_channel(input_frame[i], ref_power_est, vad)
         
         return output
-
-

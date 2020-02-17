@@ -13,6 +13,22 @@
 #define AGC_ALPHA_PEAK_RISE VTB_UQ0_32(0.5480)
 #define AGC_ALPHA_PEAK_FALL VTB_UQ0_32(0.9646)
 
+#define LC_N_FRAME_NEAR (17)
+#define LC_N_FRAME_FAR (17)
+#define LC_ALPHA_INC VTB_UQ16_16(1.005)
+#define LC_ALPHA_DEC VTB_UQ16_16(0.995)
+    
+#define LC_EST_GAMMA_INC VTB_UQ0_32(0.5480)
+#define LC_EST_GAMMA_DEC VTB_UQ0_32(0.6973)
+    
+#define LC_BG_POWER_GAMMA VTB_UQ16_16(1.002) // bg power estimate small increase prevent local minima
+#define LC_DELTA VTB_UQ16_16(8.0) // ratio of near end power to bg estimate to mark near end activity
+
+#define LC_GAIN_MAX VTB_UQ16_16(1)
+#define LC_GAIN_MIN VTB_UQ16_16(0.0056)
+#define LC_GAIN_DT VTB_UQ16_16(0.1778)
+#define LC_GAIN_SILENCE VTB_UQ16_16(0.0748)
+
 
 /**
  * Structure to hold AGC state, only used internally.
@@ -34,6 +50,21 @@ typedef struct {
     vtb_uq0_32_t alpha_pf;
     vtb_u32_float_t gain_inc;
     vtb_u32_float_t gain_dec;
+    int loss_control_enabled;
+    vtb_u32_float_t lc_bg_power_gamma;
+    int t_act_far;
+    int t_act_near;
+    vtb_u32_float_t near_power_est;
+    vtb_u32_float_t bg_power_est;
+    vtb_u32_float_t lc_gain;
+    vtb_u32_float_t lc_far_bg_power_est;
+    vtb_u32_float_t lc_delta;
+    vtb_u32_float_t lc_gain_max;
+    vtb_u32_float_t lc_gain_min;
+    vtb_u32_float_t lc_gain_dt;
+    vtb_u32_float_t lc_gain_silence;
+    vtb_u32_float_t lc_gain_dec;
+    vtb_u32_float_t lc_gain_inc;
 } agc_ch_state_t;
 
 
