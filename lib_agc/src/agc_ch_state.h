@@ -13,7 +13,7 @@
 #define AGC_ALPHA_PEAK_RISE VTB_UQ0_32(0.5480)
 #define AGC_ALPHA_PEAK_FALL VTB_UQ0_32(0.9646)
 
-#define LC_N_FRAME_NEAR (17)
+#define LC_N_FRAME_NEAR (34)
 #define LC_N_FRAME_FAR (17)
 #define LC_ALPHA_INC VTB_UQ16_16(1.005)
 #define LC_ALPHA_DEC VTB_UQ16_16(0.995)
@@ -21,13 +21,19 @@
 #define LC_EST_GAMMA_INC VTB_UQ0_32(0.5480)
 #define LC_EST_GAMMA_DEC VTB_UQ0_32(0.6973)
     
-#define LC_BG_POWER_GAMMA VTB_UQ16_16(1.002) // bg power estimate small increase prevent local minima
+#define LC_BG_POWER_GAMMA VTB_UQ16_16(1.5) // bg power estimate small increase prevent local minima
 #define LC_DELTA VTB_UQ16_16(8.0) // ratio of near end power to bg estimate to mark near end activity
 
 #define LC_GAIN_MAX VTB_UQ16_16(1)
 #define LC_GAIN_MIN VTB_UQ16_16(0.0056)
 #define LC_GAIN_DT VTB_UQ16_16(0.1778)
 #define LC_GAIN_SILENCE VTB_UQ16_16(0.0748)
+
+#define LC_BG_POWER_EST_INIT VTB_UQ0_32(0.00001)
+#define LC_FAR_BG_POWER_EST_INIT VTB_UQ0_32(0.01)
+
+
+
 
 
 /**

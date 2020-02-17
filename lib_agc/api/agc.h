@@ -28,6 +28,7 @@ typedef struct {
     vtb_uq16_16_t gain_inc;         ///< Step value to increment the channel gain.
     vtb_uq16_16_t gain_dec;         ///< Step value to decrement the channel gain.
     // TODO add JSON config vals here
+    int loss_control_enabled;
 } agc_ch_init_config_t;
 
 /**
