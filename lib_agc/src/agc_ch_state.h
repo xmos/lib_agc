@@ -21,7 +21,7 @@
 #define LC_EST_GAMMA_INC VTB_UQ0_32(0.5480)
 #define LC_EST_GAMMA_DEC VTB_UQ0_32(0.6973)
     
-#define LC_BG_POWER_GAMMA VTB_UQ16_16(1.5) // bg power estimate small increase prevent local minima
+#define LC_BG_POWER_GAMMA VTB_UQ16_16(1.01) // bg power estimate small increase prevent local minima
 #define LC_DELTA VTB_UQ16_16(8.0) // ratio of near end power to bg estimate to mark near end activity
 
 #define LC_GAIN_MAX VTB_UQ16_16(1)
@@ -29,9 +29,10 @@
 #define LC_GAIN_DT VTB_UQ16_16(0.1778)
 #define LC_GAIN_SILENCE VTB_UQ16_16(0.0748)
 
-#define LC_BG_POWER_EST_INIT VTB_UQ0_32(0.00001)
 #define LC_FAR_BG_POWER_EST_INIT VTB_UQ0_32(0.01)
-
+#define LC_NEAR_POWER_EST VTB_UQ0_32(0.00001)
+#define LC_BG_POWER_EST_INIT VTB_UQ0_32(0.00001)
+#define LC_MIN_REF_POWER VTB_UQ0_32(0.00001)
 
 
 
@@ -60,10 +61,11 @@ typedef struct {
     vtb_u32_float_t lc_bg_power_gamma;
     int t_act_far;
     int t_act_near;
-    vtb_u32_float_t near_power_est;
-    vtb_u32_float_t bg_power_est;
+    vtb_u32_float_t lc_near_power_est;
+    vtb_u32_float_t lc_bg_power_est;
     vtb_u32_float_t lc_gain;
     vtb_u32_float_t lc_far_bg_power_est;
+    vtb_u32_float_t lc_min_ref_power;
     vtb_u32_float_t lc_delta;
     vtb_u32_float_t lc_gain_max;
     vtb_u32_float_t lc_gain_min;

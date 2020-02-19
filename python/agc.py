@@ -25,22 +25,22 @@ class agc_ch(object):
         self.threshold_lower = float(lower_threshold)
         
         
-        self.loss_control_enabled = loss_control_enabled
-        self.loss_control_gain = 1
+        self.lc_enabled = loss_control_enabled
+        self.lc_gain = 1
         
-        self.near_bg_power_est = 0.0001**2
-        self.near_power_est = 0
-        self.far_bg_power_est = 10**float(-40/20)
+        self.lc_near_bg_power_est = agc.LC_BG_POWER_EST_INIT
+        self.lc_near_power_est = agc.LC_POWER_EST_INIT
+        self.lc_far_bg_power_est = agc.LC_FAR_BG_POWER_EST_INIT
         
-        self.t_act_far = 0
-        self.t_act_near = 0
+        self.lc_t_act_far = 0
+        self.lc_t_act_near = 0
         
-        # self.lc_gain = []
-        # self.lc_t_far_end = []
-        # self.lc_t_n_end = []
-        # self.f_power = []
-        # self.n_power = []
-        # self.bg_power = []
+        self.lc_gains = []
+        self.lc_t_far_ends = []
+        self.lc_t_n_ends = []
+        self.f_power = []
+        self.n_power = []
+        self.bg_power = []
     
     
     def process_channel(self, input_frame, ref_power_est, vad):
@@ -61,7 +61,7 @@ class agc_ch(object):
                 self.x_peak = (1 - alpha_peak) * self.x_fast + alpha_peak * self.x_peak
 
                 g_mod = 1
-                if self.x_peak * self.gain < self.threshold_lower:
+                if (self.x_peak * self.gain < self.threshold_lower) and (not self.lc_enabled or self.lc_t_act_far == 0):
                     g_mod = self.gain_inc 
                 elif self.x_peak * self.gain > self.threshold_upper:
                     g_mod = self.gain_dec
@@ -70,58 +70,72 @@ class agc_ch(object):
         
         
         gained_input = input_frame
-        if(self.loss_control_enabled):
-            self.far_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.far_bg_power_est, ref_power_est)
+        if(self.lc_enabled):
+            
+            limited_ref_power_est = max(agc.LC_MIN_REF_POWER, ref_power_est)
+            
+            self.lc_far_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.lc_far_bg_power_est, limited_ref_power_est)
+            # print(f"self.lc_far_bg_power_est: {self.lc_far_bg_power_est}")
+            # print(f"limited_ref_power_est: {limited_ref_power_est}")
             # Update far-end-activity timer
-            if(ref_power_est > agc.LC_DELTA * self.far_bg_power_est):
-                self.t_act_far = agc.LC_N_FRAME_FAR
+            if(limited_ref_power_est > agc.LC_DELTA * self.lc_far_bg_power_est):
+                self.lc_t_act_far = agc.LC_N_FRAME_FAR
             else:
-                self.t_act_far = max(0, self.t_act_far - 1)
+                self.lc_t_act_far = max(0, self.lc_t_act_far - 1)
             
             frame_power = np.mean(input_frame**2.0)
             gamma = agc.LC_EST_GAMMA_INC
-            if frame_power < self.near_power_est:
+            if frame_power < self.lc_near_power_est:
                 gamma = agc.LC_EST_GAMMA_DEC
             
-            self.near_power_est = (gamma) * self.near_power_est + (1 - gamma) * frame_power
-            self.near_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.near_bg_power_est, self.near_power_est)
+            self.lc_near_power_est = (gamma) * self.lc_near_power_est + (1 - gamma) * frame_power
+            self.lc_near_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.lc_near_bg_power_est, self.lc_near_power_est)
+            
+            # print(f"self.lc_near_power_est: {self.lc_near_power_est}")
+            # print(f"self.lc_near_bg_power_est: {self.lc_near_bg_power_est}")
             
             # Update near-end-activity timer
-            if(self.near_power_est > (agc.LC_DELTA * self.near_bg_power_est)):
-                self.t_act_near = agc.LC_N_SAMPLE_NEAR
+            if(self.lc_near_power_est > (agc.LC_DELTA * self.lc_near_bg_power_est)):
+                self.lc_t_act_near = agc.LC_N_SAMPLE_NEAR
             else:
-                self.t_act_near = max(0, self.t_act_near - 1)
+                self.lc_t_act_near = max(0, self.lc_t_act_near - 1)
             
             
             # Adapt loss control gain
-            if(self.t_act_far <= 0 and self.t_act_near > 0):
+            if(self.lc_t_act_far <= 0 and self.lc_t_act_near > 0):
                 # Near speech only
                 target_gain = agc.LC_GAIN_MAX
-            elif(self.t_act_far <= 0 and self.t_act_near <= 0):
+                # print(f"NEAR - far {self.lc_t_act_far} - near {self.lc_t_act_near}")
+            elif(self.lc_t_act_far <= 0 and self.lc_t_act_near <= 0):
                 # Silence
                 target_gain = agc.LC_GAIN_SILENCE
-            elif(self.t_act_far > 0 and self.t_act_near <= 0):
+                # print(f"SILENCE - far {self.lc_t_act_far} - near {self.lc_t_act_near}")
+            elif(self.lc_t_act_far > 0 and self.lc_t_act_near <= 0):
                 # Far end only
                 target_gain = agc.LC_GAIN_MIN
-            elif(self.t_act_far > 0 and self.t_act_near > 0):
+                # print(f"FAR - far {self.lc_t_act_far} - near {self.lc_t_act_near}")
+            elif(self.lc_t_act_far > 0 and self.lc_t_act_near > 0):
                 # Both near and far speech
                 target_gain = agc.LC_GAIN_DT
+                # print(f"BOTH - far {self.lc_t_act_far} - near {self.lc_t_act_near}")
             
-            if(self.loss_control_gain > target_gain):
+            # print(f'self.lc_gain: {self.lc_gain}')
+            
+            if(self.lc_gain > target_gain):
                 for i, sample in enumerate(input_frame):
-                    self.loss_control_gain = max(target_gain, self.loss_control_gain*agc.LC_ALPHA_DEC)
-                    gained_input[i] = (self.loss_control_gain * self.gain) * sample
+                    self.lc_gain = max(target_gain, self.lc_gain*agc.LC_ALPHA_DEC)
+                    gained_input[i] = (self.lc_gain * self.gain) * sample
             else:
                 for i, sample in enumerate(input_frame):
-                    self.loss_control_gain = min(target_gain, self.loss_control_gain*agc.LC_ALPHA_INC)
-                    gained_input[i] = (self.loss_control_gain * self.gain) * sample
+                    self.lc_gain = min(target_gain, self.lc_gain*agc.LC_ALPHA_INC)
+                    gained_input[i] = (self.lc_gain * self.gain) * sample
             
-            # self.lc_gain.append(self.loss_control_gain)
-            # self.lc_t_far_end.append(self.t_act_far)
-            # self.lc_t_n_end.append(self.t_act_near)
-            # self.f_power.append(ref_power_est)
-            # self.n_power.append(self.near_power_est)
-            # self.bg_power.append(self.bg_power_est)
+            self.lc_gains.append(self.lc_gain)
+            self.lc_t_far_ends.append(self.lc_t_act_far)
+            self.lc_t_n_ends.append(self.lc_t_act_near)
+            self.f_power.append(ref_power_est)
+            self.n_power.append(self.lc_near_power_est)
+            self.bg_power.append(self.lc_near_bg_power_est)
             
         else:
             gained_input = self.gain * input_frame
@@ -143,7 +157,7 @@ class agc(object):
     ALPHA_PEAK_RISE = 0.5480
     ALPHA_PEAK_FALL = 0.9646
     
-    LC_N_SAMPLE_NEAR = 17 # 0.25 second, reduced from the 0.5s recommended in "acoustic echo and noise control"
+    LC_N_SAMPLE_NEAR = 34 # 0.25 second, reduced from the 0.5s recommended in "acoustic echo and noise control"
     LC_N_FRAME_FAR = 17 # 0.25 seconds, frame count
     LC_ALPHA_INC = 1.005
     LC_ALPHA_DEC = 0.995
@@ -151,7 +165,7 @@ class agc(object):
     LC_EST_GAMMA_INC = 0.5480
     LC_EST_GAMMA_DEC = 0.6973
     
-    LC_BG_POWER_GAMMA = 1.002 # bg power estimate small increase prevent local minima
+    LC_BG_POWER_GAMMA = 1.01 # bg power estimate small increase prevent local minima
     LC_DELTA = 8.0 # ratio of near end power to bg estimate to mark near end activity
     
     LC_GAIN_MAX = 1
@@ -159,6 +173,11 @@ class agc(object):
     LC_GAIN_DT = 0.1778 # sqrt(0.0316)
     LC_GAIN_SILENCE = 0.0748 # sqrt(0.0056)
 
+    LC_MIN_REF_POWER = 0.00001
+    LC_POWER_EST_INIT = 0.00001
+    LC_BG_POWER_EST_INIT = 0.00001
+    LC_FAR_BG_POWER_EST_INIT = 0.01
+    
 
     def __init__(self, ch_init_config):
         self.ch_state = []
