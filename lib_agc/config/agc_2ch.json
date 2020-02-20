@@ -8,16 +8,18 @@
                 "adapt": 1, 
                 "init_gain": 10,
                 "upper_threshold": 0.7079,
-                "lower_threshold": 0.1905
+                "lower_threshold": 0.1905,
+                "loss_control_enabled": 0
             }, 
             {
                 "gain_dec": 0.98804, 
                 "max_gain": 100000, 
                 "gain_inc": 1.0121, 
-                "adapt": 1, 
-                "init_gain": 2,
-                "upper_threshold": 0.316,
-                "lower_threshold": 0.316
+                "adapt": 1,
+                "init_gain": 500,
+                "upper_threshold": 0.4,
+                "lower_threshold": 0.4,
+                "loss_control_enabled": 1
             }
         ]
     }

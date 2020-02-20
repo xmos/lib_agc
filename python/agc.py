@@ -32,15 +32,17 @@ class agc_ch(object):
         self.lc_near_power_est = agc.LC_POWER_EST_INIT
         self.lc_far_bg_power_est = agc.LC_FAR_BG_POWER_EST_INIT
         
-        self.lc_t_act_far = 0
-        self.lc_t_act_near = 0
+        self.lc_t_far = 0
+        self.lc_t_near = 0
         
+        self.agc_gains = []
         self.lc_gains = []
         self.lc_t_far_ends = []
         self.lc_t_n_ends = []
         self.f_power = []
         self.n_power = []
         self.bg_power = []
+        self.frame_powers = []
     
     
     def process_channel(self, input_frame, ref_power_est, vad):
@@ -61,7 +63,7 @@ class agc_ch(object):
                 self.x_peak = (1 - alpha_peak) * self.x_fast + alpha_peak * self.x_peak
 
                 g_mod = 1
-                if (self.x_peak * self.gain < self.threshold_lower) and (not self.lc_enabled or self.lc_t_act_far == 0):
+                if (self.x_peak * self.gain < self.threshold_lower) and (not self.lc_enabled or self.lc_t_far == 0):
                     g_mod = self.gain_inc 
                 elif self.x_peak * self.gain > self.threshold_upper:
                     g_mod = self.gain_dec
@@ -79,9 +81,9 @@ class agc_ch(object):
             # print(f"limited_ref_power_est: {limited_ref_power_est}")
             # Update far-end-activity timer
             if(limited_ref_power_est > agc.LC_DELTA * self.lc_far_bg_power_est):
-                self.lc_t_act_far = agc.LC_N_FRAME_FAR
+                self.lc_t_far = agc.LC_N_FRAME_FAR
             else:
-                self.lc_t_act_far = max(0, self.lc_t_act_far - 1)
+                self.lc_t_far = max(0, self.lc_t_far - 1)
             
             frame_power = np.mean(input_frame**2.0)
             gamma = agc.LC_EST_GAMMA_INC
@@ -96,28 +98,28 @@ class agc_ch(object):
             
             # Update near-end-activity timer
             if(self.lc_near_power_est > (agc.LC_DELTA * self.lc_near_bg_power_est)):
-                self.lc_t_act_near = agc.LC_N_SAMPLE_NEAR
+                self.lc_t_near = agc.LC_N_SAMPLE_NEAR
             else:
-                self.lc_t_act_near = max(0, self.lc_t_act_near - 1)
+                self.lc_t_near = max(0, self.lc_t_near - 1)
             
             
             # Adapt loss control gain
-            if(self.lc_t_act_far <= 0 and self.lc_t_act_near > 0):
+            if(self.lc_t_far <= 0 and self.lc_t_near > 0):
                 # Near speech only
                 target_gain = agc.LC_GAIN_MAX
-                # print(f"NEAR - far {self.lc_t_act_far} - near {self.lc_t_act_near}")
-            elif(self.lc_t_act_far <= 0 and self.lc_t_act_near <= 0):
+                # print(f"NEAR - far {self.lc_t_far} - near {self.lc_t_near}")
+            elif(self.lc_t_far <= 0 and self.lc_t_near <= 0):
                 # Silence
                 target_gain = agc.LC_GAIN_SILENCE
-                # print(f"SILENCE - far {self.lc_t_act_far} - near {self.lc_t_act_near}")
-            elif(self.lc_t_act_far > 0 and self.lc_t_act_near <= 0):
+                # print(f"SILENCE - far {self.lc_t_far} - near {self.lc_t_near}")
+            elif(self.lc_t_far > 0 and self.lc_t_near <= 0):
                 # Far end only
                 target_gain = agc.LC_GAIN_MIN
-                # print(f"FAR - far {self.lc_t_act_far} - near {self.lc_t_act_near}")
-            elif(self.lc_t_act_far > 0 and self.lc_t_act_near > 0):
+                # print(f"FAR - far {self.lc_t_far} - near {self.lc_t_near}")
+            elif(self.lc_t_far > 0 and self.lc_t_near > 0):
                 # Both near and far speech
                 target_gain = agc.LC_GAIN_DT
-                # print(f"BOTH - far {self.lc_t_act_far} - near {self.lc_t_act_near}")
+                # print(f"BOTH - far {self.lc_t_far} - near {self.lc_t_near}")
             
             # print(f'self.lc_gain: {self.lc_gain}')
             
@@ -130,12 +132,14 @@ class agc_ch(object):
                     self.lc_gain = min(target_gain, self.lc_gain*agc.LC_ALPHA_INC)
                     gained_input[i] = (self.lc_gain * self.gain) * sample
             
+            self.agc_gains.append(self.gain)
             self.lc_gains.append(self.lc_gain)
-            self.lc_t_far_ends.append(self.lc_t_act_far)
-            self.lc_t_n_ends.append(self.lc_t_act_near)
+            self.lc_t_far_ends.append(self.lc_t_far)
+            self.lc_t_n_ends.append(self.lc_t_near)
             self.f_power.append(ref_power_est)
             self.n_power.append(self.lc_near_power_est)
             self.bg_power.append(self.lc_near_bg_power_est)
+            self.frame_powers.append(frame_power)
             
         else:
             gained_input = self.gain * input_frame
