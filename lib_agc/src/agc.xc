@@ -384,9 +384,11 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         
         vtb_exponential_average_u32(state.lc_near_power_est, input_power, near_power_alpha);
         
-        state.lc_bg_power_est = vtb_mul_u32_u32(state.lc_bg_power_est, state.lc_bg_power_gamma);
         if(vtb_gte_u32_u32(state.lc_bg_power_est, state.lc_near_power_est)){
-            state.lc_bg_power_est = state.lc_near_power_est;
+            vtb_exponential_average_u32(state.lc_bg_power_est, state.lc_near_power_est, AGC_LC_BG_POWER_EST_GAMMA_DEC);
+        }
+        else{
+            state.lc_bg_power_est = vtb_mul_u32_u32(state.lc_bg_power_est, state.lc_bg_power_gamma);
         }
         
         // printf("bg_power_est.m = %u, ", state.lc_bg_power_est.m);

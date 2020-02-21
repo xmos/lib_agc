@@ -91,7 +91,13 @@ class agc_ch(object):
                 gamma = agc.LC_EST_GAMMA_DEC
             
             self.lc_near_power_est = (gamma) * self.lc_near_power_est + (1 - gamma) * frame_power
-            self.lc_near_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.lc_near_bg_power_est, self.lc_near_power_est)
+            
+            if(self.lc_near_bg_power_est > self.lc_near_power_est):
+                self.lc_near_bg_power_est = (LC_BG_POWER_EST_GAMMA_DEC) * self.lc_near_bg_power_est + (1 - LC_BG_POWER_EST_GAMMA_DEC) * self.lc_near_power_est
+            else:
+                self.lc_near_bg_power_est = agc.LC_BG_POWER_GAMMA * self.lc_near_bg_power_est
+            
+            
             
             # print(f"self.lc_near_power_est: {self.lc_near_power_est}")
             # print(f"self.lc_near_bg_power_est: {self.lc_near_bg_power_est}")
@@ -166,10 +172,13 @@ class agc(object):
     LC_ALPHA_INC = 1.005
     LC_ALPHA_DEC = 0.995
     
+    
     LC_EST_GAMMA_INC = 0.5480
     LC_EST_GAMMA_DEC = 0.6973
     
-    LC_BG_POWER_GAMMA = 1.01 # bg power estimate small increase prevent local minima
+    LC_BG_POWER_EST_GAMMA_DEC = 0.5480
+    
+    LC_BG_POWER_GAMMA = 1.001 # bg power estimate small increase prevent local minima
     LC_DELTA = 8.0 # ratio of near end power to bg estimate to mark near end activity
     
     LC_GAIN_MAX = 1
@@ -179,7 +188,7 @@ class agc(object):
 
     LC_MIN_REF_POWER = 0.00001
     LC_POWER_EST_INIT = 0.00001
-    LC_BG_POWER_EST_INIT = 0.00001
+    LC_BG_POWER_EST_INIT = 0.01
     LC_FAR_BG_POWER_EST_INIT = 0.01
     
 
