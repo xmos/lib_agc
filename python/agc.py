@@ -73,12 +73,9 @@ class agc_ch(object):
         
         gained_input = input_frame
         if(self.lc_enabled):
-            
             limited_ref_power_est = max(agc.LC_MIN_REF_POWER, ref_power_est)
-            
             self.lc_far_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.lc_far_bg_power_est, limited_ref_power_est)
-            # print(f"self.lc_far_bg_power_est: {self.lc_far_bg_power_est}")
-            # print(f"limited_ref_power_est: {limited_ref_power_est}")
+            
             # Update far-end-activity timer
             if(limited_ref_power_est > agc.LC_DELTA * self.lc_far_bg_power_est):
                 self.lc_t_far = agc.LC_N_FRAME_FAR
@@ -86,24 +83,23 @@ class agc_ch(object):
                 self.lc_t_far = max(0, self.lc_t_far - 1)
             
             frame_power = np.mean(input_frame**2.0)
-            gamma = agc.LC_EST_GAMMA_INC
+            near_power_alpha = agc.LC_EST_ALPHA_INC
             if frame_power < self.lc_near_power_est:
-                gamma = agc.LC_EST_GAMMA_DEC
+                near_power_alpha = agc.LC_EST_ALPHA_DEC
             
-            self.lc_near_power_est = (gamma) * self.lc_near_power_est + (1 - gamma) * frame_power
+            self.lc_near_power_est = (near_power_alpha) * self.lc_near_power_est + (1 - near_power_alpha) * frame_power
             
             if(self.lc_near_bg_power_est > self.lc_near_power_est):
-                self.lc_near_bg_power_est = (LC_BG_POWER_EST_GAMMA_DEC) * self.lc_near_bg_power_est + (1 - LC_BG_POWER_EST_GAMMA_DEC) * self.lc_near_power_est
+                self.lc_near_bg_power_est = (LC_BG_POWER_EST_ALPHA_DEC) * self.lc_near_bg_power_est + (1 - LC_BG_POWER_EST_ALPHA_DEC) * self.lc_near_power_est
             else:
                 self.lc_near_bg_power_est = agc.LC_BG_POWER_GAMMA * self.lc_near_bg_power_est
             
             
-            
-            # print(f"self.lc_near_power_est: {self.lc_near_power_est}")
-            # print(f"self.lc_near_bg_power_est: {self.lc_near_bg_power_est}")
-            
+            delta = agc.LC_DELTA
+            if self.lc_t_far > 0:
+                delta = agc.LC_DELTA_FAR_ACT
             # Update near-end-activity timer
-            if(self.lc_near_power_est > (agc.LC_DELTA * self.lc_near_bg_power_est)):
+            if(self.lc_near_power_est > (delta * self.lc_near_bg_power_est)):
                 self.lc_t_near = agc.LC_N_SAMPLE_NEAR
             else:
                 self.lc_t_near = max(0, self.lc_t_near - 1)
@@ -113,29 +109,24 @@ class agc_ch(object):
             if(self.lc_t_far <= 0 and self.lc_t_near > 0):
                 # Near speech only
                 target_gain = agc.LC_GAIN_MAX
-                # print(f"NEAR - far {self.lc_t_far} - near {self.lc_t_near}")
             elif(self.lc_t_far <= 0 and self.lc_t_near <= 0):
                 # Silence
                 target_gain = agc.LC_GAIN_SILENCE
-                # print(f"SILENCE - far {self.lc_t_far} - near {self.lc_t_near}")
             elif(self.lc_t_far > 0 and self.lc_t_near <= 0):
                 # Far end only
                 target_gain = agc.LC_GAIN_MIN
-                # print(f"FAR - far {self.lc_t_far} - near {self.lc_t_near}")
             elif(self.lc_t_far > 0 and self.lc_t_near > 0):
                 # Both near and far speech
                 target_gain = agc.LC_GAIN_DT
-                # print(f"BOTH - far {self.lc_t_far} - near {self.lc_t_near}")
             
-            # print(f'self.lc_gain: {self.lc_gain}')
             
             if(self.lc_gain > target_gain):
                 for i, sample in enumerate(input_frame):
-                    self.lc_gain = max(target_gain, self.lc_gain*agc.LC_ALPHA_DEC)
+                    self.lc_gain = max(target_gain, self.lc_gain * agc.LC_GAMMA_DEC)
                     gained_input[i] = (self.lc_gain * self.gain) * sample
             else:
                 for i, sample in enumerate(input_frame):
-                    self.lc_gain = min(target_gain, self.lc_gain*agc.LC_ALPHA_INC)
+                    self.lc_gain = min(target_gain, self.lc_gain * agc.LC_GAMMA_INC)
                     gained_input[i] = (self.lc_gain * self.gain) * sample
             
             self.agc_gains.append(self.gain)
@@ -167,19 +158,21 @@ class agc(object):
     ALPHA_PEAK_RISE = 0.5480
     ALPHA_PEAK_FALL = 0.9646
     
-    LC_N_SAMPLE_NEAR = 34 # 0.25 second, reduced from the 0.5s recommended in "acoustic echo and noise control"
+    LC_N_SAMPLE_NEAR = 34 # 0.5s as recommended in "acoustic echo and noise control"
     LC_N_FRAME_FAR = 17 # 0.25 seconds, frame count
-    LC_ALPHA_INC = 1.005
-    LC_ALPHA_DEC = 0.995
     
+    # Alpha values for EWMA calcuations
+    LC_EST_ALPHA_INC = 0.5480
+    LC_EST_ALPHA_DEC = 0.6973
+    LC_BG_POWER_EST_ALPHA_DEC = 0.5480
     
-    LC_EST_GAMMA_INC = 0.5480
-    LC_EST_GAMMA_DEC = 0.6973
-    
-    LC_BG_POWER_EST_GAMMA_DEC = 0.5480
-    
+    # Gamma values are multipliers
+    LC_GAMMA_INC = 1.005
+    LC_GAMMA_DEC = 0.995
     LC_BG_POWER_GAMMA = 1.001 # bg power estimate small increase prevent local minima
+    
     LC_DELTA = 8.0 # ratio of near end power to bg estimate to mark near end activity
+    LC_DELTA_FAR_ACT = 32
     
     LC_GAIN_MAX = 1
     LC_GAIN_MIN = 0.0056

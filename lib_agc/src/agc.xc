@@ -108,6 +108,10 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         agc.ch_state[ch].lc_bg_power_gamma.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_bg_power_gamma);
         
+        agc.ch_state[ch].lc_delta_far.m = AGC_LC_DELTA_FAR;
+        agc.ch_state[ch].lc_delta_far.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].lc_delta_far);
+        
         agc.ch_state[ch].lc_delta.m = AGC_LC_DELTA;
         agc.ch_state[ch].lc_delta.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_delta);
@@ -128,10 +132,10 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         agc.ch_state[ch].lc_gain_silence.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_gain_silence);
         
-        agc.ch_state[ch].lc_gain_inc.m = AGC_LC_ALPHA_INC;
+        agc.ch_state[ch].lc_gain_inc.m = AGC_LC_GAMMA_INC;
         agc.ch_state[ch].lc_gain_inc.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_gain_inc);
-        agc.ch_state[ch].lc_gain_dec.m = AGC_LC_ALPHA_DEC;
+        agc.ch_state[ch].lc_gain_dec.m = AGC_LC_GAMMA_DEC;
         agc.ch_state[ch].lc_gain_dec.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_gain_dec);
         
@@ -345,11 +349,6 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
     // Loss Control 
     vtb_u32_float_t lc_target_gain;
     if(state.loss_control_enabled){
-        // printf("ref_power_est.m = %u, ", ref_power_est.m);
-        // printf("ref_power_est.e = %d\n", ref_power_est.e);
-        // printf("lc_far_bg_power_est.m = %u, ", state.lc_far_bg_power_est.m);
-        // printf("lc_far_bg_power_est.e = %d\n", state.lc_far_bg_power_est.e);
-        
         vtb_u32_float_t limited_ref_power_est = ref_power_est;
         if(vtb_gte_u32_u32(state.lc_min_ref_power, limited_ref_power_est)){
             limited_ref_power_est = state.lc_min_ref_power;
@@ -362,9 +361,6 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         else{
             state.lc_far_bg_power_est = far_bg_power_est;
         }
-        // printf("far_bg_power_est.m = %u, ", far_bg_power_est.m);
-        // printf("far_bg_power_est.e = %d\n", far_bg_power_est.e);
-
 
         if(vtb_gte_u32_u32(limited_ref_power_est, vtb_mul_u32_u32(state.lc_delta, state.lc_far_bg_power_est))){
             state.lc_t_far = AGC_LC_N_FRAME_FAR;
@@ -377,25 +373,26 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         // Get frame power of input channel
         vtb_u32_float_t input_power = vtb_get_td_frame_power((vtb_ch_pair_t *)samples, s32_exponent, AGC_PROC_FRAME_LENGTH, ch_index);
 
-        vtb_uq0_32_t near_power_alpha = AGC_LC_EST_GAMMA_INC;
+        vtb_uq0_32_t near_power_alpha = AGC_LC_EST_ALPHA_INC;
         if(vtb_gte_u32_u32(state.lc_near_power_est, input_power)){
-            near_power_alpha = AGC_LC_EST_GAMMA_DEC;
+            near_power_alpha = AGC_LC_EST_ALPHA_DEC;
         }
         
         vtb_exponential_average_u32(state.lc_near_power_est, input_power, near_power_alpha);
         
         if(vtb_gte_u32_u32(state.lc_bg_power_est, state.lc_near_power_est)){
-            vtb_exponential_average_u32(state.lc_bg_power_est, state.lc_near_power_est, AGC_LC_BG_POWER_EST_GAMMA_DEC);
+            vtb_exponential_average_u32(state.lc_bg_power_est, state.lc_near_power_est, AGC_LC_BG_POWER_EST_ALPHA_DEC);
         }
         else{
             state.lc_bg_power_est = vtb_mul_u32_u32(state.lc_bg_power_est, state.lc_bg_power_gamma);
         }
         
-        // printf("bg_power_est.m = %u, ", state.lc_bg_power_est.m);
-        // printf("bg_power_est.e = %d\n", state.lc_bg_power_est.e);
-        // printf("lc_near_power_est.m = %u, ", state.lc_near_power_est.m);
-        // printf("lc_near_power_est.e = %d\n", state.lc_near_power_est.e);
-        if(vtb_gte_u32_u32(state.lc_near_power_est, vtb_mul_u32_u32(state.lc_delta, state.lc_bg_power_est))){
+        
+        vtb_u32_float_t delta = state.lc_delta;
+        if(state.lc_t_far){
+            delta = state.lc_delta_far;
+        }
+        if(vtb_gte_u32_u32(state.lc_near_power_est, vtb_mul_u32_u32(delta, state.lc_bg_power_est))){
             state.lc_t_near = AGC_LC_N_FRAME_NEAR;
         }
         else{
@@ -407,38 +404,19 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         if(state.lc_t_far == 0 && state.lc_t_near){
             // Near speech only
             lc_target_gain = state.lc_gain_max;
-            // printf("LC: NEAR\n");
         }
         else if(state.lc_t_far && state.lc_t_near == 0){
             // Far end only
             lc_target_gain = state.lc_gain_min;
-            // printf("LC: FAR\n");
         }
         else if(state.lc_t_far && state.lc_t_near){
             // Both near-end and far -end
             lc_target_gain = state.lc_gain_dt;
-            // printf("LC: BOTH\n");
         }
         else{
             // Silence
             lc_target_gain = state.lc_gain_silence;
-            // printf("LC: SILENCE\n");
         }
-        
-        // if(vtb_gte_u32_u32(state.lc_gain, lc_target_gain)){
-        //     for(unsigned n = 0; n < AGC_PROC_FRAME_LENGTH; n++){
-        // 
-        // 
-        //         // 
-        //         vtb_s32_float_t input_sample = {(samples[n], int32_t[2])[ch_index&1], s32_exponent};
-        //         vtb_normalise_s32(input_sample);
-        //         vtb_s32_float_t gained_sample = vtb_mul_s32_u32(input_sample, state.lc_gain);
-        //         int32_t output_sample = vtb_denormalise_and_saturate_s32(gained_sample, s32_exponent);
-        //         (samples[n], int32_t[2])[ch_index&1] = output_sample;
-        // 
-        //     }
-        // }
-        
     }
     
 
@@ -461,9 +439,6 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         else{
             gained_sample = vtb_mul_s32_u32(input_sample, state.gain);
         }
-        
-        // if(n == 0)  printf("lc_gain.m = %u, lc_gain.e = %d\n", state.lc_gain.m, state.lc_gain.e);
-
 
         #if AGC_DEBUG_PRINT
             printf("input_sample[%u] = %d\n", ch_index, (samples[n], int32_t[2])[ch_index&1]);
