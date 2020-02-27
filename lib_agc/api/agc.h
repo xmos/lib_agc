@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019, XMOS Ltd, All rights reserved
+// Copyright (c) 2017-2020, XMOS Ltd, All rights reserved
 #ifndef _AGC_H_
 #define _AGC_H_
 
@@ -27,7 +27,6 @@ typedef struct {
     vtb_uq1_31_t lower_threshold;   ///< Lower threshold for desired output voice level [0, INT32_MAX].
     vtb_uq16_16_t gain_inc;         ///< Step value to increment the channel gain.
     vtb_uq16_16_t gain_dec;         ///< Step value to decrement the channel gain.
-    // TODO add JSON config vals here
     int lc_enabled;
 } agc_ch_init_config_t;
 
@@ -243,14 +242,14 @@ int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index);
  *                              On output this array contains the data with AGC
  *                              applied.
  *
- * \param[in] ref_power_est     Reference power estimate.
+ * \param[in] far_power         Frame power of reference audio.
  *
  * \param[in] vad_flag          VAD flag for input sample data. Non-zero indicates
  *                              that the sample data contains voice activity.
  */
 void agc_process_frame(agc_state_t &agc,
         vtb_ch_pair_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH],
-        vtb_u32_float_t ref_power_est,
+        vtb_u32_float_t far_power,
         int vad_flag);
 
 

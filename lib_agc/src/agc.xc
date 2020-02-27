@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019, XMOS Ltd, All rights reserved
+// Copyright (c) 2017-2020, XMOS Ltd, All rights reserved
 #include <xclib.h>
 #include "agc.h"
 #include "voice_toolbox.h"
@@ -41,7 +41,7 @@ const vtb_u32_float_t U_HALF = {UINT_MAX, -32-1};
 const vtb_s32_float_t S_QUARTER = {INT_MAX, -31-2};
 
 
-static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, vtb_u32_float_t ref_power_est, int vad_flag);
+static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, vtb_u32_float_t far_power, int vad_flag);
 
 
 void agc_init(agc_state_t &agc, agc_init_config_t config){
@@ -90,6 +90,11 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         agc.ch_state[ch].lc_near_power_est.e = VTB_UQ0_32_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_near_power_est);
         
+
+        agc.ch_state[ch].lc_far_power_est.m = AGC_LC_MIN_FAR_POWER;
+        agc.ch_state[ch].lc_far_power_est.e = VTB_UQ0_32_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].lc_far_power_est);
+        
         agc.ch_state[ch].lc_gain = U_ONE;
         
         agc.ch_state[ch].lc_bg_power_est.m = AGC_LC_BG_POWER_EST_INIT;
@@ -100,9 +105,9 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         agc.ch_state[ch].lc_far_bg_power_est.e = VTB_UQ0_32_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_far_bg_power_est);
         
-        agc.ch_state[ch].lc_min_ref_power.m = AGC_LC_MIN_REF_POWER;
-        agc.ch_state[ch].lc_min_ref_power.e = VTB_UQ0_32_EXP;
-        vtb_normalise_u32(agc.ch_state[ch].lc_min_ref_power);
+        agc.ch_state[ch].lc_min_far_power.m = AGC_LC_MIN_FAR_POWER;
+        agc.ch_state[ch].lc_min_far_power.e = VTB_UQ0_32_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].lc_min_far_power);
         
         agc.ch_state[ch].lc_bg_power_gamma.m = AGC_LC_BG_POWER_GAMMA;
         agc.ch_state[ch].lc_bg_power_gamma.e = VTB_UQ16_16_EXP;
@@ -305,17 +310,17 @@ uint32_t get_max_abs_sample(vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsign
 }
 
 
-void agc_process_frame(agc_state_t &agc, vtb_ch_pair_t frame[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH], vtb_u32_float_t ref_power_est, int vad_flag){
+void agc_process_frame(agc_state_t &agc, vtb_ch_pair_t frame[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH], vtb_u32_float_t far_power, int vad_flag){
     #if AGC_DEBUG_PRINT
         printf("\n#%u\n", frame_counter++);
     #endif
     for(unsigned ch=0;ch<AGC_INPUT_CHANNELS;ch++){
-        agc_process_channel(agc.ch_state[ch], frame[ch/2], ch, ref_power_est, vad_flag);
+        agc_process_channel(agc.ch_state[ch], frame[ch/2], ch, far_power, vad_flag);
     }
 }
 
 
-static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, vtb_u32_float_t ref_power_est, int vad_flag){
+static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, vtb_u32_float_t far_power, int vad_flag){
     const vtb_u32_float_t agc_limit_point = U_HALF;
     const int s32_exponent = -31;
 
@@ -362,20 +367,27 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
     // Loss Control 
     vtb_u32_float_t lc_target_gain;
     if(state.lc_enabled){
-        vtb_u32_float_t limited_ref_power_est = ref_power_est;
-        if(vtb_gte_u32_u32(state.lc_min_ref_power, limited_ref_power_est)){
-            limited_ref_power_est = state.lc_min_ref_power;
+        
+        vtb_uq0_32_t far_power_alpha = AGC_LC_EST_ALPHA_INC;
+        if(vtb_gte_u32_u32(state.lc_far_power_est, far_power)){
+            far_power_alpha = AGC_LC_EST_ALPHA_DEC;
+        }
+        vtb_exponential_average_u32(state.lc_far_power_est, far_power, far_power_alpha);
+        
+        vtb_u32_float_t limited_far_power_est = state.lc_far_power_est;
+        if(vtb_gte_u32_u32(state.lc_min_far_power, limited_far_power_est)){
+            limited_far_power_est = state.lc_min_far_power;
         }
         
         vtb_u32_float_t far_bg_power_est = vtb_mul_u32_u32(state.lc_far_bg_power_est, state.lc_bg_power_gamma);
-        if(vtb_gte_u32_u32(far_bg_power_est, limited_ref_power_est)){
-            state.lc_far_bg_power_est = limited_ref_power_est;
+        if(vtb_gte_u32_u32(far_bg_power_est, limited_far_power_est)){
+            state.lc_far_bg_power_est = limited_far_power_est;
         }
         else{
             state.lc_far_bg_power_est = far_bg_power_est;
         }
 
-        if(vtb_gte_u32_u32(limited_ref_power_est, vtb_mul_u32_u32(state.lc_delta, state.lc_far_bg_power_est))){
+        if(vtb_gte_u32_u32(limited_far_power_est, vtb_mul_u32_u32(state.lc_delta, state.lc_far_bg_power_est))){
             state.lc_t_far = AGC_LC_N_FRAME_FAR;
         }
         else{
@@ -390,7 +402,6 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         if(vtb_gte_u32_u32(state.lc_near_power_est, input_power)){
             near_power_alpha = AGC_LC_EST_ALPHA_DEC;
         }
-        
         vtb_exponential_average_u32(state.lc_near_power_est, input_power, near_power_alpha);
         
         if(vtb_gte_u32_u32(state.lc_bg_power_est, state.lc_near_power_est)){

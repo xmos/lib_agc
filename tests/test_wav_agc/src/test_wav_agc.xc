@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019, XMOS Ltd, All rights reserved
+// Copyright (c) 2017-2020, XMOS Ltd, All rights reserved
 #include<platform.h>
 
 #include "voice_toolbox.h"
@@ -43,8 +43,8 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
         vad_data_window[i] = 0;
     }
     
-    vtb_u32_float_t ref_power_est = {VTB_UQ0_32(0.00001), -32};
-    vtb_normalise_u32(ref_power_est);
+    vtb_u32_float_t ref_power = {VTB_UQ0_32(0.00001), -32};
+    vtb_normalise_u32(ref_power);
 
     
     vad_state_t vad_state;
@@ -61,34 +61,6 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
             memcpy(input_frame[ch_pair], &rec_frame[ch_pair][INPUT_FRAME_LENGTH - AGC_PROC_FRAME_LENGTH], sizeof(input_frame[ch_pair]));
         }
         
-        // vtb_ch_pair_t [[aligned(8)]] ref_frame[1][AGC_PROC_FRAME_LENGTH];
-        // memcpy(ref_frame[0], &rec_frame[1][INPUT_FRAME_LENGTH - AGC_PROC_FRAME_LENGTH], sizeof(input_frame[0]));
-        // 
-        // // Ref Power Estimate
-        // int input_exp = -31; //This is convention to range the wav input to [-1.0, 1.0).
-        // vtb_u32_float_t ref_power_est_0 = vtb_get_td_frame_power((vtb_ch_pair_t *)ref_frame[0],
-        //                                         input_exp,
-        //                                         AGC_PROC_FRAME_LENGTH,
-        //                                         0);
-        // vtb_u32_float_t ref_power_est_1 = vtb_get_td_frame_power((vtb_ch_pair_t *)ref_frame[0],
-        //                                         input_exp,
-        //                                         AGC_PROC_FRAME_LENGTH,
-        //                                         1);
-        // 
-        // vtb_u32_float_t max_ref_power = ref_power_est_1;
-        // if(vtb_gte_u32_u32(ref_power_est_0, ref_power_est_1)){
-        //     max_ref_power = ref_power_est_0;
-        // }
-        // 
-        // uint32_t alpha = VTB_UQ0_32(0.5480);
-        // if(vtb_gte_u32_u32(ref_power_est, max_ref_power)){
-        //     alpha = VTB_UQ0_32(0.6973);
-        // }
-        // 
-        // vtb_exponential_average_u32(ref_power_est, max_ref_power, alpha);
-
-
-
         for(int s = VAD_PROC_FRAME_LENGTH - 1 - AGC_FRAME_ADVANCE;s >= 0;s--){
             vad_data_window[s + AGC_FRAME_ADVANCE] = vad_data_window[s];
         }
@@ -97,7 +69,7 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
         }
         int32_t vad_percentage = vad_percentage_voice(vad_data_window, vad_state);
 
-        agc_process_frame(agc_state, input_frame, ref_power_est, vad_percentage > AGC_VAD_THRESHOLD);
+        agc_process_frame(agc_state, input_frame, ref_power, vad_percentage > AGC_VAD_THRESHOLD);
 
         vtb_tx_notification_and_data(c_data_output, (vtb_ch_pair_t*)input_frame,
                          2*AGC_CHANNEL_PAIRS,

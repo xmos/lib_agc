@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019, XMOS Ltd, All rights reserved
+// Copyright (c) 2017-2020, XMOS Ltd, All rights reserved
 #ifndef _AGC_STATE_H_
 #define _AGC_STATE_H_
 
@@ -34,7 +34,7 @@
 #define AGC_LC_FAR_BG_POWER_EST_INIT VTB_UQ0_32(0.001)
 #define AGC_LC_NEAR_POWER_EST VTB_UQ0_32(0.00001)
 #define AGC_LC_BG_POWER_EST_INIT VTB_UQ0_32(0.01)
-#define AGC_LC_MIN_REF_POWER VTB_UQ0_32(0.00001)
+#define AGC_LC_MIN_FAR_POWER VTB_UQ0_32(0.00001)
 
 
 /**
@@ -62,10 +62,11 @@ typedef struct {
     int lc_t_far;
     int lc_t_near;
     vtb_u32_float_t lc_near_power_est;
+    vtb_u32_float_t lc_far_power_est;
     vtb_u32_float_t lc_bg_power_est;
     vtb_u32_float_t lc_gain;
     vtb_u32_float_t lc_far_bg_power_est;
-    vtb_u32_float_t lc_min_ref_power;
+    vtb_u32_float_t lc_min_far_power;
     vtb_u32_float_t lc_delta;
     vtb_u32_float_t lc_delta_far;
     vtb_u32_float_t lc_gain_max;

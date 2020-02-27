@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2019, XMOS Ltd, All rights reserved
+# Copyright (c) 2018-2020, XMOS Ltd, All rights reserved
 from __future__ import division
 from builtins import object
 import numpy as np
@@ -31,21 +31,13 @@ class agc_ch(object):
         self.lc_near_bg_power_est = agc.LC_BG_POWER_EST_INIT
         self.lc_near_power_est = agc.LC_POWER_EST_INIT
         self.lc_far_bg_power_est = agc.LC_FAR_BG_POWER_EST_INIT
+        self.lc_far_power_est = agc.LC_MIN_REF_POWER
         
         self.lc_t_far = 0
         self.lc_t_near = 0
-        
-        self.agc_gains = []
-        self.lc_gains = []
-        self.lc_t_far_ends = []
-        self.lc_t_n_ends = []
-        self.f_power = []
-        self.n_power = []
-        self.bg_power = []
-        self.frame_powers = []
     
     
-    def process_channel(self, input_frame, ref_power_est, vad):
+    def process_channel(self, input_frame, ref_power, vad):
         if(self.adapt):
             peak_sample = np.absolute(input_frame).max() #Sample input from Ch0
             rising = peak_sample > abs(self.x_slow)
@@ -73,7 +65,13 @@ class agc_ch(object):
         
         gained_input = input_frame
         if(self.lc_enabled):
-            limited_ref_power_est = max(agc.LC_MIN_REF_POWER, ref_power_est)
+            far_power_alpha = agc.LC_EST_ALPHA_INC
+            if ref_power < self.lc_far_power_est:
+                far_power_alpha = agc.LC_EST_ALPHA_DEC
+            
+            self.lc_far_power_est = (far_power_alpha) * self.lc_far_power_est + (1 - far_power_alpha) * ref_power
+            limited_ref_power_est = max(agc.LC_MIN_REF_POWER, self.lc_far_power_est)
+            
             self.lc_far_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.lc_far_bg_power_est, limited_ref_power_est)
             
             # Update far-end-activity timer
@@ -128,16 +126,8 @@ class agc_ch(object):
                 for i, sample in enumerate(input_frame):
                     self.lc_gain = min(target_gain, self.lc_gain * agc.LC_GAMMA_INC)
                     gained_input[i] = (self.lc_gain * self.gain) * sample
-            
-            self.agc_gains.append(self.gain)
-            self.lc_gains.append(self.lc_gain)
-            self.lc_t_far_ends.append(self.lc_t_far)
-            self.lc_t_n_ends.append(self.lc_t_near)
-            self.f_power.append(ref_power_est)
-            self.n_power.append(self.lc_near_power_est)
-            self.bg_power.append(self.lc_near_bg_power_est)
-            self.frame_powers.append(frame_power)
-            
+        
+        
         else:
             gained_input = self.gain * input_frame
             

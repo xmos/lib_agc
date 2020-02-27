@@ -1,6 +1,12 @@
 AGC library change log
 ======================
 
+6.0.0
+-----
+
+  * ADDED: support for loss control.
+  * UPDATED: API updated to accept reference audio frame power.
+
 5.1.0
 -----
 
