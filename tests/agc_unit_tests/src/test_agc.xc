@@ -562,7 +562,8 @@ void test_agc_process_frame(){
             agc_set_ch_gain(agc, i, VTB_UQ16_16((double)gain));
         }
         int vad = 0;
-        agc_process_frame(agc, frame_in_out, vad);
+        vtb_u32_float_t ref_power = VTB_FLOAT_U32_ZERO;
+        agc_process_frame(agc, frame_in_out, ref_power, vad);
 
         for(int ch_pair=0; ch_pair<AGC_CHANNEL_PAIRS; ++ch_pair){
             for(int i=0; i<AGC_PROC_FRAME_LENGTH; ++i){
