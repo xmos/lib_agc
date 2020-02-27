@@ -7,6 +7,10 @@ AGC library change log
   * ADDED: support for loss control.
   * UPDATED: API updated to accept reference audio frame power.
 
+  * Changes to dependencies:
+
+    - lib_logging: Added dependency 3.0.0
+
 5.1.0
 -----
 
