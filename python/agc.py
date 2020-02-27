@@ -63,36 +63,36 @@ class agc_ch(object):
                 self.gain = min(g_mod * self.gain, self.max_gain)
         
         
+        # Loss Control
+        far_power_alpha = agc.LC_EST_ALPHA_INC
+        if ref_power < self.lc_far_power_est:
+            far_power_alpha = agc.LC_EST_ALPHA_DEC
+        
+        self.lc_far_power_est = (far_power_alpha) * self.lc_far_power_est + (1 - far_power_alpha) * ref_power
+        limited_ref_power_est = max(agc.LC_MIN_REF_POWER, self.lc_far_power_est)
+        
+        self.lc_far_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.lc_far_bg_power_est, limited_ref_power_est)
+        
+        frame_power = np.mean(input_frame**2.0)
+        near_power_alpha = agc.LC_EST_ALPHA_INC
+        if frame_power < self.lc_near_power_est:
+            near_power_alpha = agc.LC_EST_ALPHA_DEC
+        
+        self.lc_near_power_est = (near_power_alpha) * self.lc_near_power_est + (1 - near_power_alpha) * frame_power
+        
+        if(self.lc_near_bg_power_est > self.lc_near_power_est):
+            self.lc_near_bg_power_est = (agc.LC_BG_POWER_EST_ALPHA_DEC) * self.lc_near_bg_power_est + (1 - agc.LC_BG_POWER_EST_ALPHA_DEC) * self.lc_near_power_est
+        else:
+            self.lc_near_bg_power_est = agc.LC_BG_POWER_GAMMA * self.lc_near_bg_power_est
+        
+        
         gained_input = input_frame
         if(self.lc_enabled):
-            far_power_alpha = agc.LC_EST_ALPHA_INC
-            if ref_power < self.lc_far_power_est:
-                far_power_alpha = agc.LC_EST_ALPHA_DEC
-            
-            self.lc_far_power_est = (far_power_alpha) * self.lc_far_power_est + (1 - far_power_alpha) * ref_power
-            limited_ref_power_est = max(agc.LC_MIN_REF_POWER, self.lc_far_power_est)
-            
-            self.lc_far_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.lc_far_bg_power_est, limited_ref_power_est)
-            
             # Update far-end-activity timer
             if(limited_ref_power_est > agc.LC_DELTA * self.lc_far_bg_power_est):
                 self.lc_t_far = agc.LC_N_FRAME_FAR
             else:
                 self.lc_t_far = max(0, self.lc_t_far - 1)
-            
-            frame_power = np.mean(input_frame**2.0)
-            near_power_alpha = agc.LC_EST_ALPHA_INC
-            if frame_power < self.lc_near_power_est:
-                near_power_alpha = agc.LC_EST_ALPHA_DEC
-            
-            self.lc_near_power_est = (near_power_alpha) * self.lc_near_power_est + (1 - near_power_alpha) * frame_power
-            
-            if(self.lc_near_bg_power_est > self.lc_near_power_est):
-                self.lc_near_bg_power_est = (agc.LC_BG_POWER_EST_ALPHA_DEC) * self.lc_near_bg_power_est + (1 - agc.LC_BG_POWER_EST_ALPHA_DEC) * self.lc_near_power_est
-            else:
-                self.lc_near_bg_power_est = agc.LC_BG_POWER_GAMMA * self.lc_near_bg_power_est
-            
-            
             delta = agc.LC_DELTA
             if self.lc_t_far > 0:
                 delta = agc.LC_DELTA_FAR_ACT
@@ -101,7 +101,6 @@ class agc_ch(object):
                 self.lc_t_near = agc.LC_N_SAMPLE_NEAR
             else:
                 self.lc_t_near = max(0, self.lc_t_near - 1)
-            
             
             # Adapt loss control gain
             if(self.lc_t_far <= 0 and self.lc_t_near > 0):

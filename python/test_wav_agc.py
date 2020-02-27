@@ -43,16 +43,17 @@ if __name__ == "__main__":
     frame_gain_dB = []
     vad_results = []
 
-    output = np.zeros((channel_count, file_length))
 
     # treat the key-value pairs of the dictionary as additional named arguments to the constructor.
-    agc = agc(**agc_parameters)
+    agc = agc(**agc_parameters["agc_init_config"])
+    output = np.zeros((len(agc.ch_state), file_length))
+    
     for frame_start in range(0, file_length-FRAME_ADVANCE, FRAME_ADVANCE):
-        x = au.get_frame(wav_data, frame_start, FRAME_ADVANCE)
+        x = awu.get_frame(wav_data, frame_start, FRAME_ADVANCE)
         vad_result = vad.run(x[0])
+        ref_power = 0
 
-        for ch_idx in range(channel_count):
-            output[ch_idx, frame_start: frame_start + FRAME_ADVANCE] = agc.process_frame(ch_idx, x[ch_idx], vad_result > VAD_THRESHOLD)
+        output[:, frame_start: frame_start + FRAME_ADVANCE] = agc.process_frame(x, ref_power, vad_result > VAD_THRESHOLD)
 
         x_slow.append(20.0 * np.log10(agc.ch_state[0].x_slow))
         x_fast.append(20.0 * np.log10(agc.ch_state[0].x_fast))
