@@ -28,7 +28,7 @@ typedef struct {
     vtb_uq16_16_t gain_inc;         ///< Step value to increment the channel gain.
     vtb_uq16_16_t gain_dec;         ///< Step value to decrement the channel gain.
     // TODO add JSON config vals here
-    int loss_control_enabled;
+    int lc_enabled;
 } agc_ch_init_config_t;
 
 /**
@@ -160,6 +160,28 @@ void agc_set_ch_adapt(agc_state_t &agc, unsigned ch_index,  uint32_t adapt);
  * \returns                 0 for fixed gain, 1 for adapt.
  */
 int agc_get_ch_adapt(agc_state_t agc, unsigned ch_index);
+
+
+/** Set AGC channel loss control enabled flag.
+ *
+ * \param[in,out] agc       AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \param[in] enable        AGC LC enable flag: 0 for disabled, 1 for enabled.
+ */
+void agc_set_ch_lc_enable(agc_state_t &agc, unsigned ch_index,  uint32_t enable);
+
+
+/** Get AGC channel loss control enabled flag.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \returns                 0 for disabled, 1 for enabled.
+ */
+int agc_get_ch_lc_enable(agc_state_t agc, unsigned ch_index);
 
 
 /** Set upper threshold of desired output voice level for AGC channel.

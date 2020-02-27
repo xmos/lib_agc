@@ -5,7 +5,7 @@ import numpy as np
 from math import sqrt
 
 class agc_ch(object):
-    def __init__(self, adapt, init_gain, max_gain, upper_threshold, lower_threshold, gain_inc, gain_dec, loss_control_enabled = False):
+    def __init__(self, adapt, init_gain, max_gain, upper_threshold, lower_threshold, gain_inc, gain_dec, lc_enabled = False):
         if init_gain < 0:
             raise Exception("init_gain must be greater than 0.")
         if max_gain < 0:
@@ -25,7 +25,7 @@ class agc_ch(object):
         self.threshold_lower = float(lower_threshold)
         
         
-        self.lc_enabled = loss_control_enabled
+        self.lc_enabled = lc_enabled
         self.lc_gain = 1
         
         self.lc_near_bg_power_est = agc.LC_BG_POWER_EST_INIT
@@ -90,7 +90,7 @@ class agc_ch(object):
             self.lc_near_power_est = (near_power_alpha) * self.lc_near_power_est + (1 - near_power_alpha) * frame_power
             
             if(self.lc_near_bg_power_est > self.lc_near_power_est):
-                self.lc_near_bg_power_est = (LC_BG_POWER_EST_ALPHA_DEC) * self.lc_near_bg_power_est + (1 - LC_BG_POWER_EST_ALPHA_DEC) * self.lc_near_power_est
+                self.lc_near_bg_power_est = (agc.LC_BG_POWER_EST_ALPHA_DEC) * self.lc_near_bg_power_est + (1 - agc.LC_BG_POWER_EST_ALPHA_DEC) * self.lc_near_power_est
             else:
                 self.lc_near_bg_power_est = agc.LC_BG_POWER_GAMMA * self.lc_near_bg_power_est
             

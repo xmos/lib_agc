@@ -84,7 +84,7 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         agc.ch_state[ch].gain_dec.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].gain_dec);
         
-        agc.ch_state[ch].loss_control_enabled = config.ch_init_config[ch].loss_control_enabled;
+        agc.ch_state[ch].lc_enabled = config.ch_init_config[ch].lc_enabled;
         
         agc.ch_state[ch].lc_near_power_est.m = AGC_LC_NEAR_POWER_EST;
         agc.ch_state[ch].lc_near_power_est.e = VTB_UQ0_32_EXP;
@@ -227,6 +227,19 @@ int agc_get_ch_adapt(agc_state_t agc, unsigned ch_index){
 }
 
 
+void agc_set_ch_lc_enable(agc_state_t &agc, unsigned ch_index, uint32_t adapt){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].lc_enabled = (int)(adapt > 0);
+    }
+}
+
+
+int agc_get_ch_lc_enable(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    return agc.ch_state[ch_index].lc_enabled;
+}
+
+
 void agc_set_ch_upper_threshold(agc_state_t &agc, unsigned ch_index, int32_t upper_threshold){
     if(ch_index < AGC_INPUT_CHANNELS){
         int32_t abs_input = upper_threshold;
@@ -336,7 +349,7 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
 
             if(vtb_gte_u32_u32(gained_pk, state.upper_threshold)){
                 state.gain = vtb_mul_u32_u32(state.gain_dec, state.gain);
-            } else if(vtb_gte_u32_u32(state.lower_threshold, gained_pk) && (!state.loss_control_enabled || state.lc_t_far == 0)){
+            } else if(vtb_gte_u32_u32(state.lower_threshold, gained_pk) && (!state.lc_enabled || state.lc_t_far == 0)){
                 state.gain = vtb_mul_u32_u32(state.gain_inc, state.gain);
             }
             
@@ -348,7 +361,7 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
     
     // Loss Control 
     vtb_u32_float_t lc_target_gain;
-    if(state.loss_control_enabled){
+    if(state.lc_enabled){
         vtb_u32_float_t limited_ref_power_est = ref_power_est;
         if(vtb_gte_u32_u32(state.lc_min_ref_power, limited_ref_power_est)){
             limited_ref_power_est = state.lc_min_ref_power;
@@ -425,7 +438,7 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         vtb_normalise_s32(input_sample);
 
         vtb_s32_float_t gained_sample;
-        if(state.loss_control_enabled){
+        if(state.lc_enabled){
             if(vtb_gte_u32_u32(state.lc_gain, lc_target_gain)){
                 state.lc_gain = vtb_mul_u32_u32(state.lc_gain, state.lc_gain_dec);
                 // TODO hold lc_gain if equal?

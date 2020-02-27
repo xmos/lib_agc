@@ -57,7 +57,7 @@ typedef struct {
     vtb_uq0_32_t alpha_pf;
     vtb_u32_float_t gain_inc;
     vtb_u32_float_t gain_dec;
-    int loss_control_enabled;
+    int lc_enabled;
     vtb_u32_float_t lc_bg_power_gamma;
     int lc_t_far;
     int lc_t_near;
