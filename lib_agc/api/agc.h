@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019, XMOS Ltd, All rights reserved
+// Copyright (c) 2017-2020, XMOS Ltd, All rights reserved
 #ifndef _AGC_H_
 #define _AGC_H_
 
@@ -27,6 +27,7 @@ typedef struct {
     vtb_uq1_31_t lower_threshold;   ///< Lower threshold for desired output voice level [0, INT32_MAX].
     vtb_uq16_16_t gain_inc;         ///< Step value to increment the channel gain.
     vtb_uq16_16_t gain_dec;         ///< Step value to decrement the channel gain.
+    int lc_enabled;
 } agc_ch_init_config_t;
 
 /**
@@ -160,6 +161,28 @@ void agc_set_ch_adapt(agc_state_t &agc, unsigned ch_index,  uint32_t adapt);
 int agc_get_ch_adapt(agc_state_t agc, unsigned ch_index);
 
 
+/** Set AGC channel loss control enabled flag.
+ *
+ * \param[in,out] agc       AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \param[in] enable        AGC LC enable flag: 0 for disabled, 1 for enabled.
+ */
+void agc_set_ch_lc_enable(agc_state_t &agc, unsigned ch_index,  uint32_t enable);
+
+
+/** Get AGC channel loss control enabled flag.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \returns                 0 for disabled, 1 for enabled.
+ */
+int agc_get_ch_lc_enable(agc_state_t agc, unsigned ch_index);
+
+
 /** Set upper threshold of desired output voice level for AGC channel.
  *
  * \param[in,out] agc           AGC state.
@@ -219,11 +242,14 @@ int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index);
  *                              On output this array contains the data with AGC
  *                              applied.
  *
+ * \param[in] far_power         Frame power of reference audio.
+ *
  * \param[in] vad_flag          VAD flag for input sample data. Non-zero indicates
  *                              that the sample data contains voice activity.
  */
 void agc_process_frame(agc_state_t &agc,
         vtb_ch_pair_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH],
+        vtb_u32_float_t far_power,
         int vad_flag);
 
 
