@@ -107,6 +107,48 @@ void test_agc_set_get_ch_adapt(){
 }
 
 
+void test_agc_set_get_lc_enable(){
+    srand((unsigned) 2);
+
+    agc_init_config_t config = {
+        {
+            {
+                0,
+                VTB_UQ16_16(AGC_CH0_GAIN),
+                VTB_UQ16_16(AGC_CH0_MAX_GAIN),
+            },
+            {
+                0,
+                VTB_UQ16_16(AGC_CH1_GAIN),
+                VTB_UQ16_16(AGC_CH1_MAX_GAIN),
+            }
+        }
+    };
+
+    agc_state_t agc;
+    agc_init(agc, config);
+
+
+    uint32_t expected_lc_enabled = 0;
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        agc_set_ch_lc_enable(agc, i, expected_lc_enabled);
+    }
+
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_lc_enabled, agc_get_ch_lc_enable(agc, i), "Incorrect AGC LC enabled");
+    }
+
+    expected_lc_enabled = 1;
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        agc_set_ch_lc_enable(agc, i, expected_lc_enabled);
+    }
+
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_lc_enabled, agc_get_ch_lc_enable(agc, i), "Incorrect AGC LC enabled");
+    }
+}
+
+
 void test_agc_set_get_ch_gain(){
     srand((unsigned) 2);
 
