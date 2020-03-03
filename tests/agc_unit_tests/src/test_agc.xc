@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019, XMOS Ltd, All rights reserved
+// Copyright (c) 2017-2020, XMOS Ltd, All rights reserved
 #include "agc_unit_tests.h"
 
 #define TEST_COUNT (1<<10)
@@ -103,6 +103,48 @@ void test_agc_set_get_ch_adapt(){
 
     for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
         TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_adapt, agc_get_ch_adapt(agc, i), "Incorrect AGC adapt");
+    }
+}
+
+
+void test_agc_set_get_lc_enable(){
+    srand((unsigned) 2);
+
+    agc_init_config_t config = {
+        {
+            {
+                0,
+                VTB_UQ16_16(AGC_CH0_GAIN),
+                VTB_UQ16_16(AGC_CH0_MAX_GAIN),
+            },
+            {
+                0,
+                VTB_UQ16_16(AGC_CH1_GAIN),
+                VTB_UQ16_16(AGC_CH1_MAX_GAIN),
+            }
+        }
+    };
+
+    agc_state_t agc;
+    agc_init(agc, config);
+
+
+    uint32_t expected_lc_enabled = 0;
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        agc_set_ch_lc_enable(agc, i, expected_lc_enabled);
+    }
+
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_lc_enabled, agc_get_ch_lc_enable(agc, i), "Incorrect AGC LC enabled");
+    }
+
+    expected_lc_enabled = 1;
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        agc_set_ch_lc_enable(agc, i, expected_lc_enabled);
+    }
+
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_lc_enabled, agc_get_ch_lc_enable(agc, i), "Incorrect AGC LC enabled");
     }
 }
 
@@ -562,7 +604,8 @@ void test_agc_process_frame(){
             agc_set_ch_gain(agc, i, VTB_UQ16_16((double)gain));
         }
         int vad = 0;
-        agc_process_frame(agc, frame_in_out, vad);
+        vtb_u32_float_t ref_power = VTB_FLOAT_U32_ZERO;
+        agc_process_frame(agc, frame_in_out, ref_power, vad);
 
         for(int ch_pair=0; ch_pair<AGC_CHANNEL_PAIRS; ++ch_pair){
             for(int i=0; i<AGC_PROC_FRAME_LENGTH; ++i){
