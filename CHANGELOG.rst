@@ -5,6 +5,7 @@ AGC library change log
 -----
 
   * CHANGED: Update .json config for test_wav_agc due to lib_vtb v7.1.0
+  * CHANGED: Update dependency on lib_dsp to v6.0.0
 
 5.0.0
 -----
