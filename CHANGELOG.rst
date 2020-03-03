@@ -6,6 +6,7 @@ AGC library change log
 
   * ADDED: support for loss control.
   * UPDATED: API updated to accept reference audio frame power.
+  * CHANGED: Update dependency on lib_dsp to v6.0.0
 
   * Changes to dependencies:
 
@@ -15,7 +16,6 @@ AGC library change log
 -----
 
   * CHANGED: Update .json config for test_wav_agc due to lib_vtb v7.1.0
-  * CHANGED: Update dependency on lib_dsp to v6.0.0
 
 5.0.0
 -----
