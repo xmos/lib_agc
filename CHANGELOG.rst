@@ -6,6 +6,7 @@ AGC library change log
 
   * ADDED: support for loss control.
   * UPDATED: API updated to accept reference audio frame power.
+  * CHANGED: Update dependency on lib_dsp to v6.0.0
 
   * Changes to dependencies:
 
