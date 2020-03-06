@@ -23,8 +23,8 @@
 #define AGC_LC_BG_POWER_EST_ALPHA_DEC VTB_UQ0_32(0.5480)
     
 #define AGC_LC_BG_POWER_GAMMA VTB_UQ16_16(1.001) // bg power estimate small increase prevent local minima
-#define AGC_LC_DELTA VTB_UQ16_16(8.0) // ratio of near end power to bg estimate to mark near end activity
-#define AGC_LC_DELTA_FAR VTB_UQ16_16(32.0) // ratio of near end power to bg estimate during far-end activity
+#define AGC_LC_DELTA VTB_UQ16_16(500.0) // ratio of near end power to bg estimate to mark near end activity
+#define AGC_LC_DELTA_FAR VTB_UQ16_16(1000.0) // ratio of near end power to bg estimate during far-end activity
 
 #define AGC_LC_GAIN_MAX VTB_UQ16_16(1)
 #define AGC_LC_GAIN_MIN VTB_UQ16_16(0.0562)
