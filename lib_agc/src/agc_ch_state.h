@@ -49,12 +49,6 @@ typedef struct {
     vtb_u32_float_t x_slow;
     vtb_u32_float_t x_fast;
     vtb_u32_float_t x_peak;
-    vtb_uq0_32_t alpha_sr;
-    vtb_uq0_32_t alpha_sf;
-    vtb_uq0_32_t alpha_fr;
-    vtb_uq0_32_t alpha_ff;
-    vtb_uq0_32_t alpha_pr;
-    vtb_uq0_32_t alpha_pf;
     vtb_u32_float_t gain_inc;
     vtb_u32_float_t gain_dec;
     int lc_enabled;
