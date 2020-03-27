@@ -1,6 +1,11 @@
 AGC library change log
 ======================
 
+6.0.1
+-----
+
+  * CHANGED: Updated loss control parameters for communications channel.
+
 6.0.0
 -----
 
