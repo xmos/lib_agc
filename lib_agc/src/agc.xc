@@ -69,13 +69,6 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         agc.ch_state[ch].x_fast = vtb_float_u32_zero;
         agc.ch_state[ch].x_peak = vtb_float_u32_zero;
 
-        agc.ch_state[ch].alpha_sr = AGC_ALPHA_SLOW_RISE;
-        agc.ch_state[ch].alpha_sf = AGC_ALPHA_SLOW_FALL;
-        agc.ch_state[ch].alpha_fr = AGC_ALPHA_FAST_RISE;
-        agc.ch_state[ch].alpha_ff = AGC_ALPHA_FAST_FALL;
-        agc.ch_state[ch].alpha_pr = AGC_ALPHA_PEAK_RISE;
-        agc.ch_state[ch].alpha_pf = AGC_ALPHA_PEAK_FALL;
-
         agc.ch_state[ch].gain_inc.m = config.ch_init_config[ch].gain_inc;
         agc.ch_state[ch].gain_inc.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].gain_inc);
@@ -332,12 +325,13 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         int rising = vtb_gte_u32_u32(max_abs_value, state.x_slow);
 
         if(rising){
-            vtb_exponential_average_u32(state.x_slow, max_abs_value, state.alpha_sr);
-            vtb_exponential_average_u32(state.x_fast, max_abs_value, state.alpha_fr);
+            vtb_exponential_average_u32(state.x_slow, max_abs_value, AGC_ALPHA_SLOW_RISE);
+            vtb_exponential_average_u32(state.x_fast, max_abs_value, AGC_ALPHA_FAST_RISE);
         } else{
-            vtb_exponential_average_u32(state.x_slow, max_abs_value, state.alpha_sf);
-            vtb_exponential_average_u32(state.x_fast, max_abs_value, state.alpha_ff);
+            vtb_exponential_average_u32(state.x_slow, max_abs_value, AGC_ALPHA_SLOW_FALL);
+            vtb_exponential_average_u32(state.x_fast, max_abs_value, AGC_ALPHA_FAST_FALL);
         }
+
 
         vtb_u32_float_t gained_max_abs_value = vtb_mul_u32_u32(max_abs_value, state.gain);
         int exceed_threshold = vtb_gte_u32_u32(gained_max_abs_value, state.upper_threshold);
@@ -345,9 +339,9 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         if(exceed_threshold || vad_flag){
             int peak_rising = vtb_gte_u32_u32(state.x_fast, state.x_peak);
             if(peak_rising){
-                vtb_exponential_average_u32(state.x_peak, state.x_fast, state.alpha_pr);
+                vtb_exponential_average_u32(state.x_peak, state.x_fast, AGC_ALPHA_PEAK_RISE);
             } else{
-                vtb_exponential_average_u32(state.x_peak, state.x_fast, state.alpha_pf);
+                vtb_exponential_average_u32(state.x_peak, state.x_fast, AGC_ALPHA_PEAK_FALL);
             }
 
             vtb_u32_float_t gained_pk = vtb_mul_u32_u32(state.x_peak, state.gain);

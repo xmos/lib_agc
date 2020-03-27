@@ -160,13 +160,13 @@ class agc(object):
     LC_GAMMA_DEC = 0.995
     LC_BG_POWER_GAMMA = 1.001 # bg power estimate small increase prevent local minima
     
-    LC_DELTA = 8.0 # ratio of near end power to bg estimate to mark near end activity
-    LC_DELTA_FAR_ACT = 32
+    LC_DELTA = 500.0 # ratio of near end power to bg estimate to mark near end activity
+    LC_DELTA_FAR_ACT = 1000.0
     
     LC_GAIN_MAX = 1
-    LC_GAIN_MIN = 0.0056
-    LC_GAIN_DT = 0.1778 # sqrt(0.0316)
-    LC_GAIN_SILENCE = 0.0748 # sqrt(0.0056)
+    LC_GAIN_MIN = 0.0562
+    LC_GAIN_DT = 0.2
+    LC_GAIN_SILENCE = 0.3162
 
     LC_MIN_REF_POWER = 0.00001
     LC_POWER_EST_INIT = 0.00001
