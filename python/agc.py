@@ -55,7 +55,8 @@ class agc_ch(object):
                 self.x_peak = (1 - alpha_peak) * self.x_fast + alpha_peak * self.x_peak
 
                 g_mod = 1
-                if (self.x_peak * self.gain < self.threshold_lower) and (not self.lc_enabled or self.lc_t_far == 0):
+                near_only = (self.lc_t_far == 0) and (self.lc_t_near > 0)
+                if (self.x_peak * self.gain < self.threshold_lower) and (not self.lc_enabled or near_only):
                     g_mod = self.gain_inc 
                 elif self.x_peak * self.gain > self.threshold_upper:
                     g_mod = self.gain_dec

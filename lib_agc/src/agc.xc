@@ -345,10 +345,10 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
             }
 
             vtb_u32_float_t gained_pk = vtb_mul_u32_u32(state.x_peak, state.gain);
-
+            int near_only = state.lc_t_near && !state.lc_t_far;
             if(vtb_gte_u32_u32(gained_pk, state.upper_threshold)){
                 state.gain = vtb_mul_u32_u32(state.gain_dec, state.gain);
-            } else if(vtb_gte_u32_u32(state.lower_threshold, gained_pk) && (!state.lc_enabled || state.lc_t_far == 0)){
+            } else if(vtb_gte_u32_u32(state.lower_threshold, gained_pk) && (!state.lc_enabled || near_only)){
                 state.gain = vtb_mul_u32_u32(state.gain_inc, state.gain);
             }
             
