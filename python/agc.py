@@ -55,7 +55,8 @@ class agc_ch(object):
                 self.x_peak = (1 - alpha_peak) * self.x_fast + alpha_peak * self.x_peak
 
                 g_mod = 1
-                if (self.x_peak * self.gain < self.threshold_lower) and (not self.lc_enabled or self.lc_t_far == 0):
+                near_only = (self.lc_t_far == 0) and (self.lc_t_near > 0)
+                if (self.x_peak * self.gain < self.threshold_lower) and (not self.lc_enabled or near_only):
                     g_mod = self.gain_inc 
                 elif self.x_peak * self.gain > self.threshold_upper:
                     g_mod = self.gain_dec
@@ -160,13 +161,13 @@ class agc(object):
     LC_GAMMA_DEC = 0.995
     LC_BG_POWER_GAMMA = 1.001 # bg power estimate small increase prevent local minima
     
-    LC_DELTA = 8.0 # ratio of near end power to bg estimate to mark near end activity
-    LC_DELTA_FAR_ACT = 32
+    LC_DELTA = 500.0 # ratio of near end power to bg estimate to mark near end activity
+    LC_DELTA_FAR_ACT = 1000.0
     
     LC_GAIN_MAX = 1
-    LC_GAIN_MIN = 0.0056
-    LC_GAIN_DT = 0.1778 # sqrt(0.0316)
-    LC_GAIN_SILENCE = 0.0748 # sqrt(0.0056)
+    LC_GAIN_MIN = 0.0562
+    LC_GAIN_DT = 0.2
+    LC_GAIN_SILENCE = 0.3162
 
     LC_MIN_REF_POWER = 0.00001
     LC_POWER_EST_INIT = 0.00001

@@ -53,13 +53,6 @@ void test_agc_init(){
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(vtb_float_u32_zero.m, agc.ch_state[ch].x_peak.m, "Incorrect x_peak m");
         TEST_ASSERT_EQUAL_INT32_MESSAGE(vtb_float_u32_zero.e, agc.ch_state[ch].x_peak.e, "Incorrect x_peak e");
 
-        TEST_ASSERT_EQUAL_UINT32_MESSAGE(AGC_ALPHA_SLOW_RISE, agc.ch_state[ch].alpha_sr, "Incorrect alpha_sr");
-        TEST_ASSERT_EQUAL_UINT32_MESSAGE(AGC_ALPHA_SLOW_FALL, agc.ch_state[ch].alpha_sf, "Incorrect alpha_sf");
-        TEST_ASSERT_EQUAL_UINT32_MESSAGE(AGC_ALPHA_FAST_RISE, agc.ch_state[ch].alpha_fr, "Incorrect alpha_fr");
-        TEST_ASSERT_EQUAL_UINT32_MESSAGE(AGC_ALPHA_FAST_FALL, agc.ch_state[ch].alpha_ff, "Incorrect alpha_ff");
-        TEST_ASSERT_EQUAL_UINT32_MESSAGE(AGC_ALPHA_PEAK_RISE, agc.ch_state[ch].alpha_pr, "Incorrect alpha_pr");
-        TEST_ASSERT_EQUAL_UINT32_MESSAGE(AGC_ALPHA_PEAK_FALL, agc.ch_state[ch].alpha_pf, "Incorrect alpha_pf");
-
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_gain_inc[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].gain_inc, -16), "Incorrect gain inc");
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_gain_dec[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].gain_dec, -16), "Incorrect gain inc");
     }
