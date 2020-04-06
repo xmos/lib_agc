@@ -2,7 +2,7 @@
 from __future__ import division
 from builtins import object
 import numpy as np
-from math import sqrt, log
+from math import sqrt
 
 class agc_ch(object):
     def __init__(self, adapt, init_gain, max_gain, upper_threshold, lower_threshold, gain_inc, gain_dec, lc_enabled = False):
