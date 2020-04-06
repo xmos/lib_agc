@@ -35,18 +35,6 @@ class agc_ch(object):
         
         self.lc_t_far = 0
         self.lc_t_near = 0
-
-        self.lc_gains = []
-        self.t_nears = []
-        self.t_fars = []
-        self.powers = []
-        self.near_powers = []
-        self.near_bg_powers = []
-        self.far_powers = []
-        self.far_bg_powers = []
-        self.ref_powers = []
-        self.near_max = []
-
     
     
     def process_channel(self, input_frame, ref_power, vad):
@@ -137,16 +125,6 @@ class agc_ch(object):
                     self.lc_gain = min(target_gain, self.lc_gain * agc.LC_GAMMA_INC)
                     gained_input[i] = (self.lc_gain * self.gain) * sample
             
-            self.t_nears.append(self.lc_t_near)
-            self.t_fars.append(self.lc_t_far)
-            self.powers.append(frame_power)
-            self.lc_gains.append(20*log(self.lc_gain, 10))
-            self.near_powers.append(self.lc_near_power_est)
-            self.near_bg_powers.append(delta * self.lc_near_bg_power_est)
-            self.far_powers.append(self.lc_far_power_est)
-            self.far_bg_powers.append(agc.LC_FAR_DELTA * self.lc_far_bg_power_est)
-            self.ref_powers.append(ref_power)
-            self.near_max.append(max(input_frame**2.0))
         else:
             gained_input = self.gain * input_frame
             
