@@ -84,7 +84,7 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         vtb_normalise_u32(agc.ch_state[ch].lc_near_power_est);
         
 
-        agc.ch_state[ch].lc_far_power_est.m = AGC_LC_MIN_FAR_POWER;
+        agc.ch_state[ch].lc_far_power_est.m = AGC_LC_FAR_BG_POWER_EST_INIT;
         agc.ch_state[ch].lc_far_power_est.e = VTB_UQ0_32_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_far_power_est);
         
@@ -98,22 +98,22 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         agc.ch_state[ch].lc_far_bg_power_est.e = VTB_UQ0_32_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_far_bg_power_est);
         
-        agc.ch_state[ch].lc_min_far_power.m = AGC_LC_MIN_FAR_POWER;
-        agc.ch_state[ch].lc_min_far_power.e = VTB_UQ0_32_EXP;
-        vtb_normalise_u32(agc.ch_state[ch].lc_min_far_power);
-        
         agc.ch_state[ch].lc_bg_power_gamma.m = AGC_LC_BG_POWER_GAMMA;
         agc.ch_state[ch].lc_bg_power_gamma.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_bg_power_gamma);
         
-        agc.ch_state[ch].lc_delta_far.m = AGC_LC_DELTA_FAR;
-        agc.ch_state[ch].lc_delta_far.e = VTB_UQ16_16_EXP;
-        vtb_normalise_u32(agc.ch_state[ch].lc_delta_far);
+        agc.ch_state[ch].lc_near_delta_far.m = AGC_LC_NEAR_DELTA_FAR_ACT;
+        agc.ch_state[ch].lc_near_delta_far.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].lc_near_delta_far);
         
-        agc.ch_state[ch].lc_delta.m = AGC_LC_DELTA;
-        agc.ch_state[ch].lc_delta.e = VTB_UQ16_16_EXP;
-        vtb_normalise_u32(agc.ch_state[ch].lc_delta);
+        agc.ch_state[ch].lc_near_delta.m = AGC_LC_NEAR_DELTA;
+        agc.ch_state[ch].lc_near_delta.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].lc_near_delta);
         
+        agc.ch_state[ch].lc_far_delta.m = AGC_LC_FAR_DELTA;
+        agc.ch_state[ch].lc_far_delta.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].lc_far_delta);
+
         agc.ch_state[ch].lc_gain_max.m = AGC_LC_GAIN_MAX;
         agc.ch_state[ch].lc_gain_max.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_gain_max);
@@ -366,14 +366,9 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
     }
     vtb_exponential_average_u32(state.lc_far_power_est, far_power, far_power_alpha);
     
-    vtb_u32_float_t limited_far_power_est = state.lc_far_power_est;
-    if(vtb_gte_u32_u32(state.lc_min_far_power, limited_far_power_est)){
-        limited_far_power_est = state.lc_min_far_power;
-    }
-    
     vtb_u32_float_t far_bg_power_est = vtb_mul_u32_u32(state.lc_far_bg_power_est, state.lc_bg_power_gamma);
-    if(vtb_gte_u32_u32(far_bg_power_est, limited_far_power_est)){
-        state.lc_far_bg_power_est = limited_far_power_est;
+    if(vtb_gte_u32_u32(far_bg_power_est, state.lc_far_power_est)){
+        state.lc_far_bg_power_est = state.lc_far_power_est;
     }
     else{
         state.lc_far_bg_power_est = far_bg_power_est;
@@ -398,7 +393,7 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
     vtb_u32_float_t lc_target_gain;
     if(state.lc_enabled){
         // Update activity timers
-        if(vtb_gte_u32_u32(limited_far_power_est, vtb_mul_u32_u32(state.lc_delta, state.lc_far_bg_power_est))){
+        if(vtb_gte_u32_u32(state.lc_far_power_est, vtb_mul_u32_u32(state.lc_far_delta, state.lc_far_bg_power_est))){
             state.lc_t_far = AGC_LC_N_FRAME_FAR;
         }
         else{
@@ -406,9 +401,9 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
             if (state.lc_t_far < 0) state.lc_t_far = 0;
         }
         
-        vtb_u32_float_t delta = state.lc_delta;
+        vtb_u32_float_t delta = state.lc_near_delta;
         if(state.lc_t_far){
-            delta = state.lc_delta_far;
+            delta = state.lc_near_delta_far;
         }
         if(vtb_gte_u32_u32(state.lc_near_power_est, vtb_mul_u32_u32(delta, state.lc_bg_power_est))){
             state.lc_t_near = AGC_LC_N_FRAME_NEAR;
