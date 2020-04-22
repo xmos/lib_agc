@@ -2,7 +2,7 @@
 from __future__ import division
 from builtins import object
 import numpy as np
-from math import sqrt
+from math import sqrt, log
 
 class agc_ch(object):
     def __init__(self, adapt, init_gain, max_gain, upper_threshold, lower_threshold, gain_inc, gain_dec, lc_enabled = False):
@@ -35,9 +35,23 @@ class agc_ch(object):
         
         self.lc_t_far = 0
         self.lc_t_near = 0
+        
+        self.corr_val = 0
+        
+        self.lc_gains = []
+        self.t_nears = []
+        self.t_fars = []
+        self.powers = []
+        self.near_powers = []
+        self.near_bg_powers = []
+        self.far_powers = []
+        self.far_bg_powers = []
+        self.ref_powers = []
+        self.near_max = []
+        self.corr_vals = []
+
     
-    
-    def process_channel(self, input_frame, ref_power, vad):
+    def process_channel(self, input_frame, ref_power, vad, aec_corr_factor):
         if(self.adapt):
             peak_sample = np.absolute(input_frame).max() #Sample input from Ch0
             rising = peak_sample > abs(self.x_slow)
@@ -87,7 +101,13 @@ class agc_ch(object):
         
         gained_input = input_frame
         if(self.lc_enabled):
-            # Update far-end-activity timer
+            
+            if aec_corr_factor > self.corr_val:
+                self.corr_val = aec_corr_factor
+                self.corr_val_counter = agc.LC_CORR_PK_HOLD
+            else:
+                self.corr_val = 0.95 * self.corr_val + 0.05 * aec_corr_factor
+
             if(self.lc_far_power_est > agc.LC_FAR_DELTA * self.lc_far_bg_power_est):
                 self.lc_t_far = agc.LC_N_FRAME_FAR
             else:
@@ -95,10 +115,25 @@ class agc_ch(object):
             delta = agc.LC_DELTA
             if self.lc_t_far > 0:
                 delta = agc.LC_DELTA_FAR_ACT
+            
             # Update near-end-activity timer
             if(self.lc_near_power_est > (delta * self.lc_near_bg_power_est)):
-                self.lc_t_near = agc.LC_N_SAMPLE_NEAR
+                if self.lc_t_far == 0:
+                    # Near speech only
+                    self.lc_t_near = agc.LC_N_SAMPLE_NEAR
+                elif self.lc_t_far > 0 and self.corr_val < agc.LC_CORR_THRESHOLD:
+                    # Double talk
+                    self.lc_t_near = agc.LC_N_SAMPLE_NEAR / 2
+                elif self.lc_t_far > 0 and self.corr_val >= agc.LC_CORR_THRESHOLD:
+                    # Far end speech only
+                    self.lc_t_near = 0
+                else:
+                    raise Exception("Reached here!")
+                
+                # self.lc_t_near = agc.LC_N_SAMPLE_NEAR
+            
             else:
+                # Silence
                 self.lc_t_near = max(0, self.lc_t_near - 1)
             
             # Adapt loss control gain
@@ -112,7 +147,7 @@ class agc_ch(object):
                 # Far end only
                 target_gain = agc.LC_GAIN_MIN
             elif(self.lc_t_far > 0 and self.lc_t_near > 0):
-                # Both near and far speech
+                # Double talk
                 target_gain = agc.LC_GAIN_DT
             
             
@@ -124,6 +159,18 @@ class agc_ch(object):
                 for i, sample in enumerate(input_frame):
                     self.lc_gain = min(target_gain, self.lc_gain * agc.LC_GAMMA_INC)
                     gained_input[i] = (self.lc_gain * self.gain) * sample
+                    
+            self.t_nears.append(self.lc_t_near)
+            self.t_fars.append(self.lc_t_far)
+            self.powers.append(frame_power)
+            self.near_powers.append(self.lc_near_power_est)
+            self.near_bg_powers.append(delta * self.lc_near_bg_power_est)
+            self.far_powers.append(self.lc_far_power_est)
+            self.far_bg_powers.append(agc.LC_FAR_DELTA * self.lc_far_bg_power_est)
+            self.ref_powers.append(ref_power)
+            self.near_max.append(max(input_frame**2.0))
+            self.corr_vals.append(self.corr_val)
+            self.lc_gains.append(20*log(self.lc_gain, 10))
             
         else:
             gained_input = self.gain * input_frame
@@ -162,6 +209,9 @@ class agc(object):
     LC_FAR_DELTA = 50.0
     LC_DELTA_FAR_ACT = 500.0
     
+    LC_CORR_THRESHOLD = 0.9
+    LC_CORR_PK_HOLD = 1
+    
     LC_GAIN_MAX = 1
     LC_GAIN_MIN = 0.0177 #-35dB
     LC_GAIN_DT = 0.2
@@ -183,9 +233,9 @@ class agc(object):
             self.ch_state[ch_idx].x_peak = 0
 
 
-    def process_frame(self, input_frame, ref_power_est, vad):
+    def process_frame(self, input_frame, ref_power_est, vad, aec_corr_factor):
         output = np.zeros((self.input_ch_count, len(input_frame[0])))
         for i in range(self.input_ch_count):
-            output[i] = self.ch_state[i].process_channel(input_frame[i], ref_power_est, vad)
+            output[i] = self.ch_state[i].process_channel(input_frame[i], ref_power_est, vad, aec_corr_factor)
         
         return output
