@@ -105,20 +105,19 @@ class agc_ch(object):
             
             if aec_corr_factor > self.corr_val:
                 self.corr_val = aec_corr_factor
-                self.corr_val_counter = agc.LC_CORR_PK_HOLD
             else:
                 self.corr_val = 0.95 * self.corr_val + 0.05 * aec_corr_factor
 
+            # Update far-end activity timer
             if(self.lc_far_power_est > agc.LC_FAR_DELTA * self.lc_far_bg_power_est):
                 self.lc_t_far = agc.LC_N_FRAME_FAR
-                # print(f'{self.lc_far_power_est} > {agc.LC_FAR_DELTA} * {self.lc_far_bg_power_est}')
             else:
                 self.lc_t_far = max(0, self.lc_t_far - 1)
             delta = agc.LC_DELTA
             if self.lc_t_far > 0:
                 delta = agc.LC_DELTA_FAR_ACT
             
-            # Update near-end-activity timer
+            # Update near-end activity timer
             if(self.lc_near_power_est > (delta * self.lc_near_bg_power_est)):
                 if self.lc_t_far == 0:
                     # Near speech only
@@ -131,8 +130,6 @@ class agc_ch(object):
                     self.lc_t_near = 0
                 else:
                     raise Exception("Reached here!")
-                
-                # self.lc_t_near = agc.LC_N_SAMPLE_NEAR
             
             else:
                 # Silence

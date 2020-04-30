@@ -36,6 +36,8 @@
 #define AGC_LC_NEAR_POWER_EST VTB_UQ0_32(0.00001)
 #define AGC_LC_BG_POWER_EST_INIT VTB_UQ0_32(0.01)
 #define AGC_LC_FAR_BG_POWER_EST_INIT VTB_UQ0_32(0.01)
+
+#define AGC_LC_CORR_THRESHOLD VTB_UQ0_32(0.9)
 // #define AGC_LC_FAR_BG_POWER_EST_MIN VTB_UQ0_32(0.00001)
 
 
@@ -71,6 +73,7 @@ typedef struct {
     vtb_u32_float_t lc_gain_silence;
     vtb_u32_float_t lc_gain_dec;
     vtb_u32_float_t lc_gain_inc;
+    vtb_uq0_32_t lc_corr_factor;
 } agc_ch_state_t;
 
 
