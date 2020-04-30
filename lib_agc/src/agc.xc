@@ -28,6 +28,9 @@
 #include "audio_test_tools.h"
 #endif
 
+#include <stdio.h>
+
+
 #if AGC_DEBUG_PRINT
 static int frame_counter = 0;
 #endif
@@ -40,6 +43,7 @@ const vtb_u32_float_t U_ONE = {UINT_MAX, -32};
 const vtb_u32_float_t U_HALF = {UINT_MAX, -32-1};
 const vtb_s32_float_t S_QUARTER = {INT_MAX, -31-2};
 
+const vtb_u32_float_t AGC_LC_FAR_BG_POWER_EST_MIN = {2814705664, -48}; //0.00001
 
 static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, vtb_u32_float_t far_power, int vad_flag);
 
@@ -94,9 +98,17 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         agc.ch_state[ch].lc_bg_power_est.e = VTB_UQ0_32_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_bg_power_est);
         
+        // agc.ch_state[ch].lc_far_bg_power_est.m = AGC_LC_FAR_BG_POWER_EST_MIN; 
+        // agc.ch_state[ch].lc_far_bg_power_est.e = VTB_UQ0_32_EXP;
+        // vtb_normalise_u32(agc.ch_state[ch].lc_far_bg_power_est);
+        // 
+        // printf("m = %u, e = %d\n", agc.ch_state[ch].lc_far_bg_power_est.m, agc.ch_state[ch].lc_far_bg_power_est.e);
+        
+        
         agc.ch_state[ch].lc_far_bg_power_est.m = AGC_LC_FAR_BG_POWER_EST_INIT; 
         agc.ch_state[ch].lc_far_bg_power_est.e = VTB_UQ0_32_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_far_bg_power_est);
+
         
         agc.ch_state[ch].lc_bg_power_gamma.m = AGC_LC_BG_POWER_GAMMA;
         agc.ch_state[ch].lc_bg_power_gamma.e = VTB_UQ16_16_EXP;
@@ -373,6 +385,12 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
     else{
         state.lc_far_bg_power_est = far_bg_power_est;
     }
+    
+    // Limit min value to AGC_LC_FAR_BG_POWER_EST_MIN
+    if(vtb_gte_u32_u32(AGC_LC_FAR_BG_POWER_EST_MIN, state.lc_far_bg_power_est)){
+        state.lc_far_bg_power_est = AGC_LC_FAR_BG_POWER_EST_MIN;
+    }
+    
     
     // Get frame power of input channel
     vtb_u32_float_t input_power = vtb_get_td_frame_power((vtb_ch_pair_t *)samples, s32_exponent, AGC_PROC_FRAME_LENGTH, ch_index);

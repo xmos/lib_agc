@@ -85,6 +85,7 @@ class agc_ch(object):
         self.lc_far_power_est = (far_power_alpha) * self.lc_far_power_est + (1 - far_power_alpha) * ref_power
         
         self.lc_far_bg_power_est = min(agc.LC_BG_POWER_GAMMA * self.lc_far_bg_power_est, self.lc_far_power_est)
+        self.lc_far_bg_power_est = max(self.lc_far_bg_power_est, agc.LC_FAR_BG_POWER_EST_MIN)
         
         frame_power = np.mean(input_frame**2.0)
         near_power_alpha = agc.LC_EST_ALPHA_INC
@@ -110,6 +111,7 @@ class agc_ch(object):
 
             if(self.lc_far_power_est > agc.LC_FAR_DELTA * self.lc_far_bg_power_est):
                 self.lc_t_far = agc.LC_N_FRAME_FAR
+                # print(f'{self.lc_far_power_est} > {agc.LC_FAR_DELTA} * {self.lc_far_bg_power_est}')
             else:
                 self.lc_t_far = max(0, self.lc_t_far - 1)
             delta = agc.LC_DELTA
@@ -220,6 +222,7 @@ class agc(object):
     LC_POWER_EST_INIT = 0.00001
     LC_BG_POWER_EST_INIT = 0.01
     LC_FAR_BG_POWER_EST_INIT = 0.01
+    LC_FAR_BG_POWER_EST_MIN = 0.00001
     
     
 
