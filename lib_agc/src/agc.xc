@@ -416,7 +416,7 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         }
         else{
             // Exponential decay
-            state.lc_corr_factor = (vtb_uq0_32_t)(((uint64_t)VTB_UQ0_32(0.95) * (uint64_t)state.lc_corr_factor + (uint64_t)VTB_UQ0_32(0.05) * (uint64_t)aec_corr)>>32);
+            state.lc_corr_factor = (vtb_uq0_32_t)(((uint64_t)VTB_UQ0_32(0.98) * (uint64_t)state.lc_corr_factor + (uint64_t)VTB_UQ0_32(0.02) * (uint64_t)aec_corr)>>32);
         }
         
         // Update activity timers

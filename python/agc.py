@@ -106,7 +106,7 @@ class agc_ch(object):
             if aec_corr_factor > self.corr_val:
                 self.corr_val = aec_corr_factor
             else:
-                self.corr_val = 0.95 * self.corr_val + 0.05 * aec_corr_factor
+                self.corr_val = 0.98 * self.corr_val + 0.02 * aec_corr_factor
 
             # Update far-end activity timer
             if(self.lc_far_power_est > agc.LC_FAR_DELTA * self.lc_far_bg_power_est):
@@ -206,13 +206,13 @@ class agc(object):
     
     LC_DELTA = 50.0 # ratio of near end power to bg estimate to mark near end activity
     LC_FAR_DELTA = 50.0
-    LC_DELTA_FAR_ACT = 500.0
+    LC_DELTA_FAR_ACT = 100.0
     
-    LC_CORR_THRESHOLD = 0.9
+    LC_CORR_THRESHOLD = 0.95
     LC_CORR_PK_HOLD = 1
     
     LC_GAIN_MAX = 1
-    LC_GAIN_MIN = 0.0177 #-35dB
+    LC_GAIN_MIN = 0.003
     LC_GAIN_DT = 0.2
     LC_GAIN_SILENCE = 0.1
 
