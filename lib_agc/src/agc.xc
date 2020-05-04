@@ -97,12 +97,6 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         agc.ch_state[ch].lc_bg_power_est.e = VTB_UQ0_32_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_bg_power_est);
         
-        // agc.ch_state[ch].lc_far_bg_power_est.m = AGC_LC_FAR_BG_POWER_EST_MIN; 
-        // agc.ch_state[ch].lc_far_bg_power_est.e = VTB_UQ0_32_EXP;
-        // vtb_normalise_u32(agc.ch_state[ch].lc_far_bg_power_est);
-        // 
-        // printf("m = %u, e = %d\n", agc.ch_state[ch].lc_far_bg_power_est.m, agc.ch_state[ch].lc_far_bg_power_est.e);
-        
         
         agc.ch_state[ch].lc_far_bg_power_est.m = AGC_LC_FAR_BG_POWER_EST_INIT; 
         agc.ch_state[ch].lc_far_bg_power_est.e = VTB_UQ0_32_EXP;

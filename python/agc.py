@@ -2,7 +2,7 @@
 from __future__ import division
 from builtins import object
 import numpy as np
-from math import sqrt, log
+from math import sqrt
 
 class agc_ch(object):
     def __init__(self, adapt, init_gain, max_gain, upper_threshold, lower_threshold, gain_inc, gain_dec, lc_enabled = False):
@@ -24,7 +24,6 @@ class agc_ch(object):
         self.threshold_upper = float(upper_threshold)
         self.threshold_lower = float(lower_threshold)
         
-        
         self.lc_enabled = lc_enabled
         self.lc_gain = 1
         
@@ -37,20 +36,8 @@ class agc_ch(object):
         self.lc_t_near = 0
         
         self.corr_val = 0
-        
-        self.lc_gains = []
-        self.t_nears = []
-        self.t_fars = []
-        self.powers = []
-        self.near_powers = []
-        self.near_bg_powers = []
-        self.far_powers = []
-        self.far_bg_powers = []
-        self.ref_powers = []
-        self.near_max = []
-        self.corr_vals = []
 
-    
+
     def process_channel(self, input_frame, ref_power, vad, aec_corr_factor):
         if(self.adapt):
             peak_sample = np.absolute(input_frame).max() #Sample input from Ch0
@@ -159,18 +146,6 @@ class agc_ch(object):
                     self.lc_gain = min(target_gain, self.lc_gain * agc.LC_GAMMA_INC)
                     gained_input[i] = (self.lc_gain * self.gain) * sample
                     
-            self.t_nears.append(self.lc_t_near)
-            self.t_fars.append(self.lc_t_far)
-            self.powers.append(frame_power)
-            self.near_powers.append(self.lc_near_power_est)
-            self.near_bg_powers.append(delta * self.lc_near_bg_power_est)
-            self.far_powers.append(self.lc_far_power_est)
-            self.far_bg_powers.append(agc.LC_FAR_DELTA * self.lc_far_bg_power_est)
-            self.ref_powers.append(ref_power)
-            self.near_max.append(max(input_frame**2.0))
-            self.corr_vals.append(self.corr_val)
-            self.lc_gains.append(20*log(self.lc_gain, 10))
-            
         else:
             gained_input = self.gain * input_frame
             
