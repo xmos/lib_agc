@@ -1,6 +1,11 @@
 AGC library change log
 ======================
 
+7.0.0
+-----
+
+  * CHANGED: Loss control requires an AEC correlation value.
+
 6.0.2
 -----
 

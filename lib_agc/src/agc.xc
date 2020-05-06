@@ -28,6 +28,8 @@
 #include "audio_test_tools.h"
 #endif
 
+
+
 #if AGC_DEBUG_PRINT
 static int frame_counter = 0;
 #endif
@@ -40,8 +42,9 @@ const vtb_u32_float_t U_ONE = {UINT_MAX, -32};
 const vtb_u32_float_t U_HALF = {UINT_MAX, -32-1};
 const vtb_s32_float_t S_QUARTER = {INT_MAX, -31-2};
 
+const vtb_u32_float_t AGC_LC_FAR_BG_POWER_EST_MIN = {2814705664, -48}; //0.00001
 
-static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, vtb_u32_float_t far_power, int vad_flag);
+static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, vtb_u32_float_t far_power, int vad_flag, vtb_uq0_32_t aec_corr);
 
 
 void agc_init(agc_state_t &agc, agc_init_config_t config){
@@ -94,9 +97,11 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         agc.ch_state[ch].lc_bg_power_est.e = VTB_UQ0_32_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_bg_power_est);
         
+        
         agc.ch_state[ch].lc_far_bg_power_est.m = AGC_LC_FAR_BG_POWER_EST_INIT; 
         agc.ch_state[ch].lc_far_bg_power_est.e = VTB_UQ0_32_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_far_bg_power_est);
+
         
         agc.ch_state[ch].lc_bg_power_gamma.m = AGC_LC_BG_POWER_GAMMA;
         agc.ch_state[ch].lc_bg_power_gamma.e = VTB_UQ16_16_EXP;
@@ -139,6 +144,8 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         
         agc.ch_state[ch].lc_t_far = 0;
         agc.ch_state[ch].lc_t_near = 0;
+        
+        agc.ch_state[ch].lc_corr_factor = VTB_UQ0_32(0);
     }
 }
 
@@ -303,17 +310,17 @@ uint32_t get_max_abs_sample(vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsign
 }
 
 
-void agc_process_frame(agc_state_t &agc, vtb_ch_pair_t frame[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH], vtb_u32_float_t far_power, int vad_flag){
+void agc_process_frame(agc_state_t &agc, vtb_ch_pair_t frame[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH], vtb_u32_float_t far_power, int vad_flag, vtb_uq0_32_t aec_corr){
     #if AGC_DEBUG_PRINT
         printf("\n#%u\n", frame_counter++);
     #endif
     for(unsigned ch=0;ch<AGC_INPUT_CHANNELS;ch++){
-        agc_process_channel(agc.ch_state[ch], frame[ch/2], ch, far_power, vad_flag);
+        agc_process_channel(agc.ch_state[ch], frame[ch/2], ch, far_power, vad_flag, aec_corr);
     }
 }
 
 
-static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, vtb_u32_float_t far_power, int vad_flag){
+static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, vtb_u32_float_t far_power, int vad_flag, vtb_uq0_32_t aec_corr){
     const vtb_u32_float_t agc_limit_point = U_HALF;
     const int s32_exponent = -31;
 
@@ -374,6 +381,12 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         state.lc_far_bg_power_est = far_bg_power_est;
     }
     
+    // Limit min value to AGC_LC_FAR_BG_POWER_EST_MIN
+    if(vtb_gte_u32_u32(AGC_LC_FAR_BG_POWER_EST_MIN, state.lc_far_bg_power_est)){
+        state.lc_far_bg_power_est = AGC_LC_FAR_BG_POWER_EST_MIN;
+    }
+    
+    
     // Get frame power of input channel
     vtb_u32_float_t input_power = vtb_get_td_frame_power((vtb_ch_pair_t *)samples, s32_exponent, AGC_PROC_FRAME_LENGTH, ch_index);
 
@@ -392,6 +405,14 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         
     vtb_u32_float_t lc_target_gain;
     if(state.lc_enabled){
+        if(aec_corr > state.lc_corr_factor){
+            state.lc_corr_factor = aec_corr;
+        }
+        else{
+            // Exponential decay
+            state.lc_corr_factor = (vtb_uq0_32_t)(((uint64_t)VTB_UQ0_32(0.98) * (uint64_t)state.lc_corr_factor + (uint64_t)VTB_UQ0_32(0.02) * (uint64_t)aec_corr)>>32);
+        }
+        
         // Update activity timers
         if(vtb_gte_u32_u32(state.lc_far_power_est, vtb_mul_u32_u32(state.lc_far_delta, state.lc_far_bg_power_est))){
             state.lc_t_far = AGC_LC_N_FRAME_FAR;
@@ -405,10 +426,24 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         if(state.lc_t_far){
             delta = state.lc_near_delta_far;
         }
+        
+        // Update near-end-activity timer
         if(vtb_gte_u32_u32(state.lc_near_power_est, vtb_mul_u32_u32(delta, state.lc_bg_power_est))){
-            state.lc_t_near = AGC_LC_N_FRAME_NEAR;
+            if(state.lc_t_far == 0){
+                // Near-end speech only
+                state.lc_t_near = AGC_LC_N_FRAME_NEAR;
+            }
+            else if(state.lc_t_far && (state.lc_corr_factor < AGC_LC_CORR_THRESHOLD)){
+                // Double talk
+                state.lc_t_near = AGC_LC_N_FRAME_NEAR>>1;
+            }
+            else {
+                // Far-end speech only
+                state.lc_t_near = 0;
+            }
         }
         else{
+            // Silence
             state.lc_t_near = state.lc_t_near - 1;
             if (state.lc_t_near < 0) state.lc_t_near = 0;
         }
