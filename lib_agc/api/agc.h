@@ -246,11 +246,15 @@ int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index);
  *
  * \param[in] vad_flag          VAD flag for input sample data. Non-zero indicates
  *                              that the sample data contains voice activity.
+ *
+ * \param[in] aec_corr          AEC correlation value. A value close to 1 indicates
+ *                              that the mic energy is dominated by reference audio.
  */
 void agc_process_frame(agc_state_t &agc,
         vtb_ch_pair_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH],
         vtb_u32_float_t far_power,
-        int vad_flag);
+        int vad_flag,
+        vtb_uq0_32_t aec_corr);
 
 
 #endif // _AGC_H_

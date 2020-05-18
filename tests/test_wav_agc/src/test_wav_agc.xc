@@ -67,9 +67,10 @@ void agc_test_task(chanend c_data_input, chanend c_data_output,
         for(unsigned s=0;s<AGC_FRAME_ADVANCE;s++){
             vad_data_window[s] = (input_frame[0][s], int32_t[])[0];
         }
-        int32_t vad_percentage = vad_percentage_voice(vad_data_window, vad_state);
+        int vad = vad_percentage_voice(vad_data_window, vad_state) > AGC_VAD_THRESHOLD;
+        vtb_uq0_32_t aec_corr = 0;
 
-        agc_process_frame(agc_state, input_frame, ref_power, vad_percentage > AGC_VAD_THRESHOLD);
+        agc_process_frame(agc_state, input_frame, ref_power, vad, aec_corr);
 
         vtb_tx_notification_and_data(c_data_output, (vtb_ch_pair_t*)input_frame,
                          2*AGC_CHANNEL_PAIRS,

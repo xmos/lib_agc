@@ -1,6 +1,12 @@
 AGC library change log
 ======================
 
+7.0.0
+-----
+
+  * CHANGED: Loss control requires an AEC correlation value.
+  * CHANGED: Removed unnecessary internal state in agc_ch_state_t.
+
 6.0.2
 -----
 
