@@ -8,6 +8,6 @@ pytest-xdist
 webrtcvad
 
 -e ./../audio_test_tools/python
--e ./../lib_vad/python
 -e ./../lib_voice_toolbox/python
+-e ./../lib_vad/python
 -e ./python
