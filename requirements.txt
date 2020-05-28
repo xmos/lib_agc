@@ -1,0 +1,13 @@
+# python_version 3.7
+
+numpy
+scipy
+matplotlib
+pytest
+pytest-xdist
+webrtcvad
+
+-e ./../audio_test_tools/python
+-e ./../lib_vad/python
+-e ./../lib_voice_toolbox/python
+-e ./python
