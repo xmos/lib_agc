@@ -6,6 +6,8 @@ AGC library change log
 
   * CHANGED: Loss control requires an AEC correlation value.
   * CHANGED: Removed unnecessary internal state in agc_ch_state_t.
+  * CHANGED: Switch from pipenv to virtualenv
+  * CHANGED: Update Jenkins shared library to 0.14.1
 
 6.0.2
 -----
