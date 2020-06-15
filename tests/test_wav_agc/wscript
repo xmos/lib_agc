@@ -13,7 +13,7 @@ def configure(conf):
     conf.load('xwaf.xcommon')    
 
 def build(bld):
-    subprocess.call(['pipenv', 'run', '../../lib_agc/generate_config.py'])    
+    subprocess.call(['../../.venv/bin/python', '../../lib_agc/generate_config.py'])
     target_path = 'bin/' + bld.options.target
     bld.env.XSCOPE = bld.path.find_resource('config.xscope')
     depends_on = ['lib_agc', 'audio_test_tools', 'lib_voice_toolbox']
