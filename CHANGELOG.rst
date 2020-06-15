@@ -1,6 +1,11 @@
 AGC library change log
 ======================
 
+7.0.1
+-----
+
+  * CHANGED: Use virtualenv instead of pipenv.
+
 7.0.0
 -----
 
