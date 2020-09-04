@@ -26,7 +26,7 @@ setuptools.setup(
     ],
     dependency_links=[
         './../../audio_test_tools/python#egg=audio_test_tools',
-        './../../lib_vad/python#egg=lib_vad',
         './../../lib_voice_toolbox#egg=lib_voice_toolbox',
+        './../../lib_vad/python#egg=lib_vad',
     ],
 )

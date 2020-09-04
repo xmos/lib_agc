@@ -38,6 +38,6 @@ webrtcvad==2.0.10
 # of its own setup.py file, then this list must include an entry for that
 # setup.py file, e.g., '-e .' or '-e ./python' (without the quotes).
 -e ./../audio_test_tools/python
--e ./../lib_vad/python
 -e ./../lib_voice_toolbox/python
+-e ./../lib_vad/python
 -e ./python
