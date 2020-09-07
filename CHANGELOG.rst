@@ -4,7 +4,7 @@ AGC library change log
 7.0.2
 -----
 
-  * CHANGED: pin python and python module versions
+  * ADDED: DELETE-ME - Version bump placeholder for develop branch
 
 7.0.1
 -----
