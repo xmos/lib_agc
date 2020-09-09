@@ -18,7 +18,7 @@ setuptools.setup(
         'pylint~=2.5',
         'pytest~=6.0',
         'pytest-xdist~=1.34',
-        'scipy~=1.5',
+        'scipy~=1.4',
         'webrtcvad~=2.0',
         'audio_test_tools',
         'lib_vad',
