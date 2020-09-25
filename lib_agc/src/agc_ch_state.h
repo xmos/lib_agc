@@ -26,7 +26,6 @@
 
 #define AGC_LC_CORR_THRESHOLD VTB_UQ0_32(0.9)
 
-
 /**
  * Structure to hold AGC state, only used internally.
  */
@@ -51,6 +50,13 @@ typedef struct {
     vtb_u32_float_t lc_far_bg_power_est;
     vtb_uq0_32_t lc_corr_factor;
 } agc_ch_state_t;
+
+/**
+ * Structure containing AGC state unique to each input channel.
+ */
+typedef struct {
+    agc_ch_state_t ch_state[AGC_INPUT_CHANNELS]; ///< Channel states
+} agc_state_t;
 
 
 #endif // _AGC_STATE_H_
