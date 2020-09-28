@@ -16,6 +16,7 @@
 #include "voice_toolbox.h"
 
 #include "agc.h"
+#include "agc_control.h"
 
 #define TEST_ASM 1
 
