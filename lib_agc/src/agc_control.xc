@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019, XMOS Ltd, All rights reserved
+// Copyright (c) 2017-2020, XMOS Ltd, All rights reserved
 #include "agc_control.h"
 
 void agc_command_handler(chanend c_command, agc_state_t &agc_state){
