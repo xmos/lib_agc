@@ -4,7 +4,7 @@ AGC library change log
 7.0.2
 -----
 
-  * ADDED: DELETE-ME - Version bump placeholder for develop branch
+  * ADDED: Control commands map and handler
 
 7.0.1
 -----
