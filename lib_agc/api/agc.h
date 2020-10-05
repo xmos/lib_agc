@@ -2,6 +2,7 @@
 #ifndef _AGC_H_
 #define _AGC_H_
 
+#include <xccompat.h>
 #include "dsp.h"
 #include "vtb_q_format.h"
 #include "agc_ch_state.h"
@@ -45,7 +46,7 @@ typedef struct {
  * \param[in] config        Array containing AGC configuration for each channel.
  *                          Must be of length AGC_INPUT_CHANNELS.
  */
-void agc_init(agc_state_t &agc, agc_init_config_t config);
+void agc_init(REFERENCE_PARAM(agc_state_t, agc), agc_init_config_t config);
 
 
 /** Set AGC channel gain.
@@ -56,7 +57,7 @@ void agc_init(agc_state_t &agc, agc_init_config_t config);
  *
  * \param[in] gain          Gain value in linear UQ16_16 format.
  */
-void agc_set_ch_gain(agc_state_t &agc, unsigned ch_index, vtb_uq16_16_t gain);
+void agc_set_ch_gain(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index, vtb_uq16_16_t gain);
 
 
 /** Get AGC channel gain.
@@ -79,7 +80,7 @@ vtb_uq16_16_t agc_get_ch_gain(agc_state_t agc, unsigned ch_index);
  * \param[in] gain_inc      Gain increase value in linear UQ16_16 format.
  *                          Must be greater than 1.
  */
-void agc_set_ch_gain_inc(agc_state_t &agc, unsigned ch_index, vtb_uq16_16_t gain_inc);
+void agc_set_ch_gain_inc(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index, vtb_uq16_16_t gain_inc);
 
 
 /** Get AGC channel gain increase value.
@@ -102,7 +103,7 @@ vtb_uq16_16_t agc_get_ch_gain_inc(agc_state_t agc, unsigned ch_index);
  * \param[in] gain_dec      Gain decrease value in linear UQ16_16 format.
  *                          Must be between 0 and 1.
  */
-void agc_set_ch_gain_dec(agc_state_t &agc, unsigned ch_index, vtb_uq16_16_t gain_dec);
+void agc_set_ch_gain_dec(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index, vtb_uq16_16_t gain_dec);
 
 
 /** Get AGC channel gain decrease value.
@@ -124,7 +125,7 @@ vtb_uq16_16_t agc_get_ch_gain_dec(agc_state_t agc, unsigned ch_index);
  *
  * \param[in] max_gain      Max gain value in linear UQ16_16 format.
  */
-void agc_set_ch_max_gain(agc_state_t &agc, unsigned ch_index,
+void agc_set_ch_max_gain(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
         vtb_uq16_16_t max_gain);
 
 
@@ -147,7 +148,7 @@ vtb_uq16_16_t agc_get_ch_max_gain(agc_state_t agc, unsigned ch_index);
  *
  * \param[in] adapt         AGC adapt flag: 0 for fixed gain, 1 for adapt.
  */
-void agc_set_ch_adapt(agc_state_t &agc, unsigned ch_index,  uint32_t adapt);
+void agc_set_ch_adapt(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,  uint32_t adapt);
 
 
 /** Get AGC channel adapt flag.
@@ -169,7 +170,7 @@ int agc_get_ch_adapt(agc_state_t agc, unsigned ch_index);
  *
  * \param[in] enable        AGC LC enable flag: 0 for disabled, 1 for enabled.
  */
-void agc_set_ch_lc_enable(agc_state_t &agc, unsigned ch_index,  uint32_t enable);
+void agc_set_ch_lc_enable(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,  uint32_t enable);
 
 
 /** Get AGC channel loss control enabled flag.
@@ -193,7 +194,7 @@ int agc_get_ch_lc_enable(agc_state_t agc, unsigned ch_index);
  * \param[in] upper_threshold   Upper threshold of desired output voice level
  *                              [0, INT32_MAX].
  */
-void agc_set_ch_upper_threshold(agc_state_t &agc, unsigned ch_index,
+void agc_set_ch_upper_threshold(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
         int32_t upper_threshold);
 
 
@@ -207,7 +208,7 @@ void agc_set_ch_upper_threshold(agc_state_t &agc, unsigned ch_index,
  * \param[in] lower_threshold   Lower threshold of desired output voice level
  *                              [0, INT32_MAX].
  */
-void agc_set_ch_lower_threshold(agc_state_t &agc, unsigned ch_index,
+void agc_set_ch_lower_threshold(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
         int32_t lower_threshold);
 
 
@@ -250,7 +251,7 @@ int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index);
  * \param[in] aec_corr          AEC correlation value. A value close to 1 indicates
  *                              that the mic energy is dominated by reference audio.
  */
-void agc_process_frame(agc_state_t &agc,
+void agc_process_frame(REFERENCE_PARAM(agc_state_t, agc),
         vtb_ch_pair_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH],
         vtb_u32_float_t far_power,
         int vad_flag,
