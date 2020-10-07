@@ -1,6 +1,12 @@
 AGC library change log
 ======================
 
+7.0.2
+-----
+
+  * CHANGED: Pin Python package versions
+  * REMOVED: not necessary cpanfile
+
 7.0.1
 -----
 
