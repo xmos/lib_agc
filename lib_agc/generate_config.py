@@ -3,6 +3,7 @@
 from pathlib import Path
 from json_utils import JsonHandler
 
+print("IN generate_config.py")
 module_dir = Path(__file__).parent
 file_conv = JsonHandler(str((module_dir / 'config/agc_2ch.json').resolve()),
                         False)
