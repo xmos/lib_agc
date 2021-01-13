@@ -6,6 +6,7 @@ import sys
 from waflib import Options
 from waflib.Build import BuildContext, CleanContext
 
+TARGETS = ['xcore200', 'xcoreai']
 
 def get_ruby():
     """
@@ -79,12 +80,13 @@ def generate_unity_runner(project_root_path, unity_test_path, unity_runner_dir,
 
 
 def add_unity_runner_build_config(waf_conf, project_root_path, unity_test_path,
-                                  unity_runner_build_flags):
+                                  unity_runner_build_flags, target):
     """
     Add a config to xwaf to build each Unity test runner into an xCORE
     executable.
     """
-    waf_conf.setenv(get_test_name(unity_test_path))
+    print(f"get_test_name(unity_test_path) = {get_test_name(unity_test_path)}. target = {target}")
+    waf_conf.setenv(get_test_name(unity_test_path) + '_' + target)
     waf_conf.load('xwaf.compiler_xcc')
     waf_conf.env.XCC_FLAGS = unity_runner_build_flags
     waf_conf.env.PROJECT_ROOT = project_root_path
@@ -92,12 +94,12 @@ def add_unity_runner_build_config(waf_conf, project_root_path, unity_test_path,
 
 
 def prepare_unity_test_for_build(waf_conf, project_root_path, unity_test_path,
-                                 unity_runner_dir, unity_runner_suffix):
+                                 unity_runner_dir, unity_runner_suffix, target):
     generate_unity_runner(project_root_path, unity_test_path,
                           unity_runner_dir, unity_runner_suffix)
     runner_build_flags = ''  # Could extract flags from the test name
     add_unity_runner_build_config(waf_conf, project_root_path, unity_test_path,
-                                  runner_build_flags)
+                                  runner_build_flags, target)
 
 
 def find_unity_test_paths(unity_test_dir, unity_test_prefix):
@@ -127,22 +129,30 @@ def generate_all_unity_runners(waf_conf, project_root_path,
     """
     # FIXME: pass unity_tests in?
     unity_test_paths = find_unity_test_paths(unity_test_dir, unity_test_prefix)
-    for unity_test_path in unity_test_paths:
-        prepare_unity_test_for_build(waf_conf, project_root_path,
-                                     unity_test_path,
-                                     unity_runner_dir, unity_runner_suffix)
+    for trgt in TARGETS:
+        for unity_test_path in unity_test_paths:
+            prepare_unity_test_for_build(waf_conf, project_root_path,
+                                         unity_test_path,
+                                         unity_runner_dir, unity_runner_suffix, trgt)
 
 
 # TODO: can the xwaf boilerplate help here?
 def create_waf_contexts(configs):
-    for test_name, test_language in configs.items():
-        for ctx in (BuildContext, CleanContext):
-            raw_context = ctx.__name__.replace('Context', '').lower()
+    for trgt in TARGETS:
+        for test_name, test_language in configs.items():
+            print(f"test_name {test_name}, test_language {test_language}")
+            for ctx in (BuildContext, CleanContext):
+                raw_context = ctx.__name__.replace('Context', '').lower()
 
-            class tmp(ctx):
-                cmd = raw_context + '_' + test_name
-                variant = test_name
-                language = test_language
+                class tmp(ctx):
+                    cmd = raw_context + '_' + test_name + '_' + trgt
+                    variant = test_name + '_' + trgt
+                    #cmd = raw_context + '_' + test_name
+                    #variant = test_name
+                    language = test_language
+                    target = trgt
+                    runner = test_name
+                    print(f"cmd {cmd}, variant {variant}, language {language}")
 
 
 UNITY_TEST_DIR = 'src'
@@ -154,6 +164,7 @@ UNITY_TESTS = find_unity_tests(UNITY_TEST_DIR, UNITY_TEST_PREFIX)
 create_waf_contexts(UNITY_TESTS)
 
 def options(opt):
+    opt.add_option('--target', action='store', default='xcore200')    
     opt.load('xwaf.xcommon')
 
 def configure(conf):
@@ -168,18 +179,32 @@ def configure(conf):
 def build(bld):
     if not bld.variant:
         print('Adding test runners to build queue')
+        trgt = [
+            c for c in TARGETS if c == bld.options.target
+        ]
+
+        if len(trgt) == 0:
+            bld.fatal('specify a target with --target.\nAvailable targets: {}'.format(', '.join(TARGETS)))
+            return        
+    
         for name in UNITY_TESTS:
-            Options.commands.insert(0, 'build_' + name)
+            Options.commands.insert(0, 'build_' + name + '_' + trgt[0])
+            #Options.commands.insert(0, 'build_' + name)
         print('Build queue {}'.format(Options.commands))
     else:
-        print('Building runner {}'.format(bld.variant))
+        print('Building runner {}'.format(bld.runner))
         bld.env.XSCOPE = bld.path.find_resource('config.xscope')
 
         depends_on = ['lib_agc', 'lib_voice_toolbox', 'lib_dsp', 'audio_test_tools',
                       'Unity']
         makefile_opts = {}
-        makefile_opts['SOURCE_DIRS'] = ['src', os.path.join('runners',bld.variant)]
-        makefile_opts['TARGET'] = ['XCORE-AI-EXPLORER']
+        makefile_opts['SOURCE_DIRS'] = ['src', os.path.join('runners',bld.runner)]
+        if(bld.target == 'xcoreai'):
+            print('TARGET XCOREAI')            
+            makefile_opts['TARGET'] = ['XCORE-AI-EXPLORER']
+        else:
+            print('TARGET XCORE200')            
+            makefile_opts['TARGET'] = ['XCORE-200-EXPLORER']
         makefile_opts['INCLUDE_DIRS'] = ['src']
         makefile_opts['XCC_FLAGS'] = ['-O2', '-g', '-Wall', '-DUNITY_SUPPORT_64', '-DUNITY_INCLUDE_DOUBLE']
         makefile_opts['APP_NAME'] = [bld.variant]
