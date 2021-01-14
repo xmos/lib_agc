@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.14.2') _
+@Library('xmos_jenkins_shared_library@v0.15.1') _
 
 getApproval()
 
@@ -6,9 +6,18 @@ pipeline {
   agent {
     label 'x86_64 && brew && macOS'
   }
+  //Tools for AI verif stage. Tools for standard stage in view file
+  parameters {
+     string(
+       name: 'TOOLS_VERSION',
+       defaultValue: '15.0.2',
+       description: 'The tools version to build with (check /projects/tools/ReleasesTools/)'
+     )
+   }
   environment {
     REPO = 'lib_agc'
-    VIEW = getViewName(REPO)
+    //VIEW = getViewName(REPO)
+    VIEW = "lib_agc_develop_tools15"
   }
   options {
     skipDefaultCheckout()
@@ -33,7 +42,7 @@ pipeline {
               runWaf('.', "configure clean build --target=xcore200")
               runWaf('.', "configure clean build --target=xcoreai")
               viewEnv() {
-                runPytest()
+                runPython("TARGET=XCORE200 pytest -n 1")
               }
               }
             }
