@@ -26,6 +26,7 @@ pipeline {
     options {
         skipDefaultCheckout()
     }
+    stages {
     stage('Get View') {
       steps {
         xcorePrepareSandbox("${VIEW}", "${REPO}")
@@ -76,6 +77,7 @@ pipeline {
         }
       }
     }
+  }
   }
   post {
     success {
