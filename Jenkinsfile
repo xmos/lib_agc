@@ -78,7 +78,7 @@ pipeline {
       }
     }
   }
-  }
+
   post {
     success {
       updateViewfiles()
@@ -86,6 +86,7 @@ pipeline {
     cleanup {
       xcoreCleanSandbox()
     }
+  }
   }
   }
 }
