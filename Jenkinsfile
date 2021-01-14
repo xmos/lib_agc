@@ -30,7 +30,8 @@ pipeline {
           dir('tests') {
             dir('agc_unit_tests') {
               withVenv {
-              runWaf('.')
+              runWaf('.', "configure clean build --target=xcore200")
+              runWaf('.', "configure clean build --target=xcoreai")
               viewEnv() {
                 runPytest()
               }
@@ -45,7 +46,8 @@ pipeline {
         dir("${REPO}") {
           dir('tests/test_wav_agc') {
             withVenv {
-            runWaf('.')
+            runWaf('.', "configure clean build --target=xcore200")
+            runWaf('.', "configure clean build --target=xcoreai")
            }
           }
         }
