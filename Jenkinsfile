@@ -3,9 +3,8 @@
 getApproval()
 
 pipeline {
-  agent {
-    label 'x86_64 && brew && macOS'
-  }
+  agent none
+
   //Tools for AI verif stage. Tools for standard stage in view file
   parameters {
      string(
@@ -14,15 +13,19 @@ pipeline {
        description: 'The tools version to build with (check /projects/tools/ReleasesTools/)'
      )
    }
-  environment {
-    REPO = 'lib_agc'
-    //VIEW = getViewName(REPO)
-    VIEW = "lib_agc_develop_tools15"
-  }
-  options {
-    skipDefaultCheckout()
-  }
   stages {
+    stage('Standard build and XS2 tests') {      
+    agent {
+      label 'x86_64 && brew && macOS'
+    }
+    environment {
+        REPO = 'lib_agc'
+        //VIEW = getViewName(REPO)
+        VIEW = "lib_agc_develop_tools15"
+    }
+    options {
+        skipDefaultCheckout()
+    }
     stage('Get View') {
       steps {
         xcorePrepareSandbox("${VIEW}", "${REPO}")
@@ -41,6 +44,7 @@ pipeline {
               withVenv {
               runWaf('.', "configure clean build --target=xcore200")
               runWaf('.', "configure clean build --target=xcoreai")
+              stash name: 'agc_unit_tests', includes: 'bin/*xcoreai.xe, '              
               viewEnv() {
                 runPython("TARGET=XCORE200 pytest -n 1")
               }
@@ -80,5 +84,6 @@ pipeline {
     cleanup {
       xcoreCleanSandbox()
     }
+  }
   }
 }
