@@ -118,11 +118,19 @@ pipeline {
         }          
         stage('xs3 agc_unit_tests')
         {
-            steps{
-            toolsEnv(TOOLS_PATH) {  // load xmos tools
+          steps {
+            dir("${REPO}") {
+            dir('tests') {
+            dir('agc_unit_tests') {
+              withVenv {
                 unstash 'agc_unit_tests'
+                viewEnv() {
                 runPython("TARGET=XCOREAI pytest -n 1")
+              }
             }
+            }
+            }
+           }
           }
         }
       } //stages
