@@ -46,8 +46,10 @@ class UnityTestExecutable(pytest.Item):
         test_output = None
         try:
             if('xcore200' in self.name):
+                print("run axe for executable ", self.name)
                 test_output = subprocess.check_output(['axe', self.name], text=True)
             else:
+                print("run xrun for executable ", self.name)
                 test_output = subprocess.check_output(['xrun', '--io', self.name], text=True, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             # Unity exits non-zero if an assertion fails
@@ -55,6 +57,7 @@ class UnityTestExecutable(pytest.Item):
             test_output = e.output
 
         # Parse the Unity output
+        print('test_output = ', test_output)
         unity_pass = False
         test_output = test_output.split('\n')
         for line in test_output:
