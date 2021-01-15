@@ -78,7 +78,7 @@ pipeline {
       }
     }
   }
-
+  
   post {
     success {
       updateViewfiles()
@@ -87,6 +87,45 @@ pipeline {
       xcoreCleanSandbox()
     }
   }
+  }
+    stage('xcore.ai Verification'){
+      environment {
+        // '/XMOS/tools' from get_tools.py and rest from tools installers
+        TOOLS_PATH = "/XMOS/tools/${params.TOOLS_VERSION}/XMOS/xTIMEcomposer/${params.TOOLS_VERSION}"
+      }
+      stages{
+        stage('Install Dependencies') {
+          steps {
+            sh '/XMOS/get_tools.py ' + params.TOOLS_VERSION
+            installDependencies()
+          }
+        }          
+        stage('xs3 agc_unit_tests')
+        {
+            steps{
+            toolsEnv(TOOLS_PATH) {  // load xmos tools
+                unstash 'agc_unit_tests'
+                runPython("TARGET=XCOREAI pytest -n 1")
+            }
+          }
+        }
+      } //stages
+      post {
+        cleanup {
+          cleanWs()
+        }
+      }
+  }//xcore.ai
+  stage('Update view files') {
+    agent {
+      label 'x86_64&&brew'
+    }
+    when {
+      expression { return currentBuild.result == "SUCCESS" }
+    }
+    steps {
+      updateViewfiles()
+    }
   }
   }
 }

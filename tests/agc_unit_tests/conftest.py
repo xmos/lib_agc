@@ -6,7 +6,7 @@ import pytest
 import subprocess
 
 target = os.environ.get('TARGET', 'all_possible')
-print(f"target = {target}")
+print("target = ", target)
 
 def pytest_collect_file(parent, path):
     if(path.ext == ".xe"):
