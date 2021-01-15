@@ -95,8 +95,9 @@ pipeline {
       environment {
         // '/XMOS/tools' from get_tools.py and rest from tools installers
         TOOLS_PATH = "/XMOS/tools/${params.TOOLS_VERSION}/XMOS/xTIMEcomposer/${params.TOOLS_VERSION}"
-        REPO = 'lib_logging'
-        VIEW = getViewName(REPO)
+        REPO = 'lib_agc'
+        //VIEW = getViewName(REPO)
+        VIEW = "lib_agc_develop_tools15"
       }
       options {
         skipDefaultCheckout()
