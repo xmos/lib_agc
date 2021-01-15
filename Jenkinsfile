@@ -47,7 +47,7 @@ pipeline {
               runWaf('.', "configure clean build --target=xcoreai")
               stash name: 'agc_unit_tests', includes: 'bin/*xcoreai.xe, '              
               viewEnv() {
-                runPython("TARGET=XCORE200 pytest -s")
+                runPython("TARGET=XCORE200 pytest -n 1")
               }
               }
             }
@@ -125,7 +125,7 @@ pipeline {
               withVenv {
                 unstash 'agc_unit_tests'
                 viewEnv() {
-                runPython("TARGET=XCOREAI pytest -n 1")
+                runPython("TARGET=XCOREAI pytest -s")
               }
             }
             }

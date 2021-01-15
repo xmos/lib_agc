@@ -50,7 +50,7 @@ class UnityTestExecutable(pytest.Item):
                 test_output = subprocess.check_output(['axe', self.name], text=True)
             else:
                 print("run xrun for executable ", self.name)
-                test_output = subprocess.check_output(['xrun', '--io', self.name], text=True, stderr=subprocess.STDOUT)
+                test_output = subprocess.check_output(['xrun', '--io', '--id 0', self.name], text=True, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             # Unity exits non-zero if an assertion fails
             simulator_fail = True
