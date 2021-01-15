@@ -1,3 +1,4 @@
+# Copyright (c) 2020-2021, XMOS Ltd, All rights reserved
 import glob
 import os.path
 import subprocess
