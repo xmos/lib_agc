@@ -89,11 +89,26 @@ pipeline {
   }
   }
     stage('xcore.ai Verification'){
+      agent {
+        label 'xcore.ai-explorer'
+      }      
       environment {
         // '/XMOS/tools' from get_tools.py and rest from tools installers
         TOOLS_PATH = "/XMOS/tools/${params.TOOLS_VERSION}/XMOS/xTIMEcomposer/${params.TOOLS_VERSION}"
+        REPO = 'lib_logging'
+        VIEW = getViewName(REPO)
       }
+      options {
+        skipDefaultCheckout()
+      }
+
       stages{
+
+        stage('Get View') {
+            steps {
+                xcorePrepareSandbox("${VIEW}", "${REPO}")
+            }
+        }
         stage('Install Dependencies') {
           steps {
             sh '/XMOS/get_tools.py ' + params.TOOLS_VERSION
