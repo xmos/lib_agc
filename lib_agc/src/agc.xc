@@ -315,7 +315,7 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         vtb_u32_float_t gained_max_abs_value = vtb_mul_u32_u32(max_abs_value, state.gain);
         int exceed_threshold = vtb_gte_u32_u32(gained_max_abs_value, state.upper_threshold);
 
-        if(exceed_threshold || vad_flag){
+        if(1) {//exceed_threshold || vad_flag){
             int peak_rising = vtb_gte_u32_u32(state.x_fast, state.x_peak);
             if(peak_rising){
                 vtb_exponential_average_u32(state.x_peak, state.x_fast, AGC_ALPHA_PEAK_RISE);
