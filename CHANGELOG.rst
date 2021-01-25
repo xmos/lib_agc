@@ -1,6 +1,11 @@
 AGC library change log
 ======================
 
+7.1.0
+-----
+
+  * CHANGED: Always update AGC gain if loss control is not enabled
+
 7.0.2
 -----
 

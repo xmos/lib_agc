@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2020, XMOS Ltd, All rights reserved
+# Copyright (c) 2018-2021, XMOS Ltd, All rights reserved
 from __future__ import division
 from builtins import object
 import numpy as np
@@ -51,7 +51,7 @@ class agc_ch(object):
 
             exceed_desired_level = (peak_sample * self.gain) > self.threshold_upper
 
-            if vad or exceed_desired_level:
+            if (self.lc_enabled==0) or vad or exceed_desired_level:
                 alpha_peak = agc.ALPHA_PEAK_RISE if self.x_fast > self.x_peak else agc.ALPHA_PEAK_FALL
                 self.x_peak = (1 - alpha_peak) * self.x_fast + alpha_peak * self.x_peak
 
