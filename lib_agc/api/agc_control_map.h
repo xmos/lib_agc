@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2020, XMOS Ltd, All rights reserved
+// Copyright (c) 2020-2021, XMOS Ltd, All rights reserved
 #ifndef AGC_CONTROL_MAP_H_
 #define AGC_CONTROL_MAP_H_
 #include "vtb_control.h"

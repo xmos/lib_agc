@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2020, XMOS Ltd, All rights reserved
+// Copyright (c) 2020-2021, XMOS Ltd, All rights reserved
 #include "agc_conf.h"
 #include "agc_control_map.h"
 
