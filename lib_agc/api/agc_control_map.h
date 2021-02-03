@@ -13,6 +13,9 @@ typedef enum {
     agc_cmd_get_agc_gain_increment_stepsize,
     agc_cmd_get_agc_gain_decrement_stepsize,
     agc_cmd_get_agc_lc_enabled,
+    agc_cmd_get_agc_adapt_on_vad,
+    agc_cmd_get_agc_soft_clipping,
+    agc_cmd_get_agc_min_gain,
     agc_num_get_commands,
 
     // set: MSB == 0
@@ -24,6 +27,9 @@ typedef enum {
     agc_cmd_set_agc_gain_increment_stepsize,
     agc_cmd_set_agc_gain_decrement_stepsize,
     agc_cmd_set_agc_lc_enabled,
+    agc_cmd_set_agc_adapt_on_vad,
+    agc_cmd_set_agc_soft_clipping,
+    agc_cmd_set_agc_min_gain,
     agc_num_set_commands,
 } agc_control_commands;
 
