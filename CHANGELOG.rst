@@ -4,7 +4,8 @@ AGC library change log
 8.0.0
 -----
 
-* ADDED: Control commands map and handler
+  * ADDED: Control commands map and handler
+  * ADDED: Control parameters for min gain, adapt on vad and soft clipping
 
 7.0.2
 -----

@@ -14,8 +14,11 @@
  */
 typedef struct {
     int adapt;                      ///< 0 for fixed gain, or 1 for AGC.
+    int adapt_on_vad;               ///< 0 if always adapt AGC, or 1 if adapt AGC only when voice is detection.
+    int soft_clipping;              ///< 0 for no soft clipping, or 1 for soft clipping.
     vtb_uq16_16_t init_gain;        ///< Initial channel gain. Linear UQ16_16.
     vtb_uq16_16_t max_gain;         ///< Maximum channel gain. Linear UQ16_16.
+    vtb_uq16_16_t min_gain;         ///< Minimum channel gain. Linear UQ16_16.
     vtb_uq1_31_t upper_threshold;   ///< Upper threshold for desired output voice level [0, INT32_MAX].
     vtb_uq1_31_t lower_threshold;   ///< Lower threshold for desired output voice level [0, INT32_MAX].
     vtb_uq16_16_t gain_inc;         ///< Step value to increment the channel gain.
@@ -40,8 +43,6 @@ typedef struct {
  */
 void agc_init(REFERENCE_PARAM(agc_state_t, agc), agc_init_config_t config);
 
-<<<<<<< HEAD
-=======
 
 /** Set AGC channel gain.
  *
@@ -134,6 +135,29 @@ void agc_set_ch_max_gain(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
 vtb_uq16_16_t agc_get_ch_max_gain(agc_state_t agc, unsigned ch_index);
 
 
+/** Set AGC channel min gain.
+ *
+ * \param[in,out] agc       AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \param[in] min_gain      Min gain value in linear UQ16_16 format.
+ */
+void agc_set_ch_min_gain(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
+        vtb_uq16_16_t min_gain);
+
+
+/** Get AGC channel min gain.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \returns                 Channel min gain in linear UQ16_16 format.
+ */
+vtb_uq16_16_t agc_get_ch_min_gain(agc_state_t agc, unsigned ch_index);
+
+
 /** Set AGC channel adapt flag.
  *
  * \param[in,out] agc       AGC state.
@@ -154,6 +178,50 @@ void agc_set_ch_adapt(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,  uin
  * \returns                 0 for fixed gain, 1 for adapt.
  */
 int agc_get_ch_adapt(agc_state_t agc, unsigned ch_index);
+
+
+
+/** Set AGC channel adapt on VAD flag.
+ *
+ * \param[in,out] agc       AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \param[in] adapt         AGC on VAD adapt flag: 0 for adapting when voice is detected, 1 if always adapting.
+ */
+void agc_set_ch_adapt_on_vad(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,  uint32_t adapt);
+
+
+/** Get AGC channel adapt on VAD flag.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \returns                 0 for adapting when voice is detected, 1 if always adapting.
+ */
+int agc_get_ch_adapt_on_vad(agc_state_t agc, unsigned ch_index);
+
+/** Set AGC channel soft clipping flag.
+ *
+ * \param[in,out] agc       AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \param[in] soft_clipping AGC soft clipping flag: 0 for soft clipping disabled, 1 for for soft clipping enabled.
+ */
+void agc_set_ch_soft_clipping(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,  uint32_t soft_clipping);
+
+
+/** Get AGC channel soft clipping  flag.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \returns                 0 for soft clipping disabled, 1 for for soft clipping enabled.
+ */
+int agc_get_ch_soft_clipping(agc_state_t agc, unsigned soft_clipping);
 
 
 /** Set AGC channel loss control enabled flag.
@@ -229,7 +297,6 @@ int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index);
 
 
 
->>>>>>> 906fc9d42fca58fa78b3f6638bf4835a15fa359c
 /** Process a multi-channel frame of time-domain sample data.
  *
  * \param[in,out] agc           AGC state.

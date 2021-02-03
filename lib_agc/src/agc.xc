@@ -64,6 +64,8 @@ static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples
 void agc_init(agc_state_t &agc, agc_init_config_t config){
     for(unsigned ch = 0; ch < AGC_INPUT_CHANNELS; ch++){
         agc.ch_state[ch].adapt = config.ch_init_config[ch].adapt;
+        agc.ch_state[ch].adapt_on_vad = config.ch_init_config[ch].adapt_on_vad;
+        agc.ch_state[ch].soft_clipping = config.ch_init_config[ch].soft_clipping;
 
         agc.ch_state[ch].gain.m = config.ch_init_config[ch].init_gain;
         agc.ch_state[ch].gain.e = VTB_UQ16_16_EXP;
@@ -72,6 +74,10 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         agc.ch_state[ch].max_gain.m = config.ch_init_config[ch].max_gain;
         agc.ch_state[ch].max_gain.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].max_gain);
+
+        agc.ch_state[ch].min_gain.m = config.ch_init_config[ch].min_gain;
+        agc.ch_state[ch].min_gain.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].min_gain);
 
         agc.ch_state[ch].upper_threshold.m = (uint32_t)config.ch_init_config[ch].upper_threshold;
         agc.ch_state[ch].upper_threshold.e = 0;
@@ -191,6 +197,21 @@ vtb_uq16_16_t agc_get_ch_max_gain(agc_state_t agc, unsigned ch_index){
 }
 
 
+void agc_set_ch_min_gain(agc_state_t &agc, unsigned ch_index, vtb_uq16_16_t min_gain){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].min_gain.m = min_gain;
+        agc.ch_state[ch_index].min_gain.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch_index].min_gain);
+    }
+}
+
+
+vtb_uq16_16_t agc_get_ch_min_gain(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    return vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].min_gain, VTB_UQ16_16_EXP);
+}
+
+
 void agc_set_ch_adapt(agc_state_t &agc, unsigned ch_index, uint32_t adapt){
     if(ch_index < AGC_INPUT_CHANNELS){
         agc.ch_state[ch_index].adapt = (int)(adapt > 0);
@@ -204,9 +225,35 @@ int agc_get_ch_adapt(agc_state_t agc, unsigned ch_index){
 }
 
 
-void agc_set_ch_lc_enable(agc_state_t &agc, unsigned ch_index, uint32_t adapt){
+void agc_set_ch_adapt_on_vad(agc_state_t &agc, unsigned ch_index, uint32_t adapt){
     if(ch_index < AGC_INPUT_CHANNELS){
-        agc.ch_state[ch_index].lc_enabled = (int)(adapt > 0);
+        agc.ch_state[ch_index].adapt_on_vad = (int)(adapt > 0);
+    }
+}
+
+
+int agc_get_ch_adapt_on_vad(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    return agc.ch_state[ch_index].adapt_on_vad;
+}
+
+
+void agc_set_ch_soft_clipping(agc_state_t &agc, unsigned ch_index, uint32_t soft_clipping){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].soft_clipping = (int)(soft_clipping > 0);
+    }
+}
+
+
+int agc_get_ch_soft_clipping(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    return agc.ch_state[ch_index].soft_clipping;
+}
+
+
+void agc_set_ch_lc_enable(agc_state_t &agc, unsigned ch_index, uint32_t enable){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].lc_enabled = (int)(enable > 0);
     }
 }
 
@@ -296,6 +343,10 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
     const vtb_u32_float_t agc_limit_point = U_HALF;
     const int s32_exponent = -31;
 
+    if (!state.adapt_on_vad) {
+        vad_flag = 1;
+    }
+
     if(state.adapt){
         uint32_t max_sample = get_max_abs_sample(samples, ch_index);
         vtb_u32_float_t max_abs_value = {max_sample, 0};
@@ -330,9 +381,13 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
             } else if(vtb_gte_u32_u32(state.lower_threshold, gained_pk) && (!state.lc_enabled || near_only)){
                 state.gain = vtb_mul_u32_u32(state.gain_inc, state.gain);
             }
-            
+
             if(vtb_gte_u32_u32(state.gain, state.max_gain)){
                 state.gain = state.max_gain;
+            }
+
+            if(vtb_gte_u32_u32(state.min_gain, state.gain)){
+                state.gain = state.min_gain;
             }
         }
     }
@@ -468,7 +523,7 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
 
         vtb_u32_float_t abs_gained_sample = vtb_abs_s32_to_u32(gained_sample);
 
-        if(vtb_gte_u32_u32(abs_gained_sample, agc_limit_point)){
+        if(state.soft_clipping && vtb_gte_u32_u32(abs_gained_sample, agc_limit_point)){
             vtb_s32_float_t div_result = vtb_div_s32_u32(S_QUARTER, abs_gained_sample);
             vtb_s32_float_t output_normalised = vtb_sub_s32_s32(S_ONE, div_result);
             int32_t output_sample = vtb_denormalise_and_saturate_s32(output_normalised, s32_exponent);

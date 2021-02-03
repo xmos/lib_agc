@@ -5,33 +5,47 @@
 
 void test_agc_init(){
     int expected_adapt[AGC_INPUT_CHANNELS] = {AGC_CH0_ADAPT, AGC_CH1_ADAPT};
+    int expected_adapt_on_vad[AGC_INPUT_CHANNELS] = {AGC_CH0_ADAPT_ON_VAD, AGC_CH1_ADAPT_ON_VAD};
+    int expected_soft_clipping[AGC_INPUT_CHANNELS] = {AGC_CH0_SOFT_CLIPPING, AGC_CH1_SOFT_CLIPPING};
+
     vtb_uq16_16_t expected_init_gain[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_GAIN), VTB_UQ16_16(AGC_CH1_GAIN)};
     vtb_uq16_16_t expected_max_gain[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_MAX_GAIN), VTB_UQ16_16(AGC_CH1_MAX_GAIN)};
+    vtb_uq16_16_t expected_min_gain[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_MIN_GAIN), VTB_UQ16_16(AGC_CH1_MIN_GAIN)};
+
     uint32_t expected_upper_threshold[AGC_INPUT_CHANNELS] = {VTB_UQ1_31(AGC_CH0_UPPER_THRESHOLD), VTB_UQ1_31(AGC_CH1_UPPER_THRESHOLD)};
     uint32_t expected_lower_threshold[AGC_INPUT_CHANNELS] = {VTB_UQ1_31(AGC_CH0_LOWER_THRESHOLD), VTB_UQ1_31(AGC_CH1_LOWER_THRESHOLD)};
     vtb_uq16_16_t expected_gain_inc[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_GAIN_INC), VTB_UQ16_16(AGC_CH1_GAIN_INC)};
     vtb_uq16_16_t expected_gain_dec[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_GAIN_DEC), VTB_UQ16_16(AGC_CH1_GAIN_DEC)};
+    int expected_lc_enabled[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_ENABLED, AGC_CH1_LC_ENABLED};
 
     agc_state_t agc;
     agc_init_config_t config = {
         {
             {
                 expected_adapt[0],
+                expected_adapt_on_vad[0],
+                expected_soft_clipping[0],
                 expected_init_gain[0],
                 expected_max_gain[0],
+                expected_min_gain[0],
                 expected_upper_threshold[0],
                 expected_lower_threshold[0],
                 expected_gain_inc[0],
-                expected_gain_dec[0]
+                expected_gain_dec[0],
+                expected_lc_enabled[0]
             },
             {
                 expected_adapt[1],
+                expected_adapt_on_vad[1],
+                expected_soft_clipping[1],
                 expected_init_gain[1],
                 expected_max_gain[1],
+                expected_min_gain[1],
                 expected_upper_threshold[1],
                 expected_lower_threshold[1],
                 expected_gain_inc[1],
-                expected_gain_dec[1]
+                expected_gain_dec[1],
+                expected_lc_enabled[1]
             }
         }
     };
@@ -40,8 +54,13 @@ void test_agc_init(){
 
     for(unsigned ch = 0; ch < AGC_INPUT_CHANNELS; ++ch){
         TEST_ASSERT_EQUAL_INT_MESSAGE(expected_adapt[ch], agc.ch_state[ch].adapt, "Incorrect adapt flag");
+        TEST_ASSERT_EQUAL_INT_MESSAGE(expected_adapt_on_vad[ch], agc.ch_state[ch].adapt_on_vad, "Incorrect adapt on vad flag");
+        TEST_ASSERT_EQUAL_INT_MESSAGE(expected_soft_clipping[ch], agc.ch_state[ch].soft_clipping, "Incorrect soft clipping flag");
+
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_init_gain[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].gain, -16), "Incorrect init gain");
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_max_gain[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].max_gain, -16), "Incorrect max gain");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_min_gain[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].min_gain, -16), "Incorrect min gain");
+
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_upper_threshold[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].upper_threshold, 0), "Incorrect threshold upper");
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lower_threshold[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].lower_threshold, 0), "Incorrect threshold lower");
 
@@ -61,20 +80,8 @@ void test_agc_init(){
 void test_agc_set_get_ch_adapt(){
     srand((unsigned) 2);
 
-    agc_init_config_t config = {
-        {
-            {
-                0,
-                VTB_UQ16_16(AGC_CH0_GAIN),
-                VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-            },
-            {
-                0,
-                VTB_UQ16_16(AGC_CH1_GAIN),
-                VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-            }
-        }
-    };
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
 
     agc_state_t agc;
     agc_init(agc, config);
@@ -99,24 +106,69 @@ void test_agc_set_get_ch_adapt(){
     }
 }
 
+void test_agc_set_get_ch_adapt_on_vad(){
+    srand((unsigned) 2);
+
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
+
+    agc_state_t agc;
+    agc_init(agc, config);
+
+
+    uint32_t expected_adapt_on_vad = 0;
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        agc_set_ch_adapt_on_vad(agc, i, expected_adapt_on_vad);
+    }
+
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_adapt_on_vad, agc_get_ch_adapt_on_vad(agc, i), "Incorrect AGC adapt on vad");
+    }
+
+    expected_adapt_on_vad = 1;
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        agc_set_ch_adapt_on_vad(agc, i, expected_adapt_on_vad);
+    }
+
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_adapt_on_vad, agc_get_ch_adapt_on_vad(agc, i), "Incorrect AGC adapt on vad");
+    }
+}
+
+void test_agc_set_get_ch_soft_clipping(){
+    srand((unsigned) 2);
+
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
+
+    agc_state_t agc;
+    agc_init(agc, config);
+
+
+    uint32_t expected_soft_clipping = 0;
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        agc_set_ch_soft_clipping(agc, i, expected_soft_clipping);
+    }
+
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_soft_clipping, agc_get_ch_soft_clipping(agc, i), "Incorrect AGC soft clipping");
+    }
+
+    expected_soft_clipping = 1;
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        agc_set_ch_soft_clipping(agc, i, expected_soft_clipping);
+    }
+
+    for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_soft_clipping, agc_get_ch_soft_clipping(agc, i), "Incorrect AGC soft clipping");
+    }
+}
 
 void test_agc_set_get_lc_enable(){
     srand((unsigned) 2);
 
-    agc_init_config_t config = {
-        {
-            {
-                0,
-                VTB_UQ16_16(AGC_CH0_GAIN),
-                VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-            },
-            {
-                0,
-                VTB_UQ16_16(AGC_CH1_GAIN),
-                VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-            }
-        }
-    };
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
 
     agc_state_t agc;
     agc_init(agc, config);
@@ -145,20 +197,8 @@ void test_agc_set_get_lc_enable(){
 void test_agc_set_get_ch_gain(){
     srand((unsigned) 2);
 
-    agc_init_config_t config = {
-        {
-            {
-                AGC_CH0_ADAPT,
-                VTB_UQ16_16(AGC_CH0_GAIN),
-                VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-            },
-            {
-                AGC_CH1_ADAPT,
-                VTB_UQ16_16(AGC_CH1_GAIN),
-                VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-            }
-        }
-    };
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
 
     for(unsigned i=0;i<TEST_COUNT;i++){
         vtb_uq16_16_t expected_gain[AGC_INPUT_CHANNELS];
@@ -189,28 +229,10 @@ void test_agc_set_get_ch_gain_inc(){
     srand((unsigned) 2);
     vtb_uq16_16_t initial_gain_inc[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_GAIN_INC), VTB_UQ16_16(AGC_CH1_GAIN_INC)};
 
-    agc_init_config_t config = {
-        {
-            {
-                AGC_CH0_ADAPT,
-                VTB_UQ16_16(AGC_CH0_GAIN),
-                VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-                0,
-                0,
-                initial_gain_inc[0],
-                0
-            },
-            {
-                AGC_CH1_ADAPT,
-                VTB_UQ16_16(AGC_CH1_GAIN),
-                VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-                0,
-                0,
-                initial_gain_inc[1],
-                0
-            }
-        }
-    };
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
+    config.ch_init_config[0].gain_inc = initial_gain_inc[0];
+    config.ch_init_config[1].gain_inc = initial_gain_inc[1];
 
     for(unsigned i=0;i<TEST_COUNT;i++){
         vtb_uq16_16_t expected_gain_inc[AGC_INPUT_CHANNELS];
@@ -243,28 +265,10 @@ void test_agc_set_get_ch_gain_dec(){
     srand((unsigned) 2);
     vtb_uq16_16_t initial_gain_dec[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_GAIN_DEC), VTB_UQ16_16(AGC_CH1_GAIN_DEC)};
 
-    agc_init_config_t config = {
-        {
-            {
-                AGC_CH0_ADAPT,
-                VTB_UQ16_16(AGC_CH0_GAIN),
-                VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-                0,
-                0,
-                0,
-                initial_gain_dec[0]
-            },
-            {
-                AGC_CH1_ADAPT,
-                VTB_UQ16_16(AGC_CH1_GAIN),
-                VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-                0,
-                0,
-                0,
-                initial_gain_dec[1]
-            }
-        }
-    };
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
+    config.ch_init_config[0].gain_dec = initial_gain_dec[0];
+    config.ch_init_config[1].gain_dec = initial_gain_dec[1];
 
     for(unsigned i=0;i<TEST_COUNT;i++){
         vtb_uq16_16_t expected_gain_dec[AGC_INPUT_CHANNELS];
@@ -297,20 +301,8 @@ void test_agc_set_get_ch_gain_dec(){
 void test_agc_set_get_ch_max_gain(){
     srand((unsigned) 1);
 
-    agc_init_config_t config = {
-        {
-            {
-                AGC_CH0_ADAPT,
-                VTB_UQ16_16(AGC_CH0_GAIN),
-                VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-            },
-            {
-                AGC_CH1_ADAPT,
-                VTB_UQ16_16(AGC_CH1_GAIN),
-                VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-            }
-        }
-    };
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
 
     for(unsigned i=0;i<TEST_COUNT;i++){
         vtb_uq16_16_t expected_max_gain[AGC_INPUT_CHANNELS];
@@ -337,31 +329,42 @@ void test_agc_set_get_ch_max_gain(){
 }
 
 
+void test_agc_set_get_ch_min_gain(){
+    srand((unsigned) 1);
+
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
+
+    for(unsigned i=0;i<TEST_COUNT;i++){
+        vtb_uq16_16_t expected_min_gain[AGC_INPUT_CHANNELS];
+        for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            expected_min_gain[i] = ((vtb_uq16_16_t)rand() << 16);
+            if(expected_min_gain[i] == 0){
+                expected_min_gain[i] = 1;
+            }
+            expected_min_gain[i] += ((uint16_t)rand());
+        }
+
+        agc_state_t agc;
+        agc_init(agc, config);
+
+        for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            agc_set_ch_min_gain(agc, i, expected_min_gain[i]);
+        }
+
+        for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
+            vtb_uq16_16_t actual_min_gain = agc_get_ch_min_gain(agc, i);
+            TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_min_gain[i], actual_min_gain, "Incorrect channel min gain");
+        }
+    }
+}
+
+
 void test_agc_set_get_ch_upper_threshold(){
     srand((unsigned) 1);
 
-    agc_init_config_t config = {
-        {
-            {
-                AGC_CH0_ADAPT,
-                VTB_UQ16_16(AGC_CH0_GAIN),
-                VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-                VTB_UQ1_31(AGC_CH0_UPPER_THRESHOLD),
-                VTB_UQ1_31(AGC_CH0_LOWER_THRESHOLD),
-                VTB_UQ16_16(AGC_CH0_GAIN_INC),
-                VTB_UQ16_16(AGC_CH0_GAIN_DEC)
-            },
-            {
-                AGC_CH1_ADAPT,
-                VTB_UQ16_16(AGC_CH1_GAIN),
-                VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-                VTB_UQ1_31(AGC_CH1_UPPER_THRESHOLD),
-                VTB_UQ1_31(AGC_CH0_LOWER_THRESHOLD),
-                VTB_UQ16_16(AGC_CH1_GAIN_INC),
-                VTB_UQ16_16(AGC_CH1_GAIN_DEC)
-            }
-        }
-    };
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
 
     for(unsigned i=0;i<TEST_COUNT;i++){
         int32_t upper_thresholds[AGC_INPUT_CHANNELS];
@@ -397,28 +400,8 @@ void test_agc_set_get_ch_upper_threshold(){
 void test_agc_set_get_ch_lower_threshold(){
     srand((unsigned) 1);
 
-    agc_init_config_t config = {
-        {
-            {
-                AGC_CH0_ADAPT,
-                VTB_UQ16_16(AGC_CH0_GAIN),
-                VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-                VTB_UQ1_31(AGC_CH0_UPPER_THRESHOLD),
-                VTB_UQ1_31(AGC_CH0_LOWER_THRESHOLD),
-                VTB_UQ16_16(AGC_CH0_GAIN_INC),
-                VTB_UQ16_16(AGC_CH0_GAIN_DEC)
-            },
-            {
-                AGC_CH1_ADAPT,
-                VTB_UQ16_16(AGC_CH1_GAIN),
-                VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-                VTB_UQ1_31(AGC_CH1_UPPER_THRESHOLD),
-                VTB_UQ1_31(AGC_CH0_LOWER_THRESHOLD),
-                VTB_UQ16_16(AGC_CH1_GAIN_INC),
-                VTB_UQ16_16(AGC_CH1_GAIN_DEC)
-            }
-        }
-    };
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
 
     for(unsigned i=0;i<TEST_COUNT;i++){
         int32_t lower_threshold[AGC_INPUT_CHANNELS];
@@ -455,20 +438,8 @@ void test_agc_set_get_ch_lower_threshold(){
 void test_agc_set_get_ch_gain_zero(){
     vtb_uq16_16_t expected_gain = 0;
 
-    agc_init_config_t config = {
-        {
-            {
-                AGC_CH0_ADAPT,
-                VTB_UQ16_16(AGC_CH0_GAIN),
-                VTB_UQ16_16(AGC_CH0_MAX_GAIN),
-            },
-            {
-                AGC_CH1_ADAPT,
-                VTB_UQ16_16(AGC_CH1_GAIN),
-                VTB_UQ16_16(AGC_CH1_MAX_GAIN),
-            }
-        }
-    };
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
 
     agc_state_t agc;
     agc_init(agc, config);
@@ -489,17 +460,27 @@ void test_set_get_wrong_ch_index(){
         {
             {
                 0,
+                1,
+                1,
                 VTB_UQ16_16(AGC_CH0_GAIN),
                 VTB_UQ16_16(AGC_CH0_MAX_GAIN),
+                VTB_UQ16_16(AGC_CH0_MIN_GAIN),
                 VTB_UQ1_31(AGC_CH0_UPPER_THRESHOLD),
-                VTB_UQ1_31(AGC_CH0_LOWER_THRESHOLD)
+                VTB_UQ1_31(AGC_CH0_LOWER_THRESHOLD),
+                AGC_CH0_GAIN_INC,
+                AGC_CH0_GAIN_DEC
             },
             {
                 0,
+                1,
+                1,
                 VTB_UQ16_16(AGC_CH1_GAIN),
                 VTB_UQ16_16(AGC_CH1_MAX_GAIN),
+                VTB_UQ16_16(AGC_CH1_MIN_GAIN),
                 VTB_UQ1_31(AGC_CH1_UPPER_THRESHOLD),
-                VTB_UQ1_31(AGC_CH0_LOWER_THRESHOLD)
+                VTB_UQ1_31(AGC_CH1_LOWER_THRESHOLD),
+                AGC_CH1_GAIN_INC,
+                AGC_CH1_GAIN_DEC
             }
         }
     };
@@ -514,7 +495,6 @@ void test_set_get_wrong_ch_index(){
         agc_set_ch_max_gain(agc, i, ((vtb_uq16_16_t)rand() << 16));
         agc_set_ch_upper_threshold(agc, i, ((int32_t)rand() << 16));
         agc_set_ch_lower_threshold(agc, i, ((int32_t)rand() << 16));
-        
 
         agc_set_ch_adapt(agc, -i, 1);
         agc_set_ch_gain(agc, -i, ((vtb_uq16_16_t)rand() << 16));
@@ -559,8 +539,11 @@ void test_agc_process_frame(){
         {
             {
                 0,
+                1,
+                1,
                 VTB_UQ16_16(AGC_CH0_GAIN),
                 VTB_UQ16_16(AGC_CH0_MAX_GAIN),
+                VTB_UQ16_16(AGC_CH0_MIN_GAIN),
                 VTB_UQ1_31(AGC_CH0_UPPER_THRESHOLD),
                 VTB_UQ1_31(AGC_CH0_LOWER_THRESHOLD),
                 AGC_CH0_GAIN_INC,
@@ -568,8 +551,11 @@ void test_agc_process_frame(){
             },
             {
                 0,
+                1,
+                1,
                 VTB_UQ16_16(AGC_CH1_GAIN),
                 VTB_UQ16_16(AGC_CH1_MAX_GAIN),
+                VTB_UQ16_16(AGC_CH1_MIN_GAIN),
                 VTB_UQ1_31(AGC_CH1_UPPER_THRESHOLD),
                 VTB_UQ1_31(AGC_CH1_LOWER_THRESHOLD),
                 AGC_CH1_GAIN_INC,

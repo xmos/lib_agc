@@ -31,8 +31,11 @@
  */
 typedef struct {
     int adapt;
+    int adapt_on_vad;
+    int soft_clipping;
     vtb_u32_float_t gain;
     vtb_u32_float_t max_gain;
+    vtb_u32_float_t min_gain;
     vtb_u32_float_t upper_threshold;
     vtb_u32_float_t lower_threshold;
     vtb_u32_float_t x_slow;

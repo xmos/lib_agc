@@ -5,7 +5,9 @@ import numpy as np
 from math import sqrt
 
 class agc_ch(object):
-    def __init__(self, adapt, init_gain, max_gain, upper_threshold, lower_threshold, gain_inc, gain_dec, lc_enabled = False):
+    def __init__(self, adapt, adapt_on_vad, soft_clipping, init_gain,
+                 max_gain, min_gain, upper_threshold, lower_threshold,
+                 gain_inc, gain_dec, lc_enabled = False):
         if init_gain < 0:
             raise Exception("init_gain must be greater than 0.")
         if max_gain < 0:
@@ -15,9 +17,13 @@ class agc_ch(object):
         if lower_threshold > 1.0:
             raise Exception("lower_threshold must be less than or equal to 1.")
         self.adapt = adapt
+        self.adapt_on_vad = adapt_on_vad
+        self.soft_clipping = soft_clipping
+
         self.gain = init_gain
         self.max_gain = max_gain
-        
+        self.min_gain = min_gain
+
         self.gain_inc = gain_inc
         self.gain_dec = gain_dec
 
@@ -39,6 +45,8 @@ class agc_ch(object):
 
 
     def process_channel(self, input_frame, ref_power, vad, aec_corr_factor):
+        if self.adapt_on_vad == 0:
+            vad = True
         if(self.adapt):
             peak_sample = np.absolute(input_frame).max() #Sample input from Ch0
             rising = peak_sample > abs(self.x_slow)
@@ -63,6 +71,7 @@ class agc_ch(object):
                     g_mod = self.gain_dec
 
                 self.gain = min(g_mod * self.gain, self.max_gain)
+                self.gain = max(g_mod * self.gain, self.min_gain)
         
         
         # Loss Control
@@ -151,7 +160,7 @@ class agc_ch(object):
             
         def limit_gain(x):
             NONLINEAR_POINT = 0.5
-            return x if abs(x) < NONLINEAR_POINT else (np.sign(x) * 2 * NONLINEAR_POINT - NONLINEAR_POINT ** 2 / x)
+            return x if (self.soft_clipping == 0 or abs(x) < NONLINEAR_POINT) else (np.sign(x) * 2 * NONLINEAR_POINT - NONLINEAR_POINT ** 2 / x)
 
         output_frame = [limit_gain(sample) for sample in gained_input]
         return output_frame
