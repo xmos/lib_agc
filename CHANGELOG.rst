@@ -1,10 +1,16 @@
 AGC library change log
 ======================
 
+8.0.0
+-----
+
+* ADDED: Control commands map and handler
+
 7.0.2
 -----
 
-  * ADDED: Control commands map and handler
+  * CHANGED: Pin Python package versions
+  * REMOVED: not necessary cpanfile
 
 7.0.1
 -----
