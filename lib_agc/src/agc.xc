@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2020, XMOS Ltd, All rights reserved
+// Copyright (c) 2017-2021, XMOS Ltd, All rights reserved
 #include <xclib.h>
 #include "agc.h"
 #include "voice_toolbox.h"

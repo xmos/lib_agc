@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2020, XMOS Ltd, All rights reserved
+// Copyright (c) 2017-2021, XMOS Ltd, All rights reserved
 #ifndef _AGC_STATE_H_
 #define _AGC_STATE_H_
 

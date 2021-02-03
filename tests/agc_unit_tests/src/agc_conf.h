@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019, XMOS Ltd, All rights reserved
+// Copyright (c) 2017-2021, XMOS Ltd, All rights reserved
 
 #ifndef AGC_CONF_H_
 #define AGC_CONF_H_

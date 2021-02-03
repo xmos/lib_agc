@@ -1,4 +1,4 @@
-# Copyright (c) 2018-2020, XMOS Ltd, All rights reserved
+# Copyright (c) 2018-2021, XMOS Ltd, All rights reserved
 from __future__ import division
 from builtins import object
 import numpy as np
