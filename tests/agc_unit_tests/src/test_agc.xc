@@ -385,12 +385,12 @@ void test_agc_set_get_ch_upper_threshold(){
 
         for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
             int32_t actual = agc_get_ch_upper_threshold(agc, i);
-            
+
             int32_t expected = abs(upper_thresholds[i]);
             if (expected < config.ch_init_config[i].lower_threshold){
                 expected = config.ch_init_config[i].lower_threshold;
             }
-            
+
             TEST_ASSERT_EQUAL_INT32_MESSAGE(expected, actual, "Incorrect upper threshold");
         }
     }
@@ -422,12 +422,12 @@ void test_agc_set_get_ch_lower_threshold(){
 
         for(unsigned i=0; i<AGC_INPUT_CHANNELS; ++i){
             int32_t actual = agc_get_ch_lower_threshold(agc, i);
-            
+
             int32_t expected = abs(lower_threshold[i]);
             if (expected > config.ch_init_config[i].upper_threshold){
                 expected = config.ch_init_config[i].upper_threshold;
             }
-            
+
             TEST_ASSERT_EQUAL_INT32_MESSAGE(expected, actual, "Incorrect upper threshold");
         }
     }

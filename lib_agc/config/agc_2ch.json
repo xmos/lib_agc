@@ -13,7 +13,7 @@
                 "upper_threshold": 0.7079,
                 "lower_threshold": 0.1905,
                 "lc_enabled": 0
-            }, 
+            },g
             {
                 "gain_dec": 0.98804,
                 "max_gain": 1000,
