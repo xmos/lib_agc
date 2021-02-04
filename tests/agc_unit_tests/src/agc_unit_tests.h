@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019, XMOS Ltd, All rights reserved
+// Copyright (c) 2018-2020, XMOS Ltd, All rights reserved
 #ifndef AGC_UNIT_TESTS_H_
 #define AGC_UNIT_TESTS_H_
 
@@ -16,6 +16,7 @@
 #include "voice_toolbox.h"
 
 #include "agc.h"
+#include "agc_control.h"
 
 #define TEST_ASM 1
 
