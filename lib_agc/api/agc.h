@@ -2,6 +2,7 @@
 #ifndef _AGC_H_
 #define _AGC_H_
 
+#include <xccompat.h>
 #include "dsp.h"
 #include "vtb_q_format.h"
 #include "agc_ch_state.h"
@@ -40,7 +41,7 @@ typedef struct {
  * \param[in] config        Array containing AGC configuration for each channel.
  *                          Must be of length AGC_INPUT_CHANNELS.
  */
-void agc_init(agc_state_t &agc, agc_init_config_t config);
+void agc_init(REFERENCE_PARAM(agc_state_t, agc), agc_init_config_t config);
 
 /** Process a multi-channel frame of time-domain sample data.
  *
@@ -58,7 +59,7 @@ void agc_init(agc_state_t &agc, agc_init_config_t config);
  * \param[in] aec_corr          AEC correlation value. A value close to 1 indicates
  *                              that the mic energy is dominated by reference audio.
  */
-void agc_process_frame(agc_state_t &agc,
+void agc_process_frame(REFERENCE_PARAM(agc_state_t, agc),
         vtb_ch_pair_t frame_in_out[AGC_CHANNEL_PAIRS][AGC_PROC_FRAME_LENGTH],
         vtb_u32_float_t far_power,
         int vad_flag,
