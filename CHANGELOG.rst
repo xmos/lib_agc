@@ -1,6 +1,11 @@
 AGC library change log
 ======================
 
+8.1.0
+-----
+
+  * ADDED: AGC loss-control commands
+
 8.0.0
 -----
 
