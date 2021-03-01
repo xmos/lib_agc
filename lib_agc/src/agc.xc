@@ -47,7 +47,7 @@ const vtb_u32_float_t AGC_LC_FAR_BG_POWER_EST_MIN = {2814705664, -48}; //0.00001
 const vtb_u32_float_t AGC_LC_GAMMA_INC = {2158166016, -31};
 const vtb_u32_float_t AGC_LC_GAMMA_DEC = {4273405952, -32};
 const vtb_u32_float_t AGC_LC_BG_POWER_GAMMA = {2151743488, -31};
-
+/*
 const vtb_u32_float_t AGC_LC_NEAR_DELTA_FAR_ACT = {3355392000, -25};
 const vtb_u32_float_t AGC_LC_NEAR_DELTA = {3355392000, -26};
 const vtb_u32_float_t AGC_LC_FAR_DELTA = {3355392000, -26};
@@ -56,7 +56,7 @@ const vtb_u32_float_t AGC_LC_GAIN_MAX = {4294901760, -32}; // 0dB
 const vtb_u32_float_t AGC_LC_GAIN_DT = {3435921408, -34}; //-14dB
 const vtb_u32_float_t AGC_LC_GAIN_SILENCE = {3435659264, -35}; //-20dB
 const vtb_u32_float_t AGC_LC_GAIN_MIN = {3288334336, -40}; // -50dB
-
+*/
 
 static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, vtb_u32_float_t far_power, int vad_flag, vtb_uq0_32_t aec_corr);
 
@@ -119,6 +119,36 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         agc.ch_state[ch].lc_far_bg_power_est.m = AGC_LC_FAR_BG_POWER_EST_INIT;
         agc.ch_state[ch].lc_far_bg_power_est.e = VTB_UQ0_32_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_far_bg_power_est);
+
+        agc.ch_state[ch].lc_near_delta_far_act.m = (uint32_t)config.ch_init_config[ch].lc_near_delta_far_act;
+        agc.ch_state[ch].lc_near_delta_far_act.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].lc_near_delta_far_act);
+
+        agc.ch_state[ch].lc_near_delta.m = (uint32_t)config.ch_init_config[ch].lc_near_delta;
+        agc.ch_state[ch].lc_near_delta.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].lc_near_delta);
+
+        agc.ch_state[ch].lc_far_delta.m = (uint32_t)config.ch_init_config[ch].lc_far_delta;
+        agc.ch_state[ch].lc_far_delta.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].lc_far_delta);
+
+        agc.ch_state[ch].lc_gain_max.m = (uint32_t)config.ch_init_config[ch].lc_gain_max;
+        agc.ch_state[ch].lc_gain_max.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].lc_gain_max);
+
+        agc.ch_state[ch].lc_gain_dt.m = (uint32_t)config.ch_init_config[ch].lc_gain_dt;
+        agc.ch_state[ch].lc_gain_dt.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].lc_gain_dt);
+
+        agc.ch_state[ch].lc_gain_silence.m = (uint32_t)config.ch_init_config[ch].lc_gain_silence;
+        agc.ch_state[ch].lc_gain_silence.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].lc_gain_silence);
+
+
+        agc.ch_state[ch].lc_gain_min.m = (uint32_t)config.ch_init_config[ch].lc_gain_min;
+        agc.ch_state[ch].lc_gain_min.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].lc_gain_min);
+
 
         agc.ch_state[ch].lc_t_far = 0;
         agc.ch_state[ch].lc_t_near = 0;
@@ -295,7 +325,6 @@ void agc_set_ch_lower_threshold(agc_state_t &agc, unsigned ch_index, int32_t low
     }
 }
 
-
 int32_t agc_get_ch_upper_threshold(agc_state_t agc, unsigned ch_index){
     if(ch_index >= AGC_INPUT_CHANNELS) return 0;
     uint32_t upper_threshold = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].upper_threshold, 0);
@@ -309,6 +338,103 @@ int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index){
     return (int32_t)lower_threshold;
 }
 
+void agc_set_ch_lc_near_delta_far_act(agc_state_t &agc, unsigned ch_index, int32_t lc_near_delta_far_act){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].lc_near_delta_far_act.m = lc_near_delta_far_act;
+        agc.ch_state[ch_index].lc_near_delta_far_act.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch_index].lc_near_delta_far_act);
+    }
+}
+
+int32_t agc_get_ch_lc_near_delta_far_act(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    uint32_t agc_get_ch_lc_near_delta_far_act = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].lc_near_delta_far_act, VTB_UQ16_16_EXP);
+    return (int32_t)agc_get_ch_lc_near_delta_far_act;
+}
+
+void agc_set_ch_lc_near_delta(agc_state_t &agc, unsigned ch_index, int32_t lc_near_delta){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].lc_near_delta.m = lc_near_delta;
+        agc.ch_state[ch_index].lc_near_delta.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch_index].lc_near_delta_far_act);
+    }
+}
+
+int32_t agc_get_ch_lc_near_delta(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    uint32_t lc_near_delta = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].lc_near_delta, VTB_UQ16_16_EXP);
+    return (int32_t)lc_near_delta;
+}
+
+void agc_set_ch_lc_far_delta(agc_state_t &agc, unsigned ch_index, int32_t lc_far_delta){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].lc_far_delta.m = lc_far_delta;
+        agc.ch_state[ch_index].lc_far_delta.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch_index].lc_far_delta);
+    }
+}
+
+int32_t agc_get_ch_lc_far_delta(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    uint32_t lc_far_delta = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].lc_far_delta, VTB_UQ16_16_EXP);
+    return (int32_t)lc_far_delta;
+}
+
+void agc_set_ch_lc_gain_max(agc_state_t &agc, unsigned ch_index, int32_t lc_gain_max){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].lc_gain_max.m = lc_gain_max;
+        agc.ch_state[ch_index].lc_gain_max.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch_index].lc_gain_max);
+    }
+}
+
+int32_t agc_get_ch_lc_gain_max(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    uint32_t lc_gain_max = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].lc_gain_max, VTB_UQ16_16_EXP);
+    return (int32_t)lc_gain_max;
+}
+
+void agc_set_ch_lc_gain_dt(agc_state_t &agc, unsigned ch_index, int32_t lc_gain_dt){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].lc_gain_dt.m = lc_gain_dt;
+        agc.ch_state[ch_index].lc_gain_dt.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch_index].lc_gain_dt);
+    }
+}
+
+int32_t agc_get_ch_lc_gain_dt(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    uint32_t lc_gain_dt = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].lc_gain_dt, VTB_UQ16_16_EXP);
+    return (int32_t)lc_gain_dt;
+}
+
+void agc_set_ch_lc_gain_silence(agc_state_t &agc, unsigned ch_index, int32_t lc_gain_silence){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].lc_gain_silence.m = lc_gain_silence;
+        agc.ch_state[ch_index].lc_gain_silence.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch_index].lc_gain_silence);
+    }
+}
+
+int32_t agc_get_ch_lc_gain_silence(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    uint32_t lc_gain_silence = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].lc_gain_silence, VTB_UQ16_16_EXP);
+    return (int32_t)lc_gain_silence;
+}
+
+void agc_set_ch_lc_gain_min(agc_state_t &agc, unsigned ch_index, int32_t lc_gain_min){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].lc_gain_min.m = lc_gain_min;
+        agc.ch_state[ch_index].lc_gain_min.e = VTB_UQ16_16_EXP;
+        vtb_normalise_u32(agc.ch_state[ch_index].lc_gain_min);
+    }
+}
+
+int32_t agc_get_ch_lc_gain_min(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    uint32_t lc_gain_min = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].lc_gain_min, VTB_UQ16_16_EXP);
+    return (int32_t)lc_gain_min;
+}
 
 uint32_t get_max_abs_sample(vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index){
     uint32_t max_abs_value = 0;
@@ -441,17 +567,17 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         }
 
         // Update activity timers
-        if(vtb_gte_u32_u32(state.lc_far_power_est, vtb_mul_u32_u32(AGC_LC_FAR_DELTA, state.lc_far_bg_power_est))){
             state.lc_t_far = AGC_LC_N_FRAME_FAR;
+        if(vtb_gte_u32_u32(state.lc_far_power_est, vtb_mul_u32_u32(state.lc_far_delta, state.lc_far_bg_power_est))){
         }
         else{
             state.lc_t_far = state.lc_t_far - 1;
             if (state.lc_t_far < 0) state.lc_t_far = 0;
         }
 
-        vtb_u32_float_t delta = AGC_LC_NEAR_DELTA;
+        vtb_u32_float_t delta = state.lc_near_delta;
         if(state.lc_t_far){
-            delta = AGC_LC_NEAR_DELTA_FAR_ACT;
+            delta = state.lc_near_delta_far_act;
         }
 
         // Update near-end-activity timer
@@ -478,19 +604,19 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         // Adapt loss control gain
         if(state.lc_t_far == 0 && state.lc_t_near){
             // Near speech only
-            lc_target_gain = AGC_LC_GAIN_MAX;
+            lc_target_gain = state.lc_gain_max;
         }
         else if(state.lc_t_far && state.lc_t_near == 0){
             // Far end only
-            lc_target_gain = AGC_LC_GAIN_MIN;
+            lc_target_gain = state.lc_gain_min;
         }
         else if(state.lc_t_far && state.lc_t_near){
             // Both near-end and far -end
-            lc_target_gain = AGC_LC_GAIN_DT;
+            lc_target_gain = state.lc_gain_dt;
         }
         else{
             // Silence
-            lc_target_gain = AGC_LC_GAIN_SILENCE;
+            lc_target_gain = state.lc_gain_silence;
         }
     }
 

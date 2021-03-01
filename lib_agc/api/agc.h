@@ -24,6 +24,13 @@ typedef struct {
     vtb_uq16_16_t gain_inc;         ///< Step value to increment the channel gain.
     vtb_uq16_16_t gain_dec;         ///< Step value to decrement the channel gain.
     int lc_enabled;
+    vtb_uq16_16_t lc_near_delta_far_act;
+    vtb_uq16_16_t lc_near_delta;
+    vtb_uq16_16_t lc_far_delta;
+    vtb_uq16_16_t lc_gain_max;
+    vtb_uq16_16_t lc_gain_dt;
+    vtb_uq16_16_t lc_gain_silence;
+    vtb_uq16_16_t lc_gain_min;
 } agc_ch_init_config_t;
 
 /**

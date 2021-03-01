@@ -52,6 +52,14 @@ typedef struct {
     vtb_u32_float_t lc_gain;
     vtb_u32_float_t lc_far_bg_power_est;
     vtb_uq0_32_t lc_corr_factor;
+    vtb_u32_float_t lc_near_delta_far_act;
+    vtb_u32_float_t lc_near_delta;
+    vtb_u32_float_t lc_far_delta;
+    vtb_u32_float_t lc_gain_max;
+    vtb_u32_float_t lc_gain_dt;
+    vtb_u32_float_t lc_gain_silence;
+    vtb_u32_float_t lc_gain_min;
+
 } agc_ch_state_t;
 
 /**

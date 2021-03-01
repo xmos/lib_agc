@@ -16,6 +16,13 @@ typedef enum {
     agc_cmd_get_adapt_on_vad,
     agc_cmd_get_soft_clipping,
     agc_cmd_get_min_gain,
+    agc_cmd_get_lc_near_delta_far_act,
+    agc_cmd_get_lc_near_delta,
+    agc_cmd_get_lc_far_delta,
+    agc_cmd_get_lc_gain_max,
+    agc_cmd_get_lc_gain_dt,
+    agc_cmd_get_lc_gain_silence,
+    agc_cmd_get_lc_gain_min,
     agc_num_get_commands,
 
     // set: MSB == 0
@@ -30,6 +37,13 @@ typedef enum {
     agc_cmd_set_adapt_on_vad,
     agc_cmd_set_soft_clipping,
     agc_cmd_set_min_gain,
+    agc_cmd_set_lc_near_delta_far_act,
+    agc_cmd_set_lc_near_delta,
+    agc_cmd_set_lc_far_delta,
+    agc_cmd_set_lc_gain_max,
+    agc_cmd_set_lc_gain_dt,
+    agc_cmd_set_lc_gain_silence,
+    agc_cmd_set_lc_gain_min,
     agc_num_set_commands,
 } agc_control_commands;
 
