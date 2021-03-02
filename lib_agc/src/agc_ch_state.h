@@ -46,6 +46,7 @@ typedef struct {
     int lc_enabled;
     int lc_t_far;
     int lc_t_near;
+    vtb_u32_float_t lc_corr_threshold;
     vtb_u32_float_t lc_near_power_est;
     vtb_u32_float_t lc_far_power_est;
     vtb_u32_float_t lc_bg_power_est;

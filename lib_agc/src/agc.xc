@@ -120,6 +120,10 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
         agc.ch_state[ch].lc_far_bg_power_est.e = VTB_UQ0_32_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_far_bg_power_est);
 
+        agc.ch_state[ch].lc_corr_threshold.m = (uint32_t)config.ch_init_config[ch].lc_corr_threshold;
+        agc.ch_state[ch].lc_corr_threshold.e = VTB_UQ0_32_EXP;
+        vtb_normalise_u32(agc.ch_state[ch].lc_corr_threshold);
+
         agc.ch_state[ch].lc_near_delta_far_act.m = (uint32_t)config.ch_init_config[ch].lc_near_delta_far_act;
         agc.ch_state[ch].lc_near_delta_far_act.e = VTB_UQ16_16_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_near_delta_far_act);
@@ -331,11 +335,24 @@ int32_t agc_get_ch_upper_threshold(agc_state_t agc, unsigned ch_index){
     return (int32_t)upper_threshold;
 }
 
-
 int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index){
     if(ch_index >= AGC_INPUT_CHANNELS) return 0;
     uint32_t lower_threshold = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].lower_threshold, 0);
     return (int32_t)lower_threshold;
+}
+
+void agc_set_ch_lc_corr_threshold(agc_state_t &agc, unsigned ch_index, int32_t lc_corr_threshold){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].lc_corr_threshold.m = lc_corr_threshold;
+        agc.ch_state[ch_index].lc_corr_threshold.e = VTB_UQ0_32_EXP;
+        vtb_normalise_u32(agc.ch_state[ch_index].lc_corr_threshold);
+    }
+}
+
+int32_t agc_get_ch_lc_corr_threshold(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    uint32_t lc_corr_threshold = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].lc_corr_threshold, VTB_UQ0_32_EXP);
+    return (int32_t)lc_corr_threshold;
 }
 
 void agc_set_ch_lc_near_delta_far_act(agc_state_t &agc, unsigned ch_index, int32_t lc_near_delta_far_act){
@@ -348,8 +365,8 @@ void agc_set_ch_lc_near_delta_far_act(agc_state_t &agc, unsigned ch_index, int32
 
 int32_t agc_get_ch_lc_near_delta_far_act(agc_state_t agc, unsigned ch_index){
     if(ch_index >= AGC_INPUT_CHANNELS) return 0;
-    uint32_t agc_get_ch_lc_near_delta_far_act = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].lc_near_delta_far_act, VTB_UQ16_16_EXP);
-    return (int32_t)agc_get_ch_lc_near_delta_far_act;
+    uint32_t lc_near_delta_far_act = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].lc_near_delta_far_act, VTB_UQ16_16_EXP);
+    return (int32_t)lc_near_delta_far_act;
 }
 
 void agc_set_ch_lc_near_delta(agc_state_t &agc, unsigned ch_index, int32_t lc_near_delta){
@@ -586,7 +603,7 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
                 // Near-end speech only
                 state.lc_t_near = AGC_LC_N_FRAME_NEAR;
             }
-            else if(state.lc_t_far && (state.lc_corr_factor < AGC_LC_CORR_THRESHOLD)){
+            else if(state.lc_t_far && (state.lc_corr_factor < state.lc_corr_threshold.m)){
                 // Double talk
                 state.lc_t_near = AGC_LC_N_FRAME_NEAR>>1;
             }

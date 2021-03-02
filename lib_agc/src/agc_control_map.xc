@@ -25,6 +25,8 @@ unsigned agc_control_map[agc_num_commands][3] = {
     {agc_cmd_get_gain_decrement_stepsize, AGC_INPUT_CHANNELS, vtb_ctrl_fixed_16_16},
     {agc_cmd_set_gain_increment_stepsize, AGC_INPUT_CHANNELS, vtb_ctrl_fixed_16_16},
     {agc_cmd_set_gain_decrement_stepsize, AGC_INPUT_CHANNELS, vtb_ctrl_fixed_16_16},
+    {agc_cmd_get_lc_corr_threshold, AGC_INPUT_CHANNELS, vtb_ctrl_fixed_0_32},
+    {agc_cmd_set_lc_corr_threshold, AGC_INPUT_CHANNELS, vtb_ctrl_fixed_0_32},
     {agc_cmd_get_lc_near_delta_far_act, AGC_INPUT_CHANNELS, vtb_ctrl_fixed_16_16},
     {agc_cmd_set_lc_near_delta_far_act, AGC_INPUT_CHANNELS, vtb_ctrl_fixed_16_16},
     {agc_cmd_get_lc_near_delta, AGC_INPUT_CHANNELS, vtb_ctrl_fixed_16_16},
