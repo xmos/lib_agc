@@ -102,6 +102,9 @@ void agc_init(agc_state_t &agc, agc_init_config_t config){
 
         agc.ch_state[ch].lc_enabled = config.ch_init_config[ch].lc_enabled;
 
+        agc.ch_state[ch].lc_n_frame_near = config.ch_init_config[ch].lc_n_frame_near;
+        agc.ch_state[ch].lc_n_frame_far = config.ch_init_config[ch].lc_n_frame_far;
+
         agc.ch_state[ch].lc_near_power_est.m = AGC_LC_NEAR_POWER_EST;
         agc.ch_state[ch].lc_near_power_est.e = VTB_UQ0_32_EXP;
         vtb_normalise_u32(agc.ch_state[ch].lc_near_power_est);
@@ -293,8 +296,14 @@ void agc_set_ch_lc_enable(agc_state_t &agc, unsigned ch_index, uint32_t enable){
 
 
 int agc_get_ch_lc_enable(agc_state_t agc, unsigned ch_index){
-    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
-    return agc.ch_state[ch_index].lc_enabled;
+    int val = -1;
+    if (ch_index == 0) {
+        val = agc.ch_state[1].lc_t_near;
+    }
+    if (ch_index == 1) {
+        val = agc.ch_state[1].lc_t_far;
+    }
+    return val;
 }
 
 
@@ -339,6 +348,28 @@ int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index){
     if(ch_index >= AGC_INPUT_CHANNELS) return 0;
     uint32_t lower_threshold = vtb_denormalise_and_saturate_u32(agc.ch_state[ch_index].lower_threshold, 0);
     return (int32_t)lower_threshold;
+}
+
+void agc_set_ch_lc_n_frame_near(agc_state_t &agc, unsigned ch_index, uint32_t frames){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].lc_n_frame_near = frames;
+    }
+}
+
+int agc_get_ch_lc_n_frame_near(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    return agc.ch_state[ch_index].lc_n_frame_near;
+}
+
+void agc_set_ch_lc_n_frame_far(agc_state_t &agc, unsigned ch_index, uint32_t frames){
+    if(ch_index < AGC_INPUT_CHANNELS){
+        agc.ch_state[ch_index].lc_n_frame_far = frames;
+    }
+}
+
+int agc_get_ch_lc_n_frame_far(agc_state_t agc, unsigned ch_index){
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    return agc.ch_state[ch_index].lc_n_frame_far;
 }
 
 void agc_set_ch_lc_corr_threshold(agc_state_t &agc, unsigned ch_index, int32_t lc_corr_threshold){
@@ -584,8 +615,8 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         }
 
         // Update activity timers
-            state.lc_t_far = AGC_LC_N_FRAME_FAR;
         if(vtb_gte_u32_u32(state.lc_far_power_est, vtb_mul_u32_u32(state.lc_far_delta, state.lc_far_bg_power_est))){
+            state.lc_t_far = state.lc_n_frame_far;
         }
         else{
             state.lc_t_far = state.lc_t_far - 1;
@@ -601,11 +632,11 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         if(vtb_gte_u32_u32(state.lc_near_power_est, vtb_mul_u32_u32(delta, state.lc_bg_power_est))){
             if(state.lc_t_far == 0){
                 // Near-end speech only
-                state.lc_t_near = AGC_LC_N_FRAME_NEAR;
+                state.lc_t_near = state.lc_n_frame_near;
             }
             else if(state.lc_t_far && (state.lc_corr_factor < state.lc_corr_threshold.m)){
                 // Double talk
-                state.lc_t_near = AGC_LC_N_FRAME_NEAR>>1;
+                state.lc_t_near = state.lc_n_frame_near>>1;
             }
             else {
                 // Far-end speech only

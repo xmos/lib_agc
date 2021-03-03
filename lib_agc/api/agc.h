@@ -24,6 +24,8 @@ typedef struct {
     vtb_uq16_16_t gain_inc;         ///< Step value to increment the channel gain.
     vtb_uq16_16_t gain_dec;         ///< Step value to decrement the channel gain.
     int lc_enabled;                 ///< 0 for loss control disabled, or 1 for enabled.
+    int lc_n_frame_far;             ///< number of frames when far-field audio is considered active
+    int lc_n_frame_near;            ///< number of frames when near-field audio is considered active
     vtb_uq0_32_t lc_corr_threshold; ///< loss control correlation threshold to detect double talk
     vtb_uq16_16_t lc_near_delta_far_act; ///< delta multiplier used by loss control when both near and far-end activities are present
     vtb_uq16_16_t lc_near_delta;    ///< delta multiplier used by loss control  when only near-end activity is present

@@ -260,6 +260,46 @@ int32_t agc_get_ch_upper_threshold(agc_state_t agc, unsigned ch_index);
  */
 int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index);
 
+/** Set loss control timer in frames for near-end activity.
+ *
+ * \param[in,out] agc       AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \param[in] frames        Number of frames to consider near-end audio activ
+ */
+void agc_set_ch_lc_n_frame_near(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,  uint32_t frames);
+
+/** Get loss control timer in frames for near-end activity.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \returns                 Number of frames to consider near-end audio active
+ */
+int agc_get_ch_lc_n_frame_near(agc_state_t agc, unsigned ch_index);
+
+/** Set loss control timer in frames for far-end activity.
+ *
+ * \param[in,out] agc       AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \param[in] frames        Number of frames to consider far-end audio activ
+ */
+void agc_set_ch_lc_n_frame_far(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,  uint32_t frames);
+
+/** Get loss control timer in frames for far-end activity.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \returns                 Number of frames to consider far-end audio active
+ */
+int agc_get_ch_lc_n_frame_far(agc_state_t agc, unsigned ch_index);
+
 /** Set loss control correlation threshold for AGC channel.
  * \param[in,out] agc           AGC state.
  *
