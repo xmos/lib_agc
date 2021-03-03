@@ -1,4 +1,5 @@
-# Copyright (c) 2018-2020, XMOS Ltd, All rights reserved
+# Copyright (c) 2018-2021, XMOS Ltd, All rights reserved
+# This software is available under the terms provided in LICENSE.txt.
 from __future__ import print_function
 from builtins import str
 import os.path
