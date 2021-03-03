@@ -1,4 +1,5 @@
 // Copyright (c) 2017-2021, XMOS Ltd, All rights reserved
+// This software is available under the terms provided in LICENSE.txt.
 #ifndef _AGC_STATE_H_
 #define _AGC_STATE_H_
 

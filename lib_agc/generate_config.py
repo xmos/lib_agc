@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# Copyright (c) 2019, XMOS Ltd, All rights reserved
+# Copyright (c) 2019-2021, XMOS Ltd, All rights reserved
+# This software is available under the terms provided in LICENSE.txt.
 from pathlib import Path
 from json_utils import JsonHandler
 
