@@ -26,6 +26,9 @@ typedef enum {
     agc_cmd_get_lc_gain_dt,
     agc_cmd_get_lc_gain_silence,
     agc_cmd_get_lc_gain_min,
+    agc_cmd_get_lc_bg_power_gamma,
+    agc_cmd_get_lc_gamma_inc,
+    agc_cmd_get_lc_gamma_dec,
     agc_num_get_commands,
 
     // set: MSB == 0
@@ -50,6 +53,9 @@ typedef enum {
     agc_cmd_set_lc_gain_dt,
     agc_cmd_set_lc_gain_silence,
     agc_cmd_set_lc_gain_min,
+    agc_cmd_set_lc_bg_power_gamma,
+    agc_cmd_set_lc_gamma_inc,
+    agc_cmd_set_lc_gamma_dec,
     agc_num_set_commands,
 } agc_control_commands;
 

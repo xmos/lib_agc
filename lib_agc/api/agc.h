@@ -27,6 +27,9 @@ typedef struct {
     int lc_n_frame_far;             ///< number of frames when far-field audio is considered active
     int lc_n_frame_near;            ///< number of frames when near-field audio is considered active
     vtb_uq0_32_t lc_corr_threshold; ///< loss control correlation threshold to detect double talk
+    vtb_uq16_16_t lc_bg_power_gamma;///< loss control background power gamma coefficient
+    vtb_uq16_16_t lc_gamma_inc;     ///< loss control gamma increment coefficient
+    vtb_uq16_16_t lc_gamma_dec;     ///< loss control gamma decrement coefficient
     vtb_uq16_16_t lc_near_delta_far_act; ///< delta multiplier used by loss control when both near and far-end activities are present
     vtb_uq16_16_t lc_near_delta;    ///< delta multiplier used by loss control  when only near-end activity is present
     vtb_uq16_16_t lc_far_delta;     ///< delta multiplier used by loss control  when only far-end activity is present

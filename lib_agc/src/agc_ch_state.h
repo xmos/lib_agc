@@ -55,6 +55,9 @@ typedef struct {
     vtb_u32_float_t lc_gain;
     vtb_u32_float_t lc_far_bg_power_est;
     vtb_uq0_32_t lc_corr_factor;
+    vtb_u32_float_t lc_bg_power_gamma;
+    vtb_u32_float_t lc_gamma_inc;
+    vtb_u32_float_t lc_gamma_dec;
     vtb_u32_float_t lc_near_delta_far_act;
     vtb_u32_float_t lc_near_delta;
     vtb_u32_float_t lc_far_delta;

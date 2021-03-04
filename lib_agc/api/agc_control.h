@@ -300,6 +300,16 @@ void agc_set_ch_lc_n_frame_far(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_in
  */
 int agc_get_ch_lc_n_frame_far(agc_state_t agc, unsigned ch_index);
 
+/** Get loss control correlation threshold for AGC channel.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \returns                 Loss control correlation threshold for AGC channel.
+ */
+int32_t agc_get_ch_lc_corr_threshold(agc_state_t agc, unsigned ch_index);
+
 /** Set loss control correlation threshold for AGC channel.
  * \param[in,out] agc           AGC state.
  *
@@ -312,15 +322,81 @@ int agc_get_ch_lc_n_frame_far(agc_state_t agc, unsigned ch_index);
 void agc_set_ch_lc_corr_threshold(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
         int32_t lc_corr_threshold);
 
-/** Get loss control correlation threshold for AGC channel.
+/** Get loss control background power gamma coefficient for AGC channel.
  *
  * \param[in] agc           AGC state.
  *
  * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
  *
- * \returns                  Loss control correlation threshold for AGC channel.
+ * \returns                 Loss control background power gamma coefficient for AGC channel.
  */
-int32_t agc_get_ch_lc_corr_threshold(agc_state_t agc, unsigned ch_index);
+int32_t agc_get_ch_lc_bg_power_gamma(agc_state_t agc, unsigned ch_index);
+
+/** Set loss control background power gamma coefficient for AGC channel.
+ * \param[in,out] agc           AGC state.
+ *
+ * \param[in] ch_index          Channel index. Must be less than
+ *                              AGC_INPUT_CHANNELS.
+ *
+ * \param[in] lc_bg_power_gamma Loss control background power gamma coefficient for AGC channel.
+ *                              [0, INT32_MAX].
+ */
+void agc_set_ch_lc_bg_power_gamma(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
+        int32_t lc_bg_power_gamma);
+
+/** Get loss control background power gamma coefficient for AGC channel.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \returns                 Loss control background power gamma coefficient for AGC channel.
+ */
+int32_t agc_get_ch_lc_bg_power_gamma(agc_state_t agc, unsigned ch_index);
+
+/** Set loss control increment gamma coefficient for AGC channel.
+ * \param[in,out] agc           AGC state.
+ *
+ * \param[in] ch_index          Channel index. Must be less than
+ *                              AGC_INPUT_CHANNELS.
+ *
+ * \param[in] lc_gamma_inc      Loss control increment gamma coefficient for AGC channel.
+ *                              [0, INT32_MAX].
+ */
+void agc_set_ch_lc_gamma_inc(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
+        int32_t lc_gamma_inc);
+
+/** Get loss control increment gamma for AGC channel.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \returns                 Loss control increment gamma for AGC channel.
+ */
+int32_t agc_get_ch_lc_gamma_inc(agc_state_t agc, unsigned ch_index);
+
+/** Set loss control decrement gamma coefficient for AGC channel.
+ * \param[in,out] agc           AGC state.
+ *
+ * \param[in] ch_index          Channel index. Must be less than
+ *                              AGC_INPUT_CHANNELS.
+ *
+ * \param[in] lc_gamma_dec      Loss control decrement gamma coefficient for AGC channel.
+ *                              [0, INT32_MAX].
+ */
+void agc_set_ch_lc_gamma_dec(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
+        int32_t lc_gamma_dec);
+
+/** Get loss control decrement gamma for AGC channel.
+ *
+ * \param[in] agc           AGC state.
+ *
+ * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
+ *
+ * \returns                 Loss control decrement gamma for AGC channel.
+ */
+int32_t agc_get_ch_lc_gamma_dec(agc_state_t agc, unsigned ch_index);
 
 /** Set delta value applied by loss control when both near-end and far-end audio are present for AGC channel.
  * \param[in,out] agc               AGC state.
