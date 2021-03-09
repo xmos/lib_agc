@@ -20,8 +20,7 @@ pipeline {
     }
     environment {
         REPO = 'lib_agc'
-        //VIEW = getViewName(REPO)
-        VIEW = "lib_agc_develop_tools15"
+        VIEW = getViewName(REPO)
     }
     options {
         skipDefaultCheckout()
