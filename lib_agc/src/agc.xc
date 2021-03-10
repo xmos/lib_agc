@@ -51,13 +51,13 @@ const vtb_u32_float_t AGC_LC_BG_POWER_GAMMA = {2151743488, -31};
 
 const vtb_u32_float_t AGC_LC_NEAR_DELTA_FAR_ACT = {3355392000, -25};
 const vtb_u32_float_t AGC_LC_NEAR_DELTA = {3355392000, -26}; // 50
-const vtb_u32_float_t AGC_LC_FAR_DELTA = {20132659200, -26}; // 300 - value recommended after user testing
+const vtb_u32_float_t AGC_LC_FAR_DELTA = {19660800, -16}; // 300 - value recommended after user testing
 
 const vtb_u32_float_t AGC_LC_GAIN_MAX = {4294901760, -32}; // 0dB
-const vtb_u32_float_t AGC_LC_GAIN_DT = {7730941132,-33}; //-0.91dB - value recommended after user testing
+const vtb_u32_float_t AGC_LC_GAIN_DT = {483183820, -29}; //-0.91dB - value recommended after user testing
 
 const vtb_u32_float_t AGC_LC_GAIN_SILENCE = {3435659264, -35}; //-20dB
-const vtb_u32_float_t AGC_LC_GAIN_MIN = (96151432, -32); // -33dB - value recommended after user testing
+const vtb_u32_float_t AGC_LC_GAIN_MIN = {96151432, -32}; // -33dB - value recommended after user testing
 
 
 
