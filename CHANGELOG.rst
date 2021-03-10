@@ -1,6 +1,11 @@
 AGC library change log
 ======================
 
+8.1.0
+-----
+
+  * CHANGED: updated hard-coded values used in loss control algorithm
+
 8.0.0
 -----
 
