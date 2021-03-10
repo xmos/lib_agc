@@ -1,4 +1,5 @@
 // Copyright (c) 2020-2021, XMOS Ltd, All rights reserved
+// This software is available under the terms provided in LICENSE.txt.
 #include "agc_conf.h"
 #include "agc_control_map.h"
 
