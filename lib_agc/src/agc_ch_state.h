@@ -14,8 +14,9 @@
 #define AGC_ALPHA_PEAK_RISE VTB_UQ0_32(0.5480)
 #define AGC_ALPHA_PEAK_FALL VTB_UQ0_32(0.9646)
 
-#define AGC_LC_N_FRAME_NEAR (34)
-#define AGC_LC_N_FRAME_FAR (17)
+#define AGC_LC_N_FRAME_NEAR (50) // value recommended after user testing
+#define AGC_LC_N_FRAME_FAR (100) // value recommended after user testing
+
 
 #define AGC_LC_EST_ALPHA_INC VTB_UQ0_32(0)
 #define AGC_LC_EST_ALPHA_DEC VTB_UQ0_32(0.6973)
@@ -25,7 +26,8 @@
 #define AGC_LC_BG_POWER_EST_INIT VTB_UQ0_32(0.01)
 #define AGC_LC_FAR_BG_POWER_EST_INIT VTB_UQ0_32(0.01)
 
-#define AGC_LC_CORR_THRESHOLD VTB_UQ0_32(0.9)
+#define AGC_LC_CORR_THRESHOLD VTB_UQ0_32(0.993) // value recommended after user testing
+
 
 /**
  * Structure to hold AGC state, only used internally.
