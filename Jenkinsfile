@@ -1,19 +1,31 @@
-@Library('xmos_jenkins_shared_library@v0.14.2') _
+@Library('xmos_jenkins_shared_library@v0.15.1') _
 
 getApproval()
 
 pipeline {
-  agent {
-    label 'x86_64 && brew && macOS'
-  }
-  environment {
-    REPO = 'lib_agc'
-    VIEW = getViewName(REPO)
-  }
-  options {
-    skipDefaultCheckout()
-  }
+  agent none
+
+  //Tools for AI verif stage. Tools for standard stage in view file
+  parameters {
+     string(
+       name: 'TOOLS_VERSION',
+       defaultValue: '15.0.2',
+       description: 'The tools version to build with (check /projects/tools/ReleasesTools/)'
+     )
+   }
   stages {
+    stage('Standard build and XS2 tests') {      
+    agent {
+      label 'x86_64 && brew && macOS'
+    }
+    environment {
+        REPO = 'lib_agc'
+        VIEW = getViewName(REPO)
+    }
+    options {
+        skipDefaultCheckout()
+    }
+    stages {
     stage('Get View') {
       steps {
         xcorePrepareSandbox("${VIEW}", "${REPO}")
@@ -29,9 +41,13 @@ pipeline {
         dir("${REPO}") {
           dir('tests') {
             dir('agc_unit_tests') {
-              runWaf('.')
+              withVenv {
+              runWaf('.', "configure clean build --target=xcore200")
+              runWaf('.', "configure clean build --target=xcoreai")
+              stash name: 'agc_unit_tests', includes: 'bin/*xcoreai.xe, '              
               viewEnv() {
-                runPytest()
+                runPython("TARGET=XCORE200 pytest -n 1")
+              }
               }
             }
           }
@@ -42,7 +58,10 @@ pipeline {
       steps {
         dir("${REPO}") {
           dir('tests/test_wav_agc') {
-            runWaf('.')
+            withVenv {
+            runWaf('.', "configure clean build --target=xcore200")
+            runWaf('.', "configure clean build --target=xcoreai")
+           }
           }
         }
       }
@@ -58,6 +77,7 @@ pipeline {
       }
     }
   }
+  
   post {
     success {
       updateViewfiles()
@@ -65,5 +85,70 @@ pipeline {
     cleanup {
       xcoreCleanSandbox()
     }
+  }
+  }
+    stage('xcore.ai Verification'){
+      agent {
+        label 'xcore.ai-explorer'
+      }      
+      environment {
+        // '/XMOS/tools' from get_tools.py and rest from tools installers
+        TOOLS_PATH = "/XMOS/tools/${params.TOOLS_VERSION}/XMOS/xTIMEcomposer/${params.TOOLS_VERSION}"
+        REPO = 'lib_agc'
+        //VIEW = getViewName(REPO)
+        VIEW = "lib_agc_develop_tools15"
+      }
+      options {
+        skipDefaultCheckout()
+      }
+
+      stages{
+
+        stage('Get View') {
+            steps {
+                xcorePrepareSandbox("${VIEW}", "${REPO}")
+            }
+        }
+        stage('Install Dependencies') {
+          steps {
+            sh '/XMOS/get_tools.py ' + params.TOOLS_VERSION
+            installDependencies()
+          }
+        }          
+        stage('xs3 agc_unit_tests')
+        {
+          steps {
+            dir("${REPO}") {
+            dir('tests') {
+            dir('agc_unit_tests') {
+              withVenv {
+                unstash 'agc_unit_tests'
+                viewEnv() {
+                runPython("TARGET=XCOREAI pytest -s")
+              }
+            }
+            }
+            }
+           }
+          }
+        }
+      } //stages
+      post {
+        cleanup {
+          cleanWs()
+        }
+      }
+  }//xcore.ai
+  stage('Update view files') {
+    agent {
+      label 'x86_64&&brew'
+    }
+    when {
+      expression { return currentBuild.result == "SUCCESS" }
+    }
+    steps {
+      updateViewfiles()
+    }
+  }
   }
 }

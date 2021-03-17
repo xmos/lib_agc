@@ -5,6 +5,7 @@ AGC library change log
 -----
 
   * CHANGED: updated hard-coded values used in loss control algorithm
+  * ADDED: Support for building and running tests on XS3 target
 
 8.0.0
 -----
