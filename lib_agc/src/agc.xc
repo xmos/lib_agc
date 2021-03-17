@@ -1,4 +1,5 @@
 // Copyright (c) 2017-2021, XMOS Ltd, All rights reserved
+// This software is available under the terms provided in LICENSE.txt.
 #include <xclib.h>
 #include "agc.h"
 #include "voice_toolbox.h"
@@ -49,13 +50,15 @@ const vtb_u32_float_t AGC_LC_GAMMA_DEC = {4273405952, -32};
 const vtb_u32_float_t AGC_LC_BG_POWER_GAMMA = {2151743488, -31};
 
 const vtb_u32_float_t AGC_LC_NEAR_DELTA_FAR_ACT = {3355392000, -25};
-const vtb_u32_float_t AGC_LC_NEAR_DELTA = {3355392000, -26};
-const vtb_u32_float_t AGC_LC_FAR_DELTA = {3355392000, -26};
+const vtb_u32_float_t AGC_LC_NEAR_DELTA = {3355392000, -26}; // 50
+const vtb_u32_float_t AGC_LC_FAR_DELTA = {19660800, -16}; // 300 - value recommended after user testing
 
 const vtb_u32_float_t AGC_LC_GAIN_MAX = {4294901760, -32}; // 0dB
-const vtb_u32_float_t AGC_LC_GAIN_DT = {3435921408, -34}; //-14dB
+const vtb_u32_float_t AGC_LC_GAIN_DT = {483183820, -29}; //-0.91dB - value recommended after user testing
+
 const vtb_u32_float_t AGC_LC_GAIN_SILENCE = {3435659264, -35}; //-20dB
-const vtb_u32_float_t AGC_LC_GAIN_MIN = {3288334336, -40}; // -50dB
+const vtb_u32_float_t AGC_LC_GAIN_MIN = {96151432, -32}; // -33dB - value recommended after user testing
+
 
 
 static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, vtb_u32_float_t far_power, int vad_flag, vtb_uq0_32_t aec_corr);
