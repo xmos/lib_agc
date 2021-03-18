@@ -6,21 +6,14 @@ pipeline {
   agent none
 
   //Tools for AI verif stage. Tools for standard stage in view file
-  parameters {
-     string(
-       name: 'TOOLS_VERSION',
-       defaultValue: '15.0.2',
-       description: 'The tools version to build with (check /projects/tools/ReleasesTools/)'
-     )
-   }
+  environment {
+      REPO = 'lib_agc'
+      VIEW = getViewName(REPO)
+  }
   stages {
     stage('Standard build and XS2 tests') {      
     agent {
       label 'x86_64 && brew && macOS'
-    }
-    environment {
-        REPO = 'lib_agc'
-        VIEW = getViewName(REPO)
     }
     options {
         skipDefaultCheckout()
@@ -79,9 +72,6 @@ pipeline {
   }
   
   post {
-    success {
-      updateViewfiles()
-    }
     cleanup {
       xcoreCleanSandbox()
     }
@@ -91,13 +81,6 @@ pipeline {
       agent {
         label 'xcore.ai-explorer'
       }      
-      environment {
-        // '/XMOS/tools' from get_tools.py and rest from tools installers
-        TOOLS_PATH = "/XMOS/tools/${params.TOOLS_VERSION}/XMOS/xTIMEcomposer/${params.TOOLS_VERSION}"
-        REPO = 'lib_agc'
-        //VIEW = getViewName(REPO)
-        VIEW = "lib_agc_develop_tools15"
-      }
       options {
         skipDefaultCheckout()
       }
@@ -109,12 +92,6 @@ pipeline {
                 xcorePrepareSandbox("${VIEW}", "${REPO}")
             }
         }
-        stage('Install Dependencies') {
-          steps {
-            sh '/XMOS/get_tools.py ' + params.TOOLS_VERSION
-            installDependencies()
-          }
-        }          
         stage('xs3 agc_unit_tests')
         {
           steps {
