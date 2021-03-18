@@ -1,4 +1,5 @@
 # Copyright (c) 2018-2021, XMOS Ltd, All rights reserved
+# This software is available under the terms provided in LICENSE.txt.
 from __future__ import division
 from builtins import object
 import numpy as np
@@ -175,8 +176,8 @@ class agc(object):
     ALPHA_PEAK_RISE = 0.5480
     ALPHA_PEAK_FALL = 0.9646
 
-    LC_N_SAMPLE_NEAR = 34 # 0.5s as recommended in "acoustic echo and noise control"
-    LC_N_FRAME_FAR = 17 # 0.25 seconds, frame count
+    LC_N_SAMPLE_NEAR = 50 # value recommended after user testing
+    LC_N_FRAME_FAR = 100 # value recommended after user testing
 
     # Alpha values for EWMA calcuations
     LC_EST_ALPHA_INC = 0.5480
@@ -189,15 +190,15 @@ class agc(object):
     LC_BG_POWER_GAMMA = 1.002 # bg power estimate small increase prevent local minima
 
     LC_DELTA = 50.0 # ratio of near end power to bg estimate to mark near end activity
-    LC_FAR_DELTA = 50.0
+    LC_FAR_DELTA = 300.0
     LC_DELTA_FAR_ACT = 100.0
 
-    LC_CORR_THRESHOLD = 0.95
+    LC_CORR_THRESHOLD = 0.993 # value recommended after user testing
     LC_CORR_PK_HOLD = 1
 
     LC_GAIN_MAX = 1
-    LC_GAIN_MIN = 0.003
-    LC_GAIN_DT = 0.2
+    LC_GAIN_MIN = 0.022387 # value recommended after user testing
+    LC_GAIN_DT = 0.9 # value recommended after user testing
     LC_GAIN_SILENCE = 0.1
 
     LC_POWER_EST_INIT = 0.00001
