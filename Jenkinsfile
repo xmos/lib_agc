@@ -12,71 +12,71 @@ pipeline {
   }
   stages {
     stage('Standard build and XS2 tests') {      
-    agent {
-      label 'x86_64 && brew && macOS'
-    }
-    options {
+      agent {
+        label 'x86_64 && brew && macOS'
+      }
+      options {
         skipDefaultCheckout()
-    }
-    stages {
-    stage('Get View') {
-      steps {
-        xcorePrepareSandbox("${VIEW}", "${REPO}")
       }
-    }
-    stage('Library Checks') {
-      steps {
-        xcoreLibraryChecks("${REPO}")
-      }
-    }
-    stage('Unit Tests') {
-      steps {
-        dir("${REPO}") {
-          dir('tests') {
-            dir('agc_unit_tests') {
-              withVenv {
-              runWaf('.', "configure clean build --target=xcore200")
-              runWaf('.', "configure clean build --target=xcoreai")
-              stash name: 'agc_unit_tests', includes: 'bin/*xcoreai.xe, '              
-              viewEnv() {
-                runPython("TARGET=XCORE200 pytest -n 1")
+      stages {
+        stage('Get View') {
+          steps {
+            xcorePrepareSandbox("${VIEW}", "${REPO}")
+          }
+        }
+        stage('Library Checks') {
+          steps {
+            xcoreLibraryChecks("${REPO}")
+          }
+        }
+        stage('Unit Tests') {
+          steps {
+            dir("${REPO}") {
+              dir('tests') {
+                dir('agc_unit_tests') {
+                  withVenv {
+                    runWaf('.', "configure clean build --target=xcore200")
+                    runWaf('.', "configure clean build --target=xcoreai")
+                    stash name: 'agc_unit_tests', includes: 'bin/*xcoreai.xe, '              
+                    viewEnv() {
+                      runPython("TARGET=XCORE200 pytest -n 1")
+                    }
+                  }
+                }
               }
+            }
+          }
+        }
+        stage('Build test_wav_agc') {
+          steps {
+            dir("${REPO}") {
+              dir('tests/test_wav_agc') {
+                withVenv {
+                  runWaf('.', "configure clean build --target=xcore200")
+                  runWaf('.', "configure clean build --target=xcoreai")
+                }
+              }
+            }
+          }
+        }
+        stage('Build') {
+          steps {
+            dir("${REPO}") {
+              // xcoreAllAppsBuild('examples')
+              dir("${REPO}") {
+                runXdoc('doc')
               }
             }
           }
         }
       }
-    }
-    stage('Build test_wav_agc') {
-      steps {
-        dir("${REPO}") {
-          dir('tests/test_wav_agc') {
-            withVenv {
-            runWaf('.', "configure clean build --target=xcore200")
-            runWaf('.', "configure clean build --target=xcoreai")
-           }
-          }
-        }
-      }
-    }
-    stage('Build') {
-      steps {
-        dir("${REPO}") {
-          // xcoreAllAppsBuild('examples')
-          dir("${REPO}") {
-            runXdoc('doc')
-          }
-        }
-      }
-    }
-  }
   
-  post {
-    cleanup {
-      xcoreCleanSandbox()
+      post {
+        cleanup {
+          xcoreCleanSandbox()
+        }
+      }
     }
-  }
-  }
     stage('xcore.ai Verification'){
       agent {
         label 'xcore.ai-explorer'
@@ -84,29 +84,27 @@ pipeline {
       options {
         skipDefaultCheckout()
       }
-
-      stages{
-
+      stages {
         stage('Get View') {
-            steps {
-                xcorePrepareSandbox("${VIEW}", "${REPO}")
-            }
+          steps {
+            xcorePrepareSandbox("${VIEW}", "${REPO}")
+          }
         }
         stage('xs3 agc_unit_tests')
         {
           steps {
             dir("${REPO}") {
-            dir('tests') {
-            dir('agc_unit_tests') {
-              withVenv {
-                unstash 'agc_unit_tests'
-                viewEnv() {
-                runPython("TARGET=XCOREAI pytest -s")
+              dir('tests') {
+                dir('agc_unit_tests') {
+                  withVenv {
+                    unstash 'agc_unit_tests'
+                    viewEnv() {
+                      runPython("TARGET=XCOREAI pytest -s")
+                    }
+                  }
+                }
               }
             }
-            }
-            }
-           }
           }
         }
       } //stages
@@ -115,17 +113,17 @@ pipeline {
           cleanWs()
         }
       }
-  }//xcore.ai
-  stage('Update view files') {
-    agent {
-      label 'x86_64&&brew'
+    }//xcore.ai
+    stage('Update view files') {
+      agent {
+        label 'x86_64&&brew'
+      }
+      when {
+        expression { return currentBuild.currentResult == "SUCCESS" }
+      }
+      steps {
+        updateViewfiles()
+      }
     }
-    when {
-      expression { return currentBuild.currentResult == "SUCCESS" }
-    }
-    steps {
-      updateViewfiles()
-    }
-  }
   }
 }
