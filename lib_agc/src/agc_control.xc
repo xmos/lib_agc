@@ -1,5 +1,5 @@
-// Copyright (c) 2017-2021, XMOS Ltd, All rights reserved
-// This software is available under the terms provided in LICENSE.txt.
+// Copyright 2021 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include "agc_control.h"
 
 void agc_command_handler(chanend c_command, agc_state_t &agc_state){

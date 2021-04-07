@@ -1,5 +1,5 @@
-// Copyright (c) 2020-2021, XMOS Ltd, All rights reserved
-// This software is available under the terms provided in LICENSE.txt.
+// Copyright 2021 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #ifndef AGC_CONTROL_MAP_H_
 #define AGC_CONTROL_MAP_H_
 #include "vtb_control.h"
