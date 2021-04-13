@@ -1,69 +1,129 @@
-@Library('xmos_jenkins_shared_library@v0.14.2') _
+@Library('xmos_jenkins_shared_library@v0.16.2') _
 
 getApproval()
 
 pipeline {
-  agent {
-    label 'x86_64 && brew && macOS'
-  }
+  agent none
+
+  //Tools for AI verif stage. Tools for standard stage in view file
   environment {
-    REPO = 'lib_agc'
-    VIEW = getViewName(REPO)
-  }
-  options {
-    skipDefaultCheckout()
+      REPO = 'lib_agc'
+      VIEW = getViewName(REPO)
   }
   stages {
-    stage('Get View') {
-      steps {
-        xcorePrepareSandbox("${VIEW}", "${REPO}")
+    stage('Standard build and XS2 tests') {      
+      agent {
+        label 'x86_64 && brew && macOS'
       }
-    }
-    stage('Library Checks') {
-      steps {
-        xcoreLibraryChecks("${REPO}")
+      options {
+        skipDefaultCheckout()
       }
-    }
-    stage('Unit Tests') {
-      steps {
-        dir("${REPO}") {
-          dir('tests') {
-            dir('agc_unit_tests') {
-              runWaf('.')
-              viewEnv() {
-                runPytest()
+      stages {
+        stage('Get View') {
+          steps {
+            xcorePrepareSandbox("${VIEW}", "${REPO}")
+          }
+        }
+        stage('Library Checks') {
+          steps {
+            xcoreLibraryChecks("${REPO}")
+          }
+        }
+        stage('Unit Tests') {
+          steps {
+            dir("${REPO}") {
+              dir('tests') {
+                dir('agc_unit_tests') {
+                  withVenv {
+                    runWaf('.', "configure clean build --target=xcore200")
+                    runWaf('.', "configure clean build --target=xcoreai")
+                    stash name: 'agc_unit_tests', includes: 'bin/*xcoreai.xe, '              
+                    viewEnv() {
+                      runPython("TARGET=XCORE200 pytest -n 1")
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        stage('Build test_wav_agc') {
+          steps {
+            dir("${REPO}") {
+              dir('tests/test_wav_agc') {
+                withVenv {
+                  runWaf('.', "configure clean build --target=xcore200")
+                  runWaf('.', "configure clean build --target=xcoreai")
+                }
+              }
+            }
+          }
+        }
+        stage('Build') {
+          steps {
+            dir("${REPO}") {
+              // xcoreAllAppsBuild('examples')
+              dir("${REPO}") {
+                runXdoc('doc')
               }
             }
           }
         }
       }
-    }
-    stage('Build test_wav_agc') {
-      steps {
-        dir("${REPO}") {
-          dir('tests/test_wav_agc') {
-            runWaf('.')
-          }
+  
+      post {
+        cleanup {
+          xcoreCleanSandbox()
         }
       }
     }
-    stage('Build') {
-      steps {
-        dir("${REPO}") {
-          // xcoreAllAppsBuild('examples')
-          dir("${REPO}") {
-            runXdoc('doc')
+    stage('xcore.ai Verification'){
+      agent {
+        label 'xcore.ai-explorer'
+      }      
+      options {
+        skipDefaultCheckout()
+      }
+      stages {
+        stage('Get View') {
+          steps {
+            xcorePrepareSandbox("${VIEW}", "${REPO}")
           }
         }
+        stage('xs3 agc_unit_tests')
+        {
+          steps {
+            dir("${REPO}") {
+              dir('tests') {
+                dir('agc_unit_tests') {
+                  withVenv {
+                    unstash 'agc_unit_tests'
+                    viewEnv() {
+                      runPython("TARGET=XCOREAI pytest -s")
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      } //stages
+      post {
+        cleanup {
+          cleanWs()
+        }
       }
-    }
-  }
-  post {
-    success {
-      updateViewfiles()
-    }
-    cleanup {
-      xcoreCleanSandbox()
+    }//xcore.ai
+    stage('Update view files') {
+      agent {
+        label 'x86_64&&brew'
+      }
+      when {
+        expression { return currentBuild.currentResult == "SUCCESS" }
+      }
+      steps {
+        updateViewfiles()
+      }
     }
   }
 }
