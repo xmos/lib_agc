@@ -44,21 +44,6 @@ const vtb_u32_float_t U_HALF = {UINT_MAX, -32-1};
 const vtb_s32_float_t S_QUARTER = {INT_MAX, -31-2};
 
 const vtb_u32_float_t AGC_LC_FAR_BG_POWER_EST_MIN = {2814705664, -48}; //0.00001
-/*
-const vtb_u32_float_t AGC_LC_GAMMA_INC = {2158166016, -31};
-const vtb_u32_float_t AGC_LC_GAMMA_DEC = {4273405952, -32};
-const vtb_u32_float_t AGC_LC_BG_POWER_GAMMA = {2151743488, -31};
-
-const vtb_u32_float_t AGC_LC_NEAR_DELTA_FAR_ACT = {3355392000, -25};
-const vtb_u32_float_t AGC_LC_NEAR_DELTA = {3355392000, -26}; // 50
-const vtb_u32_float_t AGC_LC_FAR_DELTA = {19660800, -16}; // 300 - value recommended after user testing
-
-const vtb_u32_float_t AGC_LC_GAIN_MAX = {4294901760, -32}; // 0dB
-const vtb_u32_float_t AGC_LC_GAIN_DT = {483183820, -29}; //-0.91dB - value recommended after user testing
-
-const vtb_u32_float_t AGC_LC_GAIN_SILENCE = {3435659264, -35}; //-20dB
-const vtb_u32_float_t AGC_LC_GAIN_MIN = {96151432, -32}; // -33dB - value recommended after user testing
-*/
 
 static void agc_process_channel(agc_ch_state_t &agc_state, vtb_ch_pair_t samples[AGC_PROC_FRAME_LENGTH], unsigned ch_index, vtb_u32_float_t far_power, int vad_flag, vtb_uq0_32_t aec_corr);
 
