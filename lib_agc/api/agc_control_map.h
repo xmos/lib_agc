@@ -4,6 +4,11 @@
 #define AGC_CONTROL_MAP_H_
 #include "vtb_control.h"
 
+#define LC_N_FRAMES_NUM 2
+#define LC_GAMMAS_NUM 3
+#define LC_DELTAS_NUM 3
+#define LC_GAINS_NUM 4
+
 typedef enum {
     // get: MSB == 1
     agc_cmd_get_gain = 0x80,
