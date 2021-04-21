@@ -269,7 +269,7 @@ int32_t agc_get_ch_lower_threshold(agc_state_t agc, unsigned ch_index);
  *
  * \param[in] frames        Number of frames to consider near-end audio activ
  */
-void agc_set_ch_lc_n_frame_near(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,  uint32_t frames);
+void agc_set_ch_lc_n_frames(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,  uint32_t frames[2]);
 
 /** Get loss control timer in frames for near-end activity.
  *
@@ -279,27 +279,7 @@ void agc_set_ch_lc_n_frame_near(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_i
  *
  * \returns                 Number of frames to consider near-end audio active
  */
-int agc_get_ch_lc_n_frame_near(agc_state_t agc, unsigned ch_index);
-
-/** Set loss control timer in frames for far-end activity.
- *
- * \param[in,out] agc       AGC state.
- *
- * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
- *
- * \param[in] frames        Number of frames to consider far-end audio activ
- */
-void agc_set_ch_lc_n_frame_far(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,  uint32_t frames);
-
-/** Get loss control timer in frames for far-end activity.
- *
- * \param[in] agc           AGC state.
- *
- * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
- *
- * \returns                 Number of frames to consider far-end audio active
- */
-int agc_get_ch_lc_n_frame_far(agc_state_t agc, unsigned ch_index);
+{int, int} agc_get_ch_lc_n_frames(agc_state_t agc, unsigned ch_index);
 
 /** Get loss control correlation threshold for AGC channel.
  *
@@ -331,7 +311,7 @@ void agc_set_ch_lc_corr_threshold(REFERENCE_PARAM(agc_state_t, agc), unsigned ch
  *
  * \returns                 Loss control background power gamma coefficient for AGC channel.
  */
-int32_t agc_get_ch_lc_bg_power_gamma(agc_state_t agc, unsigned ch_index);
+{int, int, int} agc_get_ch_lc_gammas(agc_state_t agc, unsigned ch_index);
 
 /** Set loss control background power gamma coefficient for AGC channel.
  * \param[in,out] agc           AGC state.
@@ -342,62 +322,7 @@ int32_t agc_get_ch_lc_bg_power_gamma(agc_state_t agc, unsigned ch_index);
  * \param[in] lc_bg_power_gamma Loss control background power gamma coefficient for AGC channel.
  *                              [0, INT32_MAX].
  */
-void agc_set_ch_lc_bg_power_gamma(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
-        int32_t lc_bg_power_gamma);
-
-/** Get loss control background power gamma coefficient for AGC channel.
- *
- * \param[in] agc           AGC state.
- *
- * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
- *
- * \returns                 Loss control background power gamma coefficient for AGC channel.
- */
-int32_t agc_get_ch_lc_bg_power_gamma(agc_state_t agc, unsigned ch_index);
-
-/** Set loss control increment gamma coefficient for AGC channel.
- * \param[in,out] agc           AGC state.
- *
- * \param[in] ch_index          Channel index. Must be less than
- *                              AGC_INPUT_CHANNELS.
- *
- * \param[in] lc_gamma_inc      Loss control increment gamma coefficient for AGC channel.
- *                              [0, INT32_MAX].
- */
-void agc_set_ch_lc_gamma_inc(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
-        int32_t lc_gamma_inc);
-
-/** Get loss control increment gamma for AGC channel.
- *
- * \param[in] agc           AGC state.
- *
- * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
- *
- * \returns                 Loss control increment gamma for AGC channel.
- */
-int32_t agc_get_ch_lc_gamma_inc(agc_state_t agc, unsigned ch_index);
-
-/** Set loss control decrement gamma coefficient for AGC channel.
- * \param[in,out] agc           AGC state.
- *
- * \param[in] ch_index          Channel index. Must be less than
- *                              AGC_INPUT_CHANNELS.
- *
- * \param[in] lc_gamma_dec      Loss control decrement gamma coefficient for AGC channel.
- *                              [0, INT32_MAX].
- */
-void agc_set_ch_lc_gamma_dec(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
-        int32_t lc_gamma_dec);
-
-/** Get loss control decrement gamma for AGC channel.
- *
- * \param[in] agc           AGC state.
- *
- * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
- *
- * \returns                 Loss control decrement gamma for AGC channel.
- */
-int32_t agc_get_ch_lc_gamma_dec(agc_state_t agc, unsigned ch_index);
+void agc_set_ch_lc_gammas(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,  uint32_t gammas[3]);
 
 /** Set delta value applied by loss control when both near-end and far-end audio are present for AGC channel.
  * \param[in,out] agc               AGC state.
@@ -408,8 +333,7 @@ int32_t agc_get_ch_lc_gamma_dec(agc_state_t agc, unsigned ch_index);
  * \param[in] lc_near_delta_far_act Delta value applied by loss control when both near-end and far-end audio are present for AGC channel.
  *                                  [0, INT32_MAX].
  */
-void agc_set_ch_lc_near_delta_far_act(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
-        int32_t lc_near_delta_far_act);
+void agc_set_ch_lc_deltas(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,  uint32_t deltas[3]);
 
 /** Get delta value applied by loss control when both near-end and far-end audio are present for AGC channel.
  *
@@ -419,51 +343,7 @@ void agc_set_ch_lc_near_delta_far_act(REFERENCE_PARAM(agc_state_t, agc), unsigne
  *
  * \returns                 Delta value applied by loss control  when both near-end and far-end audio are present for AGC channel.
  */
-int32_t agc_get_ch_lc_near_delta_far_act(agc_state_t agc, unsigned ch_index);
-
-/** Set delta value applied by loss controlwhen both near-end and far-end audio are present for AGC channel.
- * \param[in,out] agc           AGC state.
- *
- * \param[in] ch_index          Channel index. Must be less than
- *                              AGC_INPUT_CHANNELS.
- *
- * \param[in] lc_far_delta      Delta value applied by loss control when only near-end audio is present for AGC channel.
- *                              [0, INT32_MAX].
- */
-void agc_set_ch_lc_near_delta(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
-        int32_t lc_near_delta);
-
-/** Get delta value applied by loss control when only near-end audio is present for AGC channel.
- *
- * \param[in] agc           AGC state.
- *
- * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
- *
- * \returns                 Delta value applied by loss control when only near-end audio is present for AGC channel.
- */
-int32_t agc_get_ch_lc_near_delta(agc_state_t agc, unsigned ch_index);
-
-/** Set delta value applied by loss control when only far-end audio is present for AGC channel.
- * \param[in,out] agc           AGC state.
- *
- * \param[in] ch_index          Channel index. Must be less than
- *                              AGC_INPUT_CHANNELS.
- *
- * \param[in] lc_far_delta      Delta value applied by loss control when only far-end audio is present for AGC channel.
- *                              [0, INT32_MAX].
- */
-void agc_set_ch_lc_far_delta(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
-        int32_t lc_far_delta);
-
-/** Get delta value applied by loss control when only far-end audio is present for AGC channel.
- *
- * \param[in] agc           AGC state.
- *
- * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
- *
- * \returns                 Delta value applied by loss control when only far-end audio is present for AGC channel.
- */
-int32_t agc_get_ch_lc_far_delta(agc_state_t agc, unsigned ch_index);
+{int, int, int} agc_get_ch_lc_deltas(agc_state_t agc, unsigned ch_index);
 
 /** Set maximum gain applied by loss control for AGC channel.
  *
@@ -475,8 +355,7 @@ int32_t agc_get_ch_lc_far_delta(agc_state_t agc, unsigned ch_index);
  * \param[in] lc_gain_max       Upper threshold of desired output voice level
  *                              [0, INT32_MAX].
  */
-void agc_set_ch_lc_gain_max(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
-        int32_t lc_gain_max);
+void agc_set_ch_lc_gains(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index, uint32_t gains[4]);
 
 /** Get maximum gain applied by loss control for AGC channel.
  *
@@ -486,75 +365,6 @@ void agc_set_ch_lc_gain_max(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index
  *
  * \returns                 Maximum gain applied by loss control for AGC channel
  */
-int32_t agc_get_ch_lc_gain_max(agc_state_t agc, unsigned ch_index);
-
-/** Set gain applied by loss control when double talk is detected for AGC channel.
- *
- * \param[in,out] agc           AGC state.
- *
- * \param[in] ch_index          Channel index. Must be less than
- *                              AGC_INPUT_CHANNELS.
- *
- * \param[in] lc_gain_dt        Gain applied by loss control when double talk is detected for AGC channel
- *                              [0, INT32_MAX].
- */
-void agc_set_ch_lc_gain_dt(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
-        int32_t lc_gain_dt);
-
-/** Get gain applied by loss control when double talk is detected for AGC channel.
- *
- * \param[in] agc           AGC state.
- *
- * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
- *
- * \returns                 Gain applied by loss control when double talk is detected for AGC channel.
- */
-int32_t agc_get_ch_lc_gain_dt(agc_state_t agc, unsigned ch_index);
-
-/** Set gain applied by loss control when silence is detected for AGC channel.
- *
- * \param[in,out] agc           AGC state.
- *
- * \param[in] ch_index          Channel index. Must be less than
- *                              AGC_INPUT_CHANNELS.
- *
- * \param[in] lc_gain_silence   Gain applied by loss control when silence is detected for AGC channel.
- *                              [0, INT32_MAX].
- */
-void agc_set_ch_lc_gain_silence(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
-        int32_t lc_gain_silence);
-
-/** Get gain applied by loss control when silence is detected for AGC channel.
- *
- * \param[in] agc           AGC state.
- *
- * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
- *
- * \returns                 Gain applied by loss control when silence is detected for AGC channel.
- */
-int32_t agc_get_ch_lc_gain_silence(agc_state_t agc, unsigned ch_index);
-
-/** Set minimum gain applied by loss control for AGC channel.
- *
- * \param[in,out] agc           AGC state.
- *
- * \param[in] ch_index          Channel index. Must be less than
- *                              AGC_INPUT_CHANNELS.
- *
- * \param[in] lc_gain_min       Minimum gain applied by loss control for AGC channel.
- *                              [0, INT32_MAX].
- */
-void agc_set_ch_lc_gain_min(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
-        int32_t lc_gain_min);
-
-/** Get minimum gain applied by loss control for AGC channel.
- *
- * \param[in] agc           AGC state.
- *
- * \param[in] ch_index      Channel index. Must be less than AGC_INPUT_CHANNELS.
- *
- * \returns                 Minimum gain applied by loss control for AGC channel.
- */
-int32_t agc_get_ch_lc_gain_min(agc_state_t agc, unsigned ch_index);
+{int, int, int, int} agc_get_ch_lc_gains(agc_state_t agc, unsigned ch_index);
 
 #endif /* AGC_CONTROL_H_ */

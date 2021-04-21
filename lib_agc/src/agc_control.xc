@@ -1,7 +1,7 @@
 // Copyright 2021 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include "agc_control.h"
-
+#include "print.h"
 void agc_command_handler(chanend c_command, agc_state_t &agc_state){
     uint8_t cmd;
     c_command :> cmd;
@@ -162,32 +162,22 @@ void agc_command_handler(chanend c_command, agc_state_t &agc_state){
                 agc_set_ch_gain_dec(agc_state, intructions[1], intructions[0]);
             }
             break;
-        case agc_cmd_get_lc_n_frame_near:
-            uint32_t vals[AGC_INPUT_CHANNELS];
+        case agc_cmd_get_lc_n_frames:
+            uint32_t vals[AGC_INPUT_CHANNELS*2];
             for(int i = 0; i < AGC_INPUT_CHANNELS; i ++) {
-                vals[i] = (uint32_t)agc_get_ch_lc_n_frame_near(agc_state, i);
+                { vals[2*i], vals[2*i+1] } = agc_get_ch_lc_n_frames(agc_state, i);
             }
-            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS, vals);
+            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS*2, vals);
             break;
-        case agc_cmd_set_lc_n_frame_near:
-            uint32_t intructions[2];
-            vtb_control_handle_set_n_words(c_command, 2, intructions);
-            if (intructions[1] < AGC_INPUT_CHANNELS) {
-                agc_set_ch_lc_n_frame_near(agc_state, intructions[1], intructions[0]);
-            }
-            break;
-        case agc_cmd_get_lc_n_frame_far:
-            uint32_t vals[AGC_INPUT_CHANNELS];
-            for(int i = 0; i < AGC_INPUT_CHANNELS; i ++) {
-                vals[i] = (uint32_t)agc_get_ch_lc_n_frame_far(agc_state, i);
-            }
-            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS, vals);
-            break;
-        case agc_cmd_set_lc_n_frame_far:
-            uint32_t intructions[2];
-            vtb_control_handle_set_n_words(c_command, 2, intructions);
-            if (intructions[1] < AGC_INPUT_CHANNELS) {
-                agc_set_ch_lc_n_frame_far(agc_state, intructions[1], intructions[0]);
+        case agc_cmd_set_lc_n_frames:
+            uint32_t instructions[3];
+            vtb_control_handle_set_n_words(c_command, 3, instructions);
+            if (instructions[2] < AGC_INPUT_CHANNELS) {
+                uint32_t vals[2];
+                vals[0] =  instructions[0];
+                vals[1] =  instructions[1];
+
+                agc_set_ch_lc_n_frames(agc_state, instructions[2], vals);
             }
             break;
 
@@ -207,159 +197,68 @@ void agc_command_handler(chanend c_command, agc_state_t &agc_state){
             }
             break;
 
-        case agc_cmd_get_lc_bg_power_gamma:
-            uint32_t vals[AGC_INPUT_CHANNELS];
+        case agc_cmd_get_lc_gammas:
+            uint32_t vals[AGC_INPUT_CHANNELS*3];
             for(int i = 0; i < AGC_INPUT_CHANNELS; i ++) {
-                vals[i] = (uint32_t)agc_get_ch_lc_bg_power_gamma(agc_state, i);
+                { vals[3*i], vals[3*i+1], vals[3*i+2] } = agc_get_ch_lc_gammas(agc_state, i);
             }
-            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS, vals);
+            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS*3, vals);
             break;
 
-        case agc_cmd_set_lc_bg_power_gamma:
-            uint32_t intructions[2];
-            vtb_control_handle_set_n_words(c_command, 2, intructions);
-            if (intructions[1] < AGC_INPUT_CHANNELS) {
-                agc_set_ch_lc_bg_power_gamma(agc_state, intructions[1], intructions[0]);
+        case agc_cmd_set_lc_gammas:
+            uint32_t instructions[4];
+            vtb_control_handle_set_n_words(c_command, 4, instructions);
+            if (instructions[3] < AGC_INPUT_CHANNELS) {
+                uint32_t vals[3];
+                vals[0] =  instructions[0];
+                vals[1] =  instructions[1];
+                vals[2] =  instructions[2];
+
+                agc_set_ch_lc_gammas(agc_state, instructions[3], vals);
             }
             break;
 
-        case agc_cmd_get_lc_gamma_inc:
-            uint32_t vals[AGC_INPUT_CHANNELS];
+        case agc_cmd_get_lc_deltas:
+            uint32_t vals[AGC_INPUT_CHANNELS*3];
             for(int i = 0; i < AGC_INPUT_CHANNELS; i ++) {
-                vals[i] = (uint32_t)agc_get_ch_lc_gamma_inc(agc_state, i);
+                { vals[3*i], vals[3*i+1], vals[3*i+2] } = agc_get_ch_lc_deltas(agc_state, i);
             }
-            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS, vals);
+            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS*3, vals);
             break;
 
-        case agc_cmd_set_lc_gamma_inc:
-            uint32_t intructions[2];
-            vtb_control_handle_set_n_words(c_command, 2, intructions);
-            if (intructions[1] < AGC_INPUT_CHANNELS) {
-                agc_set_ch_lc_gamma_inc(agc_state, intructions[1], intructions[0]);
+        case agc_cmd_set_lc_deltas:
+            uint32_t instructions[4];
+            vtb_control_handle_set_n_words(c_command, 4, instructions);
+            if (instructions[3] < AGC_INPUT_CHANNELS) {
+                uint32_t vals[3];
+                vals[0] =  instructions[0];
+                vals[1] =  instructions[1];
+                vals[2] =  instructions[2];
+
+                agc_set_ch_lc_deltas(agc_state, instructions[3], vals);
             }
             break;
 
-        case agc_cmd_get_lc_gamma_dec:
-            uint32_t vals[AGC_INPUT_CHANNELS];
+
+         case agc_cmd_get_lc_gains:
+            uint32_t vals[AGC_INPUT_CHANNELS*4];
             for(int i = 0; i < AGC_INPUT_CHANNELS; i ++) {
-                vals[i] = (uint32_t)agc_get_ch_lc_gamma_dec(agc_state, i);
+                { vals[4*i], vals[4*i+1], vals[4*i+2], vals[4*i+3] } = agc_get_ch_lc_gains(agc_state, i);
             }
-            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS, vals);
+            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS*4, vals);
             break;
 
-        case agc_cmd_set_lc_gamma_dec:
-            uint32_t intructions[2];
-            vtb_control_handle_set_n_words(c_command, 2, intructions);
-            if (intructions[1] < AGC_INPUT_CHANNELS) {
-                agc_set_ch_lc_gamma_dec(agc_state, intructions[1], intructions[0]);
-            }
-            break;
+        case agc_cmd_set_lc_gains:
+            uint32_t instructions[5];
+            vtb_control_handle_set_n_words(c_command, 5, instructions);
+            if (instructions[4] < AGC_INPUT_CHANNELS) {
+                uint32_t vals[4];
+                vals[0] =  instructions[0];
+                vals[1] =  instructions[1];
+                vals[2] =  instructions[2];
+                vals[3] =  instructions[3];
 
-        case agc_cmd_get_lc_near_delta_far_act:
-            uint32_t vals[AGC_INPUT_CHANNELS];
-            for(int i = 0; i < AGC_INPUT_CHANNELS; i ++) {
-                vals[i] = (uint32_t)agc_get_ch_lc_near_delta_far_act(agc_state, i);
-            }
-            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS, vals);
-            break;
-
-        case agc_cmd_set_lc_near_delta_far_act:
-            uint32_t intructions[2];
-            vtb_control_handle_set_n_words(c_command, 2, intructions);
-            if (intructions[1] < AGC_INPUT_CHANNELS) {
-                agc_set_ch_lc_near_delta_far_act(agc_state, intructions[1], intructions[0]);
-            }
-            break;
-
-        case agc_cmd_get_lc_near_delta:
-            uint32_t vals[AGC_INPUT_CHANNELS];
-            for(int i = 0; i < AGC_INPUT_CHANNELS; i ++) {
-                vals[i] = (uint32_t)agc_get_ch_lc_near_delta(agc_state, i);
-            }
-            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS, vals);
-            break;
-
-        case agc_cmd_set_lc_near_delta:
-            uint32_t intructions[2];
-            vtb_control_handle_set_n_words(c_command, 2, intructions);
-            if (intructions[1] < AGC_INPUT_CHANNELS) {
-                agc_set_ch_lc_near_delta(agc_state, intructions[1], intructions[0]);
-            }
-            break;
-
-        case agc_cmd_get_lc_far_delta:
-            uint32_t vals[AGC_INPUT_CHANNELS];
-            for(int i = 0; i < AGC_INPUT_CHANNELS; i ++) {
-                vals[i] = (uint32_t)agc_get_ch_lc_far_delta(agc_state, i);
-            }
-            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS, vals);
-            break;
-
-        case agc_cmd_set_lc_far_delta:
-            uint32_t intructions[2];
-            vtb_control_handle_set_n_words(c_command, 2, intructions);
-            if (intructions[1] < AGC_INPUT_CHANNELS) {
-                agc_set_ch_lc_far_delta(agc_state, intructions[1], intructions[0]);
-            }
-            break;
-        case agc_cmd_get_lc_gain_max:
-            uint32_t vals[AGC_INPUT_CHANNELS];
-            for(int i = 0; i < AGC_INPUT_CHANNELS; i ++) {
-                vals[i] = (uint32_t)agc_get_ch_lc_gain_max(agc_state, i);
-            }
-            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS, vals);
-            break;
-
-        case agc_cmd_set_lc_gain_max:
-            uint32_t intructions[2];
-            vtb_control_handle_set_n_words(c_command, 2, intructions);
-            if (intructions[1] < AGC_INPUT_CHANNELS) {
-                agc_set_ch_lc_gain_max(agc_state, intructions[1], intructions[0]);
-            }
-            break;
-        case agc_cmd_get_lc_gain_dt:
-            uint32_t vals[AGC_INPUT_CHANNELS];
-            for(int i = 0; i < AGC_INPUT_CHANNELS; i ++) {
-                vals[i] = (uint32_t)agc_get_ch_lc_gain_dt(agc_state, i);
-            }
-            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS, vals);
-            break;
-
-        case agc_cmd_set_lc_gain_dt:
-            uint32_t intructions[2];
-            vtb_control_handle_set_n_words(c_command, 2, intructions);
-            if (intructions[1] < AGC_INPUT_CHANNELS) {
-                agc_set_ch_lc_gain_dt(agc_state, intructions[1], intructions[0]);
-            }
-            break;
-        case agc_cmd_get_lc_gain_silence:
-            uint32_t vals[AGC_INPUT_CHANNELS];
-            for(int i = 0; i < AGC_INPUT_CHANNELS; i ++) {
-                vals[i] = (uint32_t)agc_get_ch_lc_gain_silence(agc_state, i);
-            }
-            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS, vals);
-            break;
-
-        case agc_cmd_set_lc_gain_silence:
-            uint32_t intructions[2];
-            vtb_control_handle_set_n_words(c_command, 2, intructions);
-            if (intructions[1] < AGC_INPUT_CHANNELS) {
-                agc_set_ch_lc_gain_silence(agc_state, intructions[1], intructions[0]);
-            }
-            break;
-        case agc_cmd_get_lc_gain_min:
-            uint32_t vals[AGC_INPUT_CHANNELS];
-            for(int i = 0; i < AGC_INPUT_CHANNELS; i ++) {
-                vals[i] = (uint32_t)agc_get_ch_lc_gain_min(agc_state, i);
-            }
-            vtb_control_handle_get_n_words(c_command, AGC_INPUT_CHANNELS, vals);
-            break;
-
-        case agc_cmd_set_lc_gain_min:
-            uint32_t intructions[2];
-            vtb_control_handle_set_n_words(c_command, 2, intructions);
-            if (intructions[1] < AGC_INPUT_CHANNELS) {
-                agc_set_ch_lc_gain_min(agc_state, intructions[1], intructions[0]);
+                agc_set_ch_lc_gains(agc_state, instructions[4], vals);
             }
             break;
 
