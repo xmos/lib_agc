@@ -4,7 +4,7 @@ AGC library change log
 8.2.0
 -----
 
-  * ADDED: AGC loss-control commands
+  * ADDED: Control commands to configure loss-control
   * CHANGED: Use XMOS Public Licence Version 1
 
 8.1.0
