@@ -279,7 +279,7 @@ void agc_set_ch_lc_n_frames(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index
  *
  * \returns                 Number of frames to consider near-end audio active
  */
-{int, int} agc_get_ch_lc_n_frames(agc_state_t agc, unsigned ch_index);
+{uint32_t, uint32_t} agc_get_ch_lc_n_frames(agc_state_t agc, unsigned ch_index);
 
 /** Get loss control correlation threshold for AGC channel.
  *
@@ -289,7 +289,7 @@ void agc_set_ch_lc_n_frames(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index
  *
  * \returns                 Loss control correlation threshold for AGC channel.
  */
-int32_t agc_get_ch_lc_corr_threshold(agc_state_t agc, unsigned ch_index);
+uint32_t agc_get_ch_lc_corr_threshold(agc_state_t agc, unsigned ch_index);
 
 /** Set loss control correlation threshold for AGC channel.
  * \param[in,out] agc           AGC state.
@@ -301,7 +301,7 @@ int32_t agc_get_ch_lc_corr_threshold(agc_state_t agc, unsigned ch_index);
  *                              [0, INT32_MAX].
  */
 void agc_set_ch_lc_corr_threshold(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index,
-        int32_t lc_corr_threshold);
+        uint32_t lc_corr_threshold);
 
 /** Get loss control background power gamma coefficient for AGC channel.
  *
@@ -311,7 +311,7 @@ void agc_set_ch_lc_corr_threshold(REFERENCE_PARAM(agc_state_t, agc), unsigned ch
  *
  * \returns                 Loss control background power gamma coefficient for AGC channel.
  */
-{int, int, int} agc_get_ch_lc_gammas(agc_state_t agc, unsigned ch_index);
+{uint32_t, uint32_t, uint32_t} agc_get_ch_lc_gammas(agc_state_t agc, unsigned ch_index);
 
 /** Set loss control background power gamma coefficient for AGC channel.
  * \param[in,out] agc           AGC state.
@@ -343,7 +343,7 @@ void agc_set_ch_lc_deltas(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index, 
  *
  * \returns                 Delta value applied by loss control  when both near-end and far-end audio are present for AGC channel.
  */
-{int, int, int} agc_get_ch_lc_deltas(agc_state_t agc, unsigned ch_index);
+{uint32_t, uint32_t, uint32_t} agc_get_ch_lc_deltas(agc_state_t agc, unsigned ch_index);
 
 /** Set maximum gain applied by loss control for AGC channel.
  *
@@ -365,6 +365,6 @@ void agc_set_ch_lc_gains(REFERENCE_PARAM(agc_state_t, agc), unsigned ch_index, u
  *
  * \returns                 Maximum gain applied by loss control for AGC channel
  */
-{int, int, int, int} agc_get_ch_lc_gains(agc_state_t agc, unsigned ch_index);
+{uint32_t, uint32_t, uint32_t, uint32_t} agc_get_ch_lc_gains(agc_state_t agc, unsigned ch_index);
 
 #endif /* AGC_CONTROL_H_ */
