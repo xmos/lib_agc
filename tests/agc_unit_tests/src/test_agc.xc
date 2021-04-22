@@ -3,6 +3,7 @@
 #include "agc_unit_tests.h"
 
 #define TEST_COUNT (1<<10)
+#define VTB_UQ16_16_EXP (-16)
 
 void test_agc_init(){
     int expected_adapt[AGC_INPUT_CHANNELS] = {AGC_CH0_ADAPT, AGC_CH1_ADAPT};
@@ -19,6 +20,21 @@ void test_agc_init(){
     vtb_uq16_16_t expected_gain_dec[AGC_INPUT_CHANNELS] = {VTB_UQ16_16(AGC_CH0_GAIN_DEC), VTB_UQ16_16(AGC_CH1_GAIN_DEC)};
     int expected_lc_enabled[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_ENABLED, AGC_CH1_LC_ENABLED};
 
+
+    int expected_lc_n_frame_near[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_N_FRAME_NEAR, AGC_CH1_LC_N_FRAME_NEAR};
+    int expected_lc_n_frame_far[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_N_FRAME_FAR, AGC_CH1_LC_N_FRAME_FAR};
+    int expected_lc_near_delta_far_act[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_NEAR_DELTA_FAR_ACT, AGC_CH1_LC_NEAR_DELTA_FAR_ACT};
+    int expected_lc_near_delta[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_NEAR_DELTA, AGC_CH1_LC_NEAR_DELTA};
+    int expected_lc_far_delta[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_FAR_DELTA, AGC_CH1_LC_FAR_DELTA};
+    int expected_lc_gamma_inc[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_GAMMA_INC, AGC_CH1_LC_GAMMA_INC};
+    int expected_lc_gamma_dec[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_GAMMA_DEC, AGC_CH1_LC_GAMMA_DEC};
+    int expected_lc_bg_power_gamma[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_BG_POWER_GAMMA, AGC_CH1_LC_BG_POWER_GAMMA};
+    int expected_lc_corr_threshold[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_CORR_THRESHOLD, AGC_CH1_LC_CORR_THRESHOLD};
+    int expected_lc_gain_max[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_GAIN_MAX, AGC_CH1_LC_GAIN_MAX};
+    int expected_lc_gain_dt[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_GAIN_DT, AGC_CH1_LC_GAIN_DT};
+    int expected_lc_gain_silence[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_GAIN_SILENCE, AGC_CH1_LC_GAIN_SILENCE};
+    int expected_lc_gain_min[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_GAIN_MIN, AGC_CH1_LC_GAIN_MIN};
+
     agc_state_t agc;
     agc_init_config_t config = {
         {
@@ -33,7 +49,20 @@ void test_agc_init(){
                 expected_lower_threshold[0],
                 expected_gain_inc[0],
                 expected_gain_dec[0],
-                expected_lc_enabled[0]
+                expected_lc_enabled[0],
+                expected_lc_n_frame_far[0],
+                expected_lc_n_frame_near[0],
+                expected_lc_corr_threshold[0],
+                expected_lc_bg_power_gamma[0],
+                expected_lc_gamma_inc[0],
+                expected_lc_gamma_dec[0],
+                expected_lc_far_delta[0],
+                expected_lc_near_delta[0],
+                expected_lc_near_delta_far_act[0],
+                expected_lc_gain_max[0],
+                expected_lc_gain_dt[0],
+                expected_lc_gain_silence[0],
+                expected_lc_gain_min[0]
             },
             {
                 expected_adapt[1],
@@ -46,7 +75,21 @@ void test_agc_init(){
                 expected_lower_threshold[1],
                 expected_gain_inc[1],
                 expected_gain_dec[1],
-                expected_lc_enabled[1]
+                expected_lc_enabled[1],
+                expected_lc_n_frame_far[1],
+                expected_lc_n_frame_near[1],
+                expected_lc_corr_threshold[1],
+                expected_lc_bg_power_gamma[1],
+                expected_lc_gamma_inc[1],
+                expected_lc_gamma_dec[1],
+                expected_lc_far_delta[1],
+                expected_lc_near_delta[1],
+                expected_lc_near_delta_far_act[1],
+                expected_lc_gain_max[1],
+                expected_lc_gain_dt[1],
+                expected_lc_gain_silence[1],
+                expected_lc_gain_min[1]
+
             }
         }
     };
@@ -75,6 +118,21 @@ void test_agc_init(){
 
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_gain_inc[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].gain_inc, -16), "Incorrect gain inc");
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_gain_dec[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].gain_dec, -16), "Incorrect gain inc");
+
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_n_frame_far[ch], agc.ch_state[ch].lc_n_frame_far, "Incorrect LC N frame far");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_n_frame_near[ch], agc.ch_state[ch].lc_n_frame_near, "Incorrect LC N frame near");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_corr_threshold[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].lc_corr_threshold, -16), "Incorrect LC corr threshold");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_bg_power_gamma[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].lc_bg_power_gamma, -16), "Incorrect LC bg power gamma");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gamma_inc[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].lc_gamma_inc, -16), "Incorrect LC gamma inc");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gamma_dec[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].lc_gamma_dec, -16), "Incorrect LC gamma dec");
+
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_near_delta_far_act[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].lc_near_delta_far_act, -16), "Incorrect LC near delta far activity");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_near_delta[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].lc_near_delta, -16), "Incorrect LC near delta");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_far_delta[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].lc_far_delta, -16), "Incorrect LC far delta");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gain_max[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].lc_gain_max, -16), "Incorrect LC gain max");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gain_dt[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].lc_gain_dt, -16), "Incorrect LC gain double talk");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gain_silence[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].lc_gain_silence, -16), "Incorrect LC gain silence");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gain_min[ch], vtb_denormalise_and_saturate_u32(agc.ch_state[ch].lc_gain_min, -16), "Incorrect LC gain min");
     }
 }
 
@@ -297,8 +355,6 @@ void test_agc_set_get_ch_gain_dec(){
     }
 }
 
-
-
 void test_agc_set_get_ch_max_gain(){
     srand((unsigned) 1);
 
@@ -329,7 +385,6 @@ void test_agc_set_get_ch_max_gain(){
     }
 }
 
-
 void test_agc_set_get_ch_min_gain(){
     srand((unsigned) 1);
 
@@ -359,7 +414,6 @@ void test_agc_set_get_ch_min_gain(){
         }
     }
 }
-
 
 void test_agc_set_get_ch_upper_threshold(){
     srand((unsigned) 1);
@@ -397,7 +451,6 @@ void test_agc_set_get_ch_upper_threshold(){
     }
 }
 
-
 void test_agc_set_get_ch_lower_threshold(){
     srand((unsigned) 1);
 
@@ -434,7 +487,239 @@ void test_agc_set_get_ch_lower_threshold(){
     }
 }
 
+void test_agc_set_get_lc_corr_threshold(){
+    srand((unsigned) 2);
 
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
+
+    agc_state_t agc;
+    agc_init(agc, config);
+
+
+    uint32_t expected_lc_corr_threshold = 0;
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        agc_set_ch_lc_corr_threshold(agc, ch, expected_lc_corr_threshold);
+    }
+
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_lc_corr_threshold, agc_get_ch_lc_corr_threshold(agc, ch), "Incorrect AGC LC corr threshold");
+    }
+
+    expected_lc_corr_threshold = 1;
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        agc_set_ch_lc_corr_threshold(agc, ch, expected_lc_corr_threshold);
+    }
+
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        TEST_ASSERT_EQUAL_INT32_MESSAGE(expected_lc_corr_threshold, agc_get_ch_lc_corr_threshold(agc, ch), "Incorrect AGC LC corr threshold");
+    }
+}
+
+void test_agc_set_get_ch_lc_n_frames(){
+
+    int expected_lc_n_frame_near[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_N_FRAME_NEAR, AGC_CH1_LC_N_FRAME_NEAR};
+    int expected_lc_n_frame_far[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_N_FRAME_FAR, AGC_CH1_LC_N_FRAME_FAR};
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
+    agc_state_t agc;
+    agc_init(agc, config);
+
+    // configure the int values in the AGC state
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        agc.ch_state[ch].lc_n_frame_near = expected_lc_n_frame_near[ch];
+        agc.ch_state[ch].lc_n_frame_far = expected_lc_n_frame_far[ch];
+    }
+
+    // read the init values
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        uint32_t actual1, actual2;
+        {actual1, actual2} = agc_get_ch_lc_n_frames(agc, ch);
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_n_frame_far[ch], actual1, "Incorrect LC N frame far");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_n_frame_near[ch], actual2, "Incorrect LC N frame near");
+    }
+
+    // write new values
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        expected_lc_n_frame_far[ch] = expected_lc_n_frame_far[ch]+1;
+        expected_lc_n_frame_near[ch] = expected_lc_n_frame_near[ch]+1;
+    }
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        uint32_t frames[2] = {expected_lc_n_frame_far[ch], expected_lc_n_frame_near[ch]};
+        agc_set_ch_lc_n_frames(agc, ch, frames);
+    }
+
+    // read the new values
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        uint32_t actual1, actual2;
+        {actual1, actual2} = agc_get_ch_lc_n_frames(agc, ch);
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_n_frame_far[ch], actual1, "Incorrect LC N frame far");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_n_frame_near[ch], actual2, "Incorrect LC N frame near");
+    }
+}
+
+void test_agc_set_get_ch_lc_deltas(){
+
+    int expected_lc_far_delta[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_FAR_DELTA, AGC_CH1_LC_FAR_DELTA};
+    int expected_lc_near_delta[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_NEAR_DELTA, AGC_CH1_LC_NEAR_DELTA};
+    int expected_lc_near_delta_far_act[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_NEAR_DELTA_FAR_ACT, AGC_CH1_LC_NEAR_DELTA_FAR_ACT};
+
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
+    agc_state_t agc;
+    agc_init(agc, config);
+
+    // configure the int values in the AGC state
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        agc.ch_state[ch].lc_near_delta_far_act.m = expected_lc_near_delta_far_act[ch];
+        agc.ch_state[ch].lc_near_delta_far_act.e = VTB_UQ16_16_EXP;
+        agc.ch_state[ch].lc_near_delta.m = expected_lc_near_delta[ch];
+        agc.ch_state[ch].lc_near_delta.e = VTB_UQ16_16_EXP;
+        agc.ch_state[ch].lc_far_delta.m = expected_lc_far_delta[ch];
+        agc.ch_state[ch].lc_far_delta.e = VTB_UQ16_16_EXP;
+    }
+
+    // read the init values
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        uint32_t actual1, actual2, actual3;
+        {actual1, actual2, actual3} = agc_get_ch_lc_deltas(agc, ch);
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_far_delta[ch], actual1, "Incorrect LC far delta");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_near_delta[ch], actual2, "Incorrect LC near delta");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_near_delta_far_act[ch], actual3, "Incorrect LC near delta far activity");
+    }
+
+    // write new values
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        expected_lc_far_delta[ch] = expected_lc_far_delta[ch]+1;
+        expected_lc_near_delta[ch] = expected_lc_near_delta[ch]+1;
+        expected_lc_near_delta_far_act[ch] = expected_lc_near_delta_far_act[ch]+1;
+
+    }
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        uint32_t deltas[3] = {expected_lc_far_delta[ch], expected_lc_near_delta[ch], expected_lc_near_delta_far_act[ch]};
+        agc_set_ch_lc_deltas(agc, ch, deltas);
+    }
+
+    // read the new values
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        uint32_t actual1, actual2, actual3;
+        {actual1, actual2, actual3} = agc_get_ch_lc_deltas(agc, ch);
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_far_delta[ch], actual1, "Incorrect LC far delta");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_near_delta[ch], actual2, "Incorrect LC near delta");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_near_delta_far_act[ch], actual3, "Incorrect LC near delta far activity");
+    }
+}
+
+void test_agc_set_get_ch_lc_gammas(){
+
+    int expected_lc_bg_power_gamma[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_BG_POWER_GAMMA, AGC_CH1_LC_BG_POWER_GAMMA};
+    int expected_lc_gamma_inc[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_GAMMA_INC, AGC_CH1_LC_GAMMA_INC};
+    int expected_lc_gamma_dec[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_GAMMA_DEC, AGC_CH0_LC_GAMMA_DEC};
+
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
+    agc_state_t agc;
+    agc_init(agc, config);
+
+    // configure the int values in the AGC state
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        agc.ch_state[ch].lc_bg_power_gamma.m = expected_lc_bg_power_gamma[ch];
+        agc.ch_state[ch].lc_bg_power_gamma.e = VTB_UQ16_16_EXP;
+        agc.ch_state[ch].lc_gamma_inc.m = expected_lc_gamma_inc[ch];
+        agc.ch_state[ch].lc_gamma_inc.e = VTB_UQ16_16_EXP;
+        agc.ch_state[ch].lc_gamma_dec.m = expected_lc_gamma_dec[ch];
+        agc.ch_state[ch].lc_gamma_dec.e = VTB_UQ16_16_EXP;
+    }
+
+    // read the init values
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        uint32_t actual1, actual2, actual3;
+        {actual1, actual2, actual3} = agc_get_ch_lc_gammas(agc, ch);
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_bg_power_gamma[ch], actual1, "Incorrect LC bg power gamma");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gamma_inc[ch], actual2, "Incorrect LC gamma inc");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gamma_dec[ch], actual3, "Incorrect LC gamma dec");
+    }
+
+    // write new values
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        expected_lc_bg_power_gamma[ch] = expected_lc_bg_power_gamma[ch]+1;
+        expected_lc_gamma_inc[ch] = expected_lc_gamma_inc[ch]+1;
+        expected_lc_gamma_dec[ch] = expected_lc_gamma_dec[ch]+1;
+
+    }
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        uint32_t gammas[3] = {expected_lc_bg_power_gamma[ch], expected_lc_gamma_dec[ch], expected_lc_gamma_inc[ch]};
+        agc_set_ch_lc_gammas(agc, ch, gammas);
+    }
+
+    // read the new values
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        uint32_t actual1, actual2, actual3;
+        {actual1, actual2, actual3} = agc_get_ch_lc_gammas(agc, ch);
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_bg_power_gamma[ch], actual1, "Incorrect LC bg power gamma");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gamma_inc[ch], actual2, "Incorrect LC gamma inc");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gamma_dec[ch], actual3, "Incorrect LC gamma dec");
+    }
+}
+
+void test_agc_set_get_ch_lc_gainss(){
+
+    int expected_lc_gain_max[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_GAIN_MAX, AGC_CH1_LC_GAIN_MAX};
+    int expected_lc_gain_dt[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_GAIN_DT, AGC_CH1_LC_GAIN_DT};
+    int expected_lc_gain_silence[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_GAIN_SILENCE, AGC_CH1_LC_GAIN_SILENCE};
+    int expected_lc_gain_min[AGC_INPUT_CHANNELS] = {AGC_CH0_LC_GAIN_MIN, AGC_CH1_LC_GAIN_MIN};
+
+
+    agc_init_config_t config;
+    memset(&config, 0xFF, sizeof(agc_init_config_t));
+    agc_state_t agc;
+    agc_init(agc, config);
+
+    // configure the int values in the AGC state
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        agc.ch_state[ch].lc_gain_max.m = expected_lc_gain_max[ch];
+        agc.ch_state[ch].lc_gain_max.e = VTB_UQ16_16_EXP;
+        agc.ch_state[ch].lc_gain_dt.m = expected_lc_gain_dt[ch];
+        agc.ch_state[ch].lc_gain_dt.e = VTB_UQ16_16_EXP;
+        agc.ch_state[ch].lc_gain_silence.m = expected_lc_gain_silence[ch];
+        agc.ch_state[ch].lc_gain_silence.e = VTB_UQ16_16_EXP;
+        agc.ch_state[ch].lc_gain_min.m = expected_lc_gain_min[ch];
+        agc.ch_state[ch].lc_gain_min.e = VTB_UQ16_16_EXP;
+    }
+
+    // read the init values
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        uint32_t actual1, actual2, actual3, actual4;
+        {actual1, actual2, actual3, actual4} = agc_get_ch_lc_gains(agc, ch);
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gain_max[ch], actual1, "Incorrect LC gain max");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gain_dt[ch], actual2, "Incorrect LC gain dt");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gain_silence[ch], actual3, "Incorrect LC gain silence");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gain_min[ch], actual4, "Incorrect LC gain min");
+    }
+
+    // write new values
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        expected_lc_gain_max[ch] = expected_lc_gain_max[ch]+1;
+        expected_lc_gain_dt[ch] = expected_lc_gain_dt[ch]+1;
+        expected_lc_gain_silence[ch] = expected_lc_gain_silence[ch]+1;
+        expected_lc_gain_min[ch] = expected_lc_gain_min[ch]+1;
+    }
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        uint32_t gains[4] = {expected_lc_gain_max[ch], expected_lc_gain_dt[ch],\
+                             expected_lc_gain_silence[ch], expected_lc_gain_min[ch]};
+        agc_set_ch_lc_gains(agc, ch, gains);
+    }
+
+    // read the new values
+    for(unsigned ch=0; ch<AGC_INPUT_CHANNELS; ++ch){
+        uint32_t actual1, actual2, actual3, actual4;
+        {actual1, actual2, actual3, actual4} = agc_get_ch_lc_gains(agc, ch);
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gain_max[ch], actual1, "Incorrect LC gain max");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gain_dt[ch], actual2, "Incorrect LC gain dt");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gain_silence[ch], actual3, "Incorrect LC gain silence");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expected_lc_gain_min[ch], actual4, "Incorrect LC gain min");
+    }
+}
 
 void test_agc_set_get_ch_gain_zero(){
     vtb_uq16_16_t expected_gain = 0;
