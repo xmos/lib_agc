@@ -60,7 +60,6 @@ class agc_ch(object):
 
         self.lc_t_far = 0
         self.lc_t_near = 0
-<D-F><D-F>
         self.corr_val = 0
 
 
