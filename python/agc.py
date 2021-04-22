@@ -11,7 +11,7 @@ class agc_ch(object):
                  gain_inc, gain_dec, lc_enabled,
                  lc_n_frame_near, lc_n_frame_far,
                  lc_corr_threshold,
-                 lc_gamma_inc, lc_gamma_dec, lc_gamma_bg_power,
+                 lc_gamma_inc, lc_gamma_dec, lc_bg_power_gamma,
                  lc_near_delta_far_act, lc_near_delta, lc_far_delta,
                  lc_gain_max, lc_gain_dt, lc_gain_silence, lc_gain_min):
         if init_gain < 0:
@@ -44,7 +44,7 @@ class agc_ch(object):
         self.lc_corr_threshold = lc_corr_threshold
         self.lc_gamma_inc = lc_gamma_inc
         self.lc_gamma_dec = lc_gamma_dec
-        self.lc_gamma_bg_power = lc_gamma_bg_power
+        self.lc_bg_power_gamma = lc_bg_power_gamma
         self.lc_near_delta_far_act = lc_near_delta_far_act
         self.lc_near_delta = lc_near_delta
         self.lc_far_delta = lc_far_delta
@@ -60,7 +60,7 @@ class agc_ch(object):
 
         self.lc_t_far = 0
         self.lc_t_near = 0
-
+<D-F><D-F>
         self.corr_val = 0
 
 
@@ -101,7 +101,7 @@ class agc_ch(object):
             far_power_alpha = agc.LC_EST_ALPHA_DEC
         self.lc_far_power_est = (far_power_alpha) * self.lc_far_power_est + (1 - far_power_alpha) * ref_power
 
-        self.lc_far_bg_power_est = min(self.lc_gamma_bg_power * self.lc_far_bg_power_est, self.lc_far_power_est)
+        self.lc_far_bg_power_est = min(self.lc_bg_power_gamma * self.lc_far_bg_power_est, self.lc_far_power_est)
         self.lc_far_bg_power_est = max(self.lc_far_bg_power_est, agc.LC_FAR_BG_POWER_EST_MIN)
 
         frame_power = np.mean(input_frame**2.0)
@@ -114,7 +114,7 @@ class agc_ch(object):
         if(self.lc_near_bg_power_est > self.lc_near_power_est):
             self.lc_near_bg_power_est = (agc.LC_BG_POWER_EST_ALPHA_DEC) * self.lc_near_bg_power_est + (1 - agc.LC_BG_POWER_EST_ALPHA_DEC) * self.lc_near_power_est
         else:
-            self.lc_near_bg_power_est = self.lc_gamma_bg_power * self.lc_near_bg_power_est
+            self.lc_near_bg_power_est = self.lc_bg_power_gamma * self.lc_near_bg_power_est
 
 
         gained_input = input_frame
