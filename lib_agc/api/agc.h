@@ -24,7 +24,20 @@ typedef struct {
     vtb_uq1_31_t lower_threshold;   ///< Lower threshold for desired output voice level [0, INT32_MAX].
     vtb_uq16_16_t gain_inc;         ///< Step value to increment the channel gain.
     vtb_uq16_16_t gain_dec;         ///< Step value to decrement the channel gain.
-    int lc_enabled;
+    int lc_enabled;                 ///< 0 for loss control disabled, or 1 for enabled.
+    int lc_n_frame_far;             ///< number of frames when far-field audio is considered active
+    int lc_n_frame_near;            ///< number of frames when near-field audio is considered active
+    vtb_uq0_32_t lc_corr_threshold; ///< loss control correlation threshold to detect double talk
+    vtb_uq16_16_t lc_bg_power_gamma;///< loss control background power gamma coefficient
+    vtb_uq16_16_t lc_gamma_inc;     ///< loss control gamma increment coefficient
+    vtb_uq16_16_t lc_gamma_dec;     ///< loss control gamma decrement coefficient
+    vtb_uq16_16_t lc_far_delta;     ///< delta multiplier used by loss control  when only far-end activity is present
+    vtb_uq16_16_t lc_near_delta;    ///< delta multiplier used by loss control  when only near-end activity is present
+    vtb_uq16_16_t lc_near_delta_far_act; ///< delta multiplier used by loss control when both near and far-end activities are present
+    vtb_uq16_16_t lc_gain_max;      ///< gain applied by loss control when only near-end activity is present
+    vtb_uq16_16_t lc_gain_dt;       ///< gain applied by loss control when both near and far-end activities are present (double talk)
+    vtb_uq16_16_t lc_gain_silence;  ///< gain applied by loss control when only silence is present
+    vtb_uq16_16_t lc_gain_min;      ///< gain applied by loss control when only far-end activity is present
 } agc_ch_init_config_t;
 
 /**

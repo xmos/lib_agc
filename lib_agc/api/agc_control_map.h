@@ -4,6 +4,11 @@
 #define AGC_CONTROL_MAP_H_
 #include "vtb_control.h"
 
+#define LC_N_FRAMES_NUM 2
+#define LC_GAMMAS_NUM 3
+#define LC_DELTAS_NUM 3
+#define LC_GAINS_NUM 4
+
 typedef enum {
     // get: MSB == 1
     agc_cmd_get_gain = 0x80,
@@ -17,6 +22,11 @@ typedef enum {
     agc_cmd_get_adapt_on_vad,
     agc_cmd_get_soft_clipping,
     agc_cmd_get_min_gain,
+    agc_cmd_get_lc_n_frames,
+    agc_cmd_get_lc_corr_threshold,
+    agc_cmd_get_lc_deltas,
+    agc_cmd_get_lc_gains,
+    agc_cmd_get_lc_gammas,
     agc_num_get_commands,
 
     // set: MSB == 0
@@ -31,6 +41,11 @@ typedef enum {
     agc_cmd_set_adapt_on_vad,
     agc_cmd_set_soft_clipping,
     agc_cmd_set_min_gain,
+    agc_cmd_set_lc_n_frames,
+    agc_cmd_set_lc_corr_threshold,
+    agc_cmd_set_lc_deltas,
+    agc_cmd_set_lc_gains,
+    agc_cmd_set_lc_gammas,
     agc_num_set_commands,
 } agc_control_commands;
 
