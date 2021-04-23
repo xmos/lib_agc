@@ -42,7 +42,7 @@
                 "lc_enabled": 0,
                 "lc_n_frame_near": 34,
                 "lc_n_frame_far": 17,
-                "lc_corr_threshold": 0.9,
+                "lc_corr_threshold": 0.993,
                 "lc_gamma_inc": 1.005,
                 "lc_gamma_dec": 0.995,
                 "lc_bg_power_gamma": 1.002,
@@ -52,7 +52,7 @@
                 "lc_gain_max": 1,
                 "lc_gain_dt": 0.9,
                 "lc_gain_silence": 0.1,
-                "lc_gain_min": 0.0224
+                "lc_gain_min": 0.022387
             }
         ]
     }
