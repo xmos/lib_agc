@@ -11,7 +11,7 @@ pipeline {
       VIEW = getViewName(REPO)
   }
   stages {
-    stage('Standard build and XS2 tests') {      
+    stage('Standard build and XS2 tests') {
       agent {
         label 'x86_64 && brew && macOS'
       }
@@ -37,7 +37,7 @@ pipeline {
                   withVenv {
                     runWaf('.', "configure clean build --target=xcore200")
                     runWaf('.', "configure clean build --target=xcoreai")
-                    stash name: 'agc_unit_tests', includes: 'bin/*xcoreai.xe, '              
+                    stash name: 'agc_unit_tests', includes: 'bin/*xcoreai.xe, '
                     viewEnv() {
                       runPython("TARGET=XCORE200 pytest -n 1")
                     }
@@ -59,18 +59,14 @@ pipeline {
             }
           }
         }
-        stage('Build') {
+        stage('Build docs') {
           steps {
-            dir("${REPO}") {
-              // xcoreAllAppsBuild('examples')
-              dir("${REPO}") {
-                runXdoc('doc')
-              }
-            }
+            runXdoc("${REPO}/${REPO}/doc")
+            // Archive all the generated .pdf docs
+            archiveArtifacts artifacts: "${REPO}/**/pdf/*.pdf", fingerprint: true, allowEmptyArchive: true
           }
         }
       }
-  
       post {
         cleanup {
           xcoreCleanSandbox()
