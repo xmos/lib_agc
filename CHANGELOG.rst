@@ -4,6 +4,7 @@ AGC library change log
 8.2.0
 -----
 
+  * CHANGED: Handling of the loss control near-end audio timer
   * ADDED: Control commands to configure loss-control
   * CHANGED: Use XMOS Public Licence Version 1
 

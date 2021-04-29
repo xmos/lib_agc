@@ -135,15 +135,13 @@ class agc_ch(object):
 
             # Update near-end activity timer
             if(self.lc_near_power_est > (delta * self.lc_near_bg_power_est)):
-                if self.lc_t_far == 0:
-                    # Near speech only
+                if self.lc_t_far == 0 or (self.lc_t_far > 0 and self.corr_val < self.lc_corr_threshold):
+                    # Near speech only or Double talk
                     self.lc_t_near = self.lc_n_frame_near
-                elif self.lc_t_far > 0 and self.corr_val < self.lc_corr_threshold:
-                    # Double talk
-                    self.lc_t_near = self.lc_n_frame_near / 2
                 elif self.lc_t_far > 0 and self.corr_val >= self.lc_corr_threshold:
                     # Far end speech only
-                    self.lc_t_near = 0
+                    # Do nothing
+                    pass
                 else:
                     raise Exception("Reached here!")
 
