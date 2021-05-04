@@ -463,7 +463,7 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
     const vtb_u32_float_t agc_limit_point = U_HALF;
     const int s32_exponent = -31;
 
-    if (!state.adapt_on_vad) {
+    if (state.adapt_on_vad == 0) {
         vad_flag = 1;
     }
 
@@ -495,10 +495,10 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
             }
 
             vtb_u32_float_t gained_pk = vtb_mul_u32_u32(state.x_peak, state.gain);
-            int near_only = state.lc_t_near && !state.lc_t_far;
+            int near_only = (state.lc_t_near != 0) && (state.lc_t_far == 0);
             if(vtb_gte_u32_u32(gained_pk, state.upper_threshold)){
                 state.gain = vtb_mul_u32_u32(state.gain_dec, state.gain);
-            } else if(vtb_gte_u32_u32(state.lower_threshold, gained_pk) && (!state.lc_enabled || near_only)){
+            } else if(vtb_gte_u32_u32(state.lower_threshold, gained_pk) && (state.lc_enabled == 0 || near_only != 0)){
                 state.gain = vtb_mul_u32_u32(state.gain_inc, state.gain);
             }
 
@@ -570,23 +570,20 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         }
 
         vtb_u32_float_t delta = state.lc_near_delta;
-        if(state.lc_t_far){
+        if(state.lc_t_far != 0){
             delta = state.lc_near_delta_far_act;
         }
 
         // Update near-end-activity timer
         if(vtb_gte_u32_u32(state.lc_near_power_est, vtb_mul_u32_u32(delta, state.lc_bg_power_est))){
-            if(state.lc_t_far == 0){
-                // Near-end speech only
+            if(state.lc_t_far == 0 || (state.lc_t_far != 0 && (state.lc_corr_factor < state.lc_corr_threshold.m))){
+                // Near-end speech only or Double talk
                 state.lc_t_near = state.lc_n_frame_near;
-            }
-            else if(state.lc_t_far && (state.lc_corr_factor < state.lc_corr_threshold.m)){
-                // Double talk
-                state.lc_t_near = state.lc_n_frame_near>>1;
             }
             else {
                 // Far-end speech only
-                state.lc_t_near = 0;
+                // Do nothing
+                ;
             }
         }
         else{
@@ -596,15 +593,15 @@ static void agc_process_channel(agc_ch_state_t &state, vtb_ch_pair_t samples[AGC
         }
 
         // Adapt loss control gain
-        if(state.lc_t_far == 0 && state.lc_t_near){
+        if(state.lc_t_far == 0 && state.lc_t_near != 0){
             // Near speech only
             lc_target_gain = state.lc_gain_max;
         }
-        else if(state.lc_t_far && state.lc_t_near == 0){
+        else if(state.lc_t_far != 0 && state.lc_t_near == 0){
             // Far end only
             lc_target_gain = state.lc_gain_min;
         }
-        else if(state.lc_t_far && state.lc_t_near){
+        else if(state.lc_t_far != 0 && state.lc_t_near != 0){
             // Both near-end and far -end
             lc_target_gain = state.lc_gain_dt;
         }
