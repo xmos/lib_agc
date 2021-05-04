@@ -284,14 +284,8 @@ void agc_set_ch_lc_enable(agc_state_t &agc, unsigned ch_index, uint32_t enable){
 }
 
 int agc_get_ch_lc_enable(agc_state_t agc, unsigned ch_index){
-    int val = -1;
-    if (ch_index == 0) {
-        val = agc.ch_state[1].lc_t_near;
-    }
-    if (ch_index == 1) {
-        val = agc.ch_state[1].lc_t_far;
-    }
-    return val;
+    if(ch_index >= AGC_INPUT_CHANNELS) return 0;
+    return agc.ch_state[ch_index].lc_enabled;
 }
 
 void agc_set_ch_upper_threshold(agc_state_t &agc, unsigned ch_index, int32_t upper_threshold){
