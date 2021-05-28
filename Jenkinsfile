@@ -8,12 +8,12 @@ pipeline {
   //Tools for AI verif stage. Tools for standard stage in view file
   environment {
       REPO = 'lib_agc'
-      VIEW = getViewName(REPO)
+      VIEW = 'lib_agc_develop'
   }
   stages {
     stage('Standard build and XS2 tests') {
       agent {
-        label 'x86_64 && brew && macOS'
+        label 'test-catalina-jagent'
       }
       options {
         skipDefaultCheckout()
@@ -73,53 +73,53 @@ pipeline {
         }
       }
     }
-    stage('xcore.ai Verification'){
-      agent {
-        label 'xcore.ai-explorer'
-      }      
-      options {
-        skipDefaultCheckout()
-      }
-      stages {
-        stage('Get View') {
-          steps {
-            xcorePrepareSandbox("${VIEW}", "${REPO}")
-          }
-        }
-        stage('xs3 agc_unit_tests')
-        {
-          steps {
-            dir("${REPO}") {
-              dir('tests') {
-                dir('agc_unit_tests') {
-                  withVenv {
-                    unstash 'agc_unit_tests'
-                    viewEnv() {
-                      runPython("TARGET=XCOREAI pytest -s")
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      } //stages
-      post {
-        cleanup {
-          cleanWs()
-        }
-      }
-    }//xcore.ai
-    stage('Update view files') {
-      agent {
-        label 'x86_64&&brew'
-      }
-      when {
-        expression { return currentBuild.currentResult == "SUCCESS" }
-      }
-      steps {
-        updateViewfiles()
-      }
-    }
+    // stage('xcore.ai Verification'){
+    //   agent {
+    //     label 'xcore.ai-explorer'
+    //   }      
+    //   options {
+    //     skipDefaultCheckout()
+    //   }
+    //   stages {
+    //     stage('Get View') {
+    //       steps {
+    //         xcorePrepareSandbox("${VIEW}", "${REPO}")
+    //       }
+    //     }
+    //     stage('xs3 agc_unit_tests')
+    //     {
+    //       steps {
+    //         dir("${REPO}") {
+    //           dir('tests') {
+    //             dir('agc_unit_tests') {
+    //               withVenv {
+    //                 unstash 'agc_unit_tests'
+    //                 viewEnv() {
+    //                   runPython("TARGET=XCOREAI pytest -s")
+    //                 }
+    //               }
+    //             }
+    //           }
+    //         }
+    //       }
+    //     }
+    //   } //stages
+    //   post {
+    //     cleanup {
+    //       cleanWs()
+    //     }
+    //   }
+    // }//xcore.ai
+    // stage('Update view files') {
+    //   agent {
+    //     label 'x86_64&&brew'
+    //   }
+    //   when {
+    //     expression { return currentBuild.currentResult == "SUCCESS" }
+    //   }
+    //   steps {
+    //     updateViewfiles()
+    //   }
+    // }
   }
 }
