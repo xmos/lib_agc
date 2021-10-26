@@ -75,7 +75,7 @@ pipeline {
     }
     stage('xcore.ai Verification'){
       agent {
-        label 'xcore.ai-explorer'
+        label 'xcore.ai'
       }      
       options {
         skipDefaultCheckout()
