@@ -1,6 +1,11 @@
 AGC library change log
 ======================
 
+8.2.1
+-----
+
+  * FIXED: lc_enabled on chan 1 changed in config file to match lib_audio_pipelines
+
 8.2.0
 -----
 
