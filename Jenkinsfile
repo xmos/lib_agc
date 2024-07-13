@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.20.0') _
+@Library('xmos_jenkins_shared_library@v0.32.0') _
 
 getApproval()
 
@@ -13,7 +13,7 @@ pipeline {
   stages {
     stage('Standard build and XS2 tests') {
       agent {
-        label 'x86_64 && macOS'
+        label 'x86_64 && linux'
       }
       options {
         skipDefaultCheckout()
